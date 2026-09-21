@@ -1569,7 +1569,7 @@
         options: {
           responsive: true, maintainAspectRatio: false,
           plugins: { legend: { position: 'top' }, tooltip: { callbacks: { label: ctx => ctx.dataset.type === 'line' ? ` Capacidade Teórica: 20.000 lugares` : ` Sul Pagantes: ${ctx.parsed.y.toLocaleString('pt-BR')} (${((ctx.parsed.y / 20000) * 100).toFixed(1)}% do setor)` } } },
-          scales: { y: { beginAtZero: true, max: 23000, ticks: { callback: v => v.toLocaleString('pt-BR') } } }
+          scales: { y: { beginAtZero: true, max: 22000, ticks: { callback: v => v.toLocaleString('pt-BR') } } }
         }
       });
     }
@@ -2255,7 +2255,7 @@
                 options: {
                   responsive: true, maintainAspectRatio: false,
                   plugins: { legend: { position: 'top' }, tooltip: { callbacks: { label: ctx => ctx.dataset.type === 'line' ? ` Capacidade Teórica: 20.000 lugares` : ` Sul Pagantes: ${ctx.parsed.y.toLocaleString('pt-BR')} (${((ctx.parsed.y / 20000) * 100).toFixed(1)}% do setor)` } } },
-                  scales: { y: { beginAtZero: true, max: 23000, ticks: { callback: v => v.toLocaleString('pt-BR') } } }
+                  scales: { y: { beginAtZero: true, max: 22000, ticks: { callback: v => v.toLocaleString('pt-BR') } } }
                 }
               });
           } else {

@@ -153,7 +153,7 @@
             Ocupação Estádio
           </button>
           <button onclick="switchTab('desempenho')" id="tab-btn-desempenho" class="px-3 py-1.5 rounded-md text-xs font-bold transition text-white/70 hover:text-white">
-            Desempenho Time
+            Desempenho
           </button>
           <button onclick="switchTab('classicos')" id="tab-btn-classicos" class="px-3 py-1.5 rounded-md text-xs font-bold transition text-white/70 hover:text-white">
             Clássicos
@@ -181,7 +181,7 @@
           </h2>
           
           <p class="text-sm sm:text-base text-emerald-100/80 leading-relaxed">
-            Explore dados consolidados dos jogos oficiais (<span class="dynamic-year-range">...</span>).
+            Explore dados de público / desempenho em jogos oficiais (<span class="dynamic-year-range">...</span>) e histórico com todos os clássicos.
           </p>
 
           <div class="pt-4 flex flex-wrap items-center gap-4">
@@ -191,11 +191,11 @@
             </button>
             <button onclick="switchTab('desempenho')" class="px-6 py-3.5 rounded-xl bg-[#0E4735] hover:bg-[#12201A] text-[#C5A059] font-bold text-sm border border-[#C5A059]/40 transition flex items-center gap-2.5 active:scale-95 shadow-xl">
               <i data-lucide="activity" class="w-4 h-4"></i>
-              <span>Desempenho time</span>
+              <span>Desempenho</span>
             </button>
             <button onclick="switchTab('classicos')" class="px-6 py-3.5 rounded-xl bg-gradient-to-r from-[#0E4735] to-[#8A1538] hover:opacity-90 text-white font-bold text-sm shadow-xl shadow-black/50 transition flex items-center gap-2.5 active:scale-95 border border-[#C5A059]/40">
               <i data-lucide="swords" class="w-4 h-4 text-[#C5A059]"></i>
-              <span>Clássicos</span>
+              <span>Clássicos (histórico completo)</span>
             </button>
           </div>
         </div>
@@ -512,7 +512,7 @@
       </section>
     </div>
 
-    <!-- ABA: DESEMPENHO TIME -->
+    <!-- ABA: DESEMPENHO -->
     <div id="view-desempenho" class="hidden space-y-8">
       
       <!-- Filtros Desempenho -->

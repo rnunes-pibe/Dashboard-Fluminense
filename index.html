@@ -1,0 +1,2372 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fluminense FC | Dashboard Analítico</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
+
+    :root {
+      --flu-green: #0E4735;
+      --flu-maroon: #8A1538;
+      --flu-gold: #C5A059;
+      --flu-dark: #0A120F;
+      --flu-card-bg: rgba(14, 26, 21, 0.85);
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--flu-dark);
+      color: #F1F5F3;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(14, 71, 53, 0.3) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(138, 21, 56, 0.25) 0%, transparent 40%),
+        radial-gradient(circle at 50% 50%, rgba(197, 160, 89, 0.05) 0%, transparent 60%);
+      background-attachment: fixed;
+    }
+
+    .glass-panel {
+      background: var(--flu-card-bg);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(197, 160, 89, 0.22);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .glass-panel:hover {
+      border-color: rgba(197, 160, 89, 0.45);
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6);
+    }
+
+    .ms-dropdown-menu {
+      background-color: #0b1713;
+      border: 1px solid rgba(197, 160, 89, 0.38);
+      box-shadow: 0 16px 40px -6px rgba(0, 0, 0, 0.9);
+      max-height: 310px;
+      z-index: 70;
+    }
+
+    .ms-checkbox {
+      accent-color: #C5A059;
+      width: 15px;
+      height: 15px;
+      cursor: pointer;
+    }
+
+    .ms-pill {
+      background: rgba(197, 160, 89, 0.15);
+      border: 1px solid rgba(197, 160, 89, 0.35);
+      color: #F3DEAB;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #080D0B;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #183327;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--flu-gold);
+    }
+
+    /* CSS Customizado para o Slider Duplo da Aba Clássicos */
+    .dual-slider-container {
+      position: relative;
+    }
+    .dual-slider-container input[type=range] {
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+      pointer-events: none;
+    }
+    .dual-slider-container input[type=range]:focus {
+      outline: none;
+    }
+    .dual-slider-container input[type=range]::-webkit-slider-thumb {
+      pointer-events: auto;
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #C5A059;
+      cursor: pointer;
+      position: relative;
+      z-index: 10;
+      box-shadow: 0 0 6px rgba(0,0,0,0.7);
+      border: 1px solid #F3DEAB;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-[#8A1538] selection:text-white">
+
+  <header class="border-b border-white/10 bg-[#070D0B]/95 sticky top-0 z-50 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      
+      <!-- Lado Esquerdo: Logo + Título + Botão de Atualização Integrado -->
+      <div class="flex items-start gap-4">
+        <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-[#8A1538] via-[#0E4735] to-[#C5A059] flex items-center justify-center p-0.5 shadow-xl shrink-0 mt-1">
+          <div class="w-full h-full bg-[#0B1512] rounded-[14px] flex items-center justify-center font-black text-[#C5A059] text-xl sm:text-2xl tracking-tighter border border-[#C5A059]/40">
+            FFC
+          </div>
+        </div>
+        
+        <div class="flex flex-col justify-center">
+          <h1 class="text-xl sm:text-2xl font-black tracking-tight text-white leading-tight mb-2">
+            Fluminense FC
+          </h1>
+          
+          <div class="flex items-center gap-3">
+            <button type="button" onclick="fetchLiveGoogleSheet()" class="text-[10px] font-bold text-cyan-200 hover:text-white transition flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-950 border border-cyan-400/50 hover:bg-cyan-900 shadow-sm active:scale-95 group shrink-0">
+              <div class="relative flex items-center justify-center">
+                <span class="absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75 animate-ping"></span>
+                <i data-lucide="cloud-download" class="w-3.5 h-3.5 text-cyan-300 relative z-10 group-hover:scale-110 transition-transform"></i>
+              </div>
+              <span>Atualizar</span>
+            </button>
+            <div class="flex flex-col text-[10px] leading-tight">
+              <span class="text-cyan-300 font-semibold">Clique aqui para atualizar base de dados</span>
+              <span id="last-update-time" class="text-white/50 mt-0.5">Última atualização: Aguardando...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lado Direito: Abas Navegação -->
+      <div class="flex items-center gap-2 flex-wrap mt-2 md:mt-0">
+        <div class="inline-flex p-1 rounded-lg bg-[#0B1512] border border-[#C5A059]/30">
+          <button onclick="switchTab('capa')" id="tab-btn-capa" class="px-3 py-1.5 rounded-md text-xs font-bold transition bg-[#C5A059] text-[#0A120F]">
+            Início
+          </button>
+          <button onclick="switchTab('estadio')" id="tab-btn-estadio" class="px-3 py-1.5 rounded-md text-xs font-bold transition text-white/70 hover:text-white">
+            Ocupação Estádio
+          </button>
+          <button onclick="switchTab('desempenho')" id="tab-btn-desempenho" class="px-3 py-1.5 rounded-md text-xs font-bold transition text-white/70 hover:text-white">
+            Desempenho Time
+          </button>
+          <button onclick="switchTab('classicos')" id="tab-btn-classicos" class="px-3 py-1.5 rounded-md text-xs font-bold transition text-white/70 hover:text-white">
+            Clássicos
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    
+    <!-- ABA: CAPA -->
+    <div id="view-capa" class="space-y-8">
+      <section class="glass-panel rounded-3xl p-8 sm:p-12 shadow-2xl relative overflow-hidden border border-[#C5A059]/40">
+        <div class="absolute -right-16 -bottom-16 w-80 h-80 rounded-full bg-gradient-to-br from-[#8A1538]/20 via-[#0E4735]/30 to-[#C5A059]/10 blur-3xl pointer-events-none"></div>
+        
+        <div class="max-w-3xl space-y-6 relative z-10">
+          <div class="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3.5 py-1.5 rounded-full bg-[#0E4735] text-[#C5A059] border border-[#C5A059]/40 text-[10px] sm:text-xs font-bold uppercase tracking-wider max-w-full whitespace-normal">
+            <span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#C5A059] animate-ping shrink-0"></span>
+            <span class="leading-tight">Intelligence & Analytics (<span class="dynamic-year-range">...</span>)</span>
+          </div>
+          
+          <h2 class="text-3xl sm:text-5xl font-black tracking-tight text-white leading-tight">
+            Painel de Análise Fluminense FC
+          </h2>
+          
+          <p class="text-sm sm:text-base text-emerald-100/80 leading-relaxed">
+            Explore dados consolidados dos jogos partidas oficiais (<span class="dynamic-year-range">...</span>).
+          </p>
+
+          <div class="pt-4 flex flex-wrap items-center gap-4">
+            <button onclick="switchTab('estadio')" class="px-6 py-3.5 rounded-xl bg-gradient-to-r from-[#8A1538] to-[#0E4735] hover:opacity-90 text-white font-bold text-sm shadow-xl shadow-black/50 transition flex items-center gap-2.5 active:scale-95 border border-[#C5A059]/40">
+              <i data-lucide="bar-chart-3" class="w-4 h-4 text-[#C5A059]"></i>
+              <span>Ocupação Estádio</span>
+            </button>
+            <button onclick="switchTab('desempenho')" class="px-6 py-3.5 rounded-xl bg-[#0E4735] hover:bg-[#12201A] text-[#C5A059] font-bold text-sm border border-[#C5A059]/40 transition flex items-center gap-2.5 active:scale-95 shadow-xl">
+              <i data-lucide="activity" class="w-4 h-4"></i>
+              <span>Desempenho time</span>
+            </button>
+            <button onclick="switchTab('classicos')" class="px-6 py-3.5 rounded-xl bg-gradient-to-r from-[#0E4735] to-[#8A1538] hover:opacity-90 text-white font-bold text-sm shadow-xl shadow-black/50 transition flex items-center gap-2.5 active:scale-95 border border-[#C5A059]/40">
+              <i data-lucide="swords" class="w-4 h-4 text-[#C5A059]"></i>
+              <span>Clássicos</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div class="glass-panel rounded-2xl p-6 border-l-4 border-l-[#C5A059]">
+          <span class="text-xs font-bold uppercase tracking-wider text-[#C5A059]">Base Consolidada</span>
+          <div id="summary-total-games" class="text-3xl font-black text-white mt-2">-- Jogos</div>
+          <p class="text-xs text-white/50 mt-1">Registros oficiais computados</p>
+        </div>
+        <div class="glass-panel rounded-2xl p-6 border-l-4 border-l-emerald-500">
+          <span class="text-xs font-bold uppercase tracking-wider text-emerald-300">Atualização Dinâmica</span>
+          <div class="text-3xl font-black text-white mt-2">Google Sheets</div>
+          <p class="text-xs text-white/50 mt-1">Sincronização em tempo real</p>
+        </div>
+        <div class="glass-panel rounded-2xl p-6 border-l-4 border-l-cyan-500">
+          <span class="text-xs font-bold uppercase tracking-wider text-cyan-300">Analytics</span>
+          <div class="text-3xl font-black text-white mt-2">Tática & Esporte</div>
+          <p class="text-xs text-white/50 mt-1">Vitórias, gols e aproveitamento</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ABA: OCUPAÇÃO ESTÁDIO -->
+    <div id="view-estadio" class="hidden space-y-8">
+      
+      <!-- Filtros Estádio -->
+      <section class="glass-panel rounded-2xl p-6 shadow-2xl relative z-30">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 border-b border-white/10 pb-3.5">
+          <div class="flex items-center gap-2.5">
+            <div class="p-2 rounded-lg bg-[#0E4735] text-[#C5A059] border border-[#C5A059]/30">
+              <i data-lucide="sliders-horizontal" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <h2 class="text-sm font-bold uppercase tracking-wider text-[#C5A059]">
+                Filtros Multidimensionais
+              </h2>
+              <p class="text-xs text-white/50">Cruze mandos, temporadas, competições, adversários, dias e horários</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <button onclick="resetFilters()" class="text-xs font-semibold text-[#C5A059] hover:text-white transition flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 hover:border-[#C5A059]/60 shadow-sm active:scale-95">
+              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+              <span>Restaurar Padrão</span>
+            </button>
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-900/40 border border-emerald-500/40 text-emerald-300 text-xs font-semibold">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span id="filtered-matches-tag">Processando base...</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-3">
+          
+          <div class="relative" id="dropdown-container-mando">
+            <label class="block text-xs font-semibold text-emerald-200/80 mb-1.5 flex items-center gap-1.5">
+              <i data-lucide="shield" class="w-3.5 h-3.5 text-[#C5A059]"></i> Mando
+            </label>
+            <button type="button" onclick="toggleDropdown('mando')" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition">
+              <span class="truncate pr-1 text-[#C5A059] font-semibold" id="label-mando">Mandante</span>
+              <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i>
+            </button>
+            <div id="panel-mando" class="ms-dropdown-menu hidden absolute top-full left-0 right-0 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50">
+              <div class="flex items-center justify-between text-[11px] pb-1.5 border-b border-white/10">
+                <button onclick="selectAllFilter('mando', true)" class="text-[#C5A059] hover:underline font-medium">Todos</button>
+                <button onclick="selectAllFilter('mando', false)" class="text-white/50 hover:underline">Limpar</button>
+              </div>
+              <div class="overflow-y-auto space-y-1 pr-1 max-h-48" id="list-mando"></div>
+            </div>
+          </div>
+
+          <div class="relative" id="dropdown-container-temporada">
+            <label class="block text-xs font-semibold text-emerald-200/80 mb-1.5 flex items-center gap-1.5"><i data-lucide="calendar" class="w-3.5 h-3.5 text-[#C5A059]"></i> Temporada</label>
+            <button type="button" onclick="toggleDropdown('temporada')" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="label-temporada">Todas</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
+            <div id="panel-temporada" class="ms-dropdown-menu hidden absolute top-full left-0 right-0 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><div class="flex items-center justify-between text-[11px] pb-1.5 border-b border-white/10"><button onclick="selectAllFilter('temporada', true)" class="text-[#C5A059] hover:underline font-medium">Todos</button><button onclick="selectAllFilter('temporada', false)" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-48" id="list-temporada"></div></div>
+          </div>
+
+          <div class="relative" id="dropdown-container-competicao">
+            <label class="block text-xs font-semibold text-emerald-200/80 mb-1.5 flex items-center gap-1.5"><i data-lucide="trophy" class="w-3.5 h-3.5 text-[#C5A059]"></i> Competição</label>
+            <button type="button" onclick="toggleDropdown('competicao')" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="label-competicao">Todas</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
+            <div id="panel-competicao" class="ms-dropdown-menu hidden absolute top-full left-0 w-64 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><div class="flex items-center justify-between text-[11px] pb-1.5 border-b border-white/10"><button onclick="selectAllFilter('competicao', true)" class="text-[#C5A059] hover:underline font-medium">Todos</button><button onclick="selectAllFilter('competicao', false)" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-48" id="list-competicao"></div></div>
+          </div>
+
+          <div class="relative" id="dropdown-container-adversario">
+            <label class="block text-xs font-semibold text-emerald-200/80 mb-1.5 flex items-center gap-1.5"><i data-lucide="users-2" class="w-3.5 h-3.5 text-[#C5A059]"></i> Adversário</label>
+            <button type="button" onclick="toggleDropdown('adversario')" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="label-adversario">Todos</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
+            <div id="panel-adversario" class="ms-dropdown-menu hidden absolute top-full left-0 w-72 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><input type="text" placeholder="Buscar adversário..." oninput="filterDropdownOptions('adversario', this.value)" class="w-full text-[11px] rounded-lg px-2.5 py-1.5 bg-black/50 border border-white/15 text-white"><div class="flex items-center justify-between text-[11px] pb-1 border-b border-white/10"><button onclick="selectAllFilter('adversario', true)" class="text-[#C5A059] hover:underline font-medium">Todos</button><button onclick="selectAllFilter('adversario', false)" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-52" id="list-adversario"></div></div>
+          </div>
+
+          <div class="relative" id="dropdown-container-estadio">
+            <label class="block text-xs font-semibold text-emerald-200/80 mb-1.5 flex items-center gap-1.5"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-[#C5A059]"></i> Estádio</label>
+            <button type="button" onclick="toggleDropdown('estadio')" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="label-estadio">Todos</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
+            <div id="panel-estadio" class="ms-dropdown-menu hidden absolute top-full left-0 w-64 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><input type="text" placeholder="Buscar estádio..." oninput="filterDropdownOptions('estadio', this.value)" class="w-full text-[11px] rounded-lg px-2.5 py-1.5 bg-black/50 border border-white/15 text-white"><div class="flex items-center justify-between text-[11px] pb-1 border-b border-white/10"><button onclick="selectAllFilter('estadio', true)" class="text-[#C5A059] hover:underline font-medium">Todos</button><button onclick="selectAllFilter('estadio', false)" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-44" id="list-estadio"></div></div>
+          </div>
+
+          <div class="relative" id="dropdown-container-dia">
+            <label class="block text-xs font-semibold text-emerald-200/80 mb-1.5 flex items-center gap-1.5"><i data-lucide="calendar-days" class="w-3.5 h-3.5 text-[#C5A059]"></i> Dia Semana</label>
+            <button type="button" onclick="toggleDropdown('dia')" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="label-dia">Todos</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
+            <div id="panel-dia" class="ms-dropdown-menu hidden absolute top-full left-0 w-56 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><div class="flex items-center justify-between text-[11px] pb-1.5 border-b border-white/10"><button onclick="selectAllFilter('dia', true)" class="text-[#C5A059] hover:underline font-medium">Todos</button><button onclick="selectAllFilter('dia', false)" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-48" id="list-dia"></div></div>
+          </div>
+
+          <div class="relative" id="dropdown-container-horario">
+            <label class="block text-xs font-semibold text-emerald-200/80 mb-1.5 flex items-center gap-1.5"><i data-lucide="clock" class="w-3.5 h-3.5 text-[#C5A059]"></i> Horário</label>
+            <button type="button" onclick="toggleDropdown('horario')" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="label-horario">Todos</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
+            <div id="panel-horario" class="ms-dropdown-menu hidden absolute top-full right-0 w-60 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><input type="text" placeholder="Filtrar horário..." oninput="filterDropdownOptions('horario', this.value)" class="w-full text-[11px] rounded-lg px-2.5 py-1.5 bg-black/50 border border-white/15 text-white"><div class="flex items-center justify-between text-[11px] pb-1 border-b border-white/10"><button onclick="selectAllFilter('horario', true)" class="text-[#C5A059] hover:underline font-medium">Todos</button><button onclick="selectAllFilter('horario', false)" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-48" id="list-horario"></div></div>
+          </div>
+
+          <div class="relative" id="dropdown-container-presente">
+            <label class="block text-xs font-semibold text-emerald-200/80 mb-1.5 flex items-center gap-1.5"><i data-lucide="user-check" class="w-3.5 h-3.5 text-[#C5A059]"></i> Rodolfo no estádio</label>
+            <button type="button" onclick="toggleDropdown('presente')" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="label-presente">Todos</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
+            <div id="panel-presente" class="ms-dropdown-menu hidden absolute top-full right-0 w-56 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><div class="flex items-center justify-between text-[11px] pb-1.5 border-b border-white/10"><button onclick="selectAllFilter('presente', true)" class="text-[#C5A059] hover:underline font-medium">Todos</button><button onclick="selectAllFilter('presente', false)" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-48" id="list-presente"></div></div>
+          </div>
+
+        </div>
+
+        <div id="active-badges-container" class="mt-4 pt-3.5 border-t border-white/10 flex flex-wrap items-center gap-2 text-xs">
+          <span class="text-white/40 text-[11px] uppercase tracking-wider font-semibold">Filtros Ativos:</span>
+          <div id="active-badges-list" class="flex flex-wrap items-center gap-1.5"></div>
+        </div>
+      </section>
+
+      <section class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between border-l-4 border-l-emerald-500">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-200/70">Partidas Filtradas</span>
+          <div class="flex items-baseline justify-between mt-3">
+            <span id="kpi-jogos" class="text-2xl font-black text-white">0</span>
+            <i data-lucide="calendar-check" class="w-4 h-4 text-emerald-400"></i>
+          </div>
+          <span id="kpi-sub-jogos" class="text-[10px] text-white/40 mt-1">Total no filtro</span>
+        </div>
+
+        <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between border-l-4 border-l-[#C5A059]">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-[#C5A059]">Média Público Geral</span>
+          <div class="flex items-baseline justify-between mt-3">
+            <span id="kpi-media-geral" class="text-2xl font-black text-[#C5A059]">0</span>
+            <i data-lucide="users" class="w-4 h-4 text-[#C5A059]"></i>
+          </div>
+          <span id="kpi-sub-geral" class="text-[10px] text-white/40 mt-1">Presentes no estádio</span>
+        </div>
+
+        <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between border-l-4 border-l-teal-500">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-teal-300">Média Mandante</span>
+          <div class="flex items-baseline justify-between mt-3">
+            <span id="kpi-media-mandante" class="text-2xl font-black text-teal-300">0</span>
+            <i data-lucide="home" class="w-4 h-4 text-teal-400"></i>
+          </div>
+          <span id="kpi-sub-mandante" class="text-[10px] text-white/40 mt-1">Apenas jogos em casa</span>
+        </div>
+
+        <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between border-l-4 border-l-rose-500">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-rose-300">Média Visitante</span>
+          <div class="flex items-baseline justify-between mt-3">
+            <span id="kpi-media-visitante" class="text-2xl font-black text-rose-300">0</span>
+            <i data-lucide="plane" class="w-4 h-4 text-rose-400"></i>
+          </div>
+          <span id="kpi-sub-visitante" class="text-[10px] text-white/40 mt-1">Jogos com público visitante</span>
+        </div>
+
+        <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between border-l-4 border-l-cyan-500">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-cyan-300">Média Setor Sul</span>
+          <div class="flex items-baseline justify-between mt-3">
+            <span id="kpi-media-sul" class="text-2xl font-black text-cyan-300">0</span>
+            <i data-lucide="flag" class="w-4 h-4 text-cyan-400"></i>
+          </div>
+          <span id="kpi-sub-sul" class="text-[10px] text-white/40 mt-1">Maracanã (Tricolor)</span>
+        </div>
+
+        <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between border-l-4 border-l-amber-500">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-amber-300">Ocupação Média Sul</span>
+          <div class="flex items-baseline justify-between mt-3">
+            <span id="kpi-taxa-sul" class="text-2xl font-black text-amber-300">0%</span>
+            <i data-lucide="pie-chart" class="w-4 h-4 text-amber-400"></i>
+          </div>
+          <span class="text-[10px] text-white/40 mt-1">Capacidade ~20.000</span>
+        </div>
+      </section>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="glass-panel rounded-2xl p-6 shadow-xl flex flex-col">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <i data-lucide="trending-up" class="w-4 h-4 text-[#C5A059]"></i>
+                Público Médio por Temporada
+              </h3>
+              <p class="text-xs text-white/50">Evolução do público presente médio em cada temporada</p>
+            </div>
+          </div>
+          <div class="relative flex-1 min-h-[300px]">
+            <canvas id="chartTemporada"></canvas>
+          </div>
+        </div>
+
+        <div class="glass-panel rounded-2xl p-6 shadow-xl flex flex-col">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <i data-lucide="award" class="w-4 h-4 text-[#C5A059]"></i>
+                Público Médio por Competição
+              </h3>
+              <p class="text-xs text-white/50">Apelo de bilheteria e torcida nos principais campeonatos</p>
+            </div>
+          </div>
+          <div class="relative flex-1 min-h-[300px]">
+            <canvas id="chartCompeticao"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="glass-panel rounded-2xl p-6 shadow-xl flex flex-col">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <i data-lucide="calendar-days" class="w-4 h-4 text-[#C5A059]"></i>
+                Média de Público por Dia da Semana
+              </h3>
+              <p class="text-xs text-white/50">Impacto comparativo de jogos no fim de semana vs. dias úteis</p>
+            </div>
+          </div>
+          <div class="relative flex-1 min-h-[310px]">
+            <canvas id="chartDiaSemana"></canvas>
+          </div>
+        </div>
+
+        <div class="glass-panel rounded-2xl p-6 shadow-xl flex flex-col">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <i data-lucide="hourglass" class="w-4 h-4 text-[#C5A059]"></i>
+                Média de Público por Faixa de Horário
+              </h3>
+              <p class="text-xs text-white/50">Manhã (&lt;13h), Tarde (13h-17h59), Noite (18h-20h59) e Noite Tardia (&ge;21h)</p>
+            </div>
+          </div>
+          <div class="relative flex-1 min-h-[310px]">
+            <canvas id="chartHorario"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <section class="glass-panel rounded-2xl p-6 shadow-2xl border border-cyan-500/30">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4 mb-6">
+          <div>
+            <h3 class="text-base font-black text-white flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-cyan-400"></span>
+              Público pagante Setor Sul
+            </h3>
+            <p class="text-xs text-white/60 mt-0.5">
+              Top 10 maiores ocupações do Setor Sul do Maracanã (Pagantes)
+            </p>
+            <p id="sul-alert-missing" class="text-[10px] text-amber-400 mt-2 flex items-center gap-1.5 font-medium hidden">
+              <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i>
+              <span>Não há registros de público do Setor Sul de <strong id="sul-missing-count">0</strong> jogos (Maracanã)</span>
+            </p>
+          </div>
+          <div class="flex items-center gap-4 text-xs">
+            <div class="px-3 py-1 rounded-lg bg-white/5 border border-white/10">
+              <span class="text-white/50">Capacidade Base:</span>
+              <span class="font-bold text-white ml-1">20.000 lugares</span>
+            </div>
+            <div class="px-3 py-1 rounded-lg bg-cyan-950/70 border border-cyan-500/40 text-cyan-300">
+              <span class="text-white/50">Partidas no Filtro Atual:</span>
+              <span id="sul-recorded-count" class="font-bold ml-1">0 jogos</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="relative w-full h-[280px]">
+          <canvas id="chartSetorSul"></canvas>
+        </div>
+      </section>
+
+      <section class="glass-panel rounded-2xl p-6 shadow-2xl space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i data-lucide="list-filter" class="w-4 h-4 text-[#C5A059]"></i>
+              Catálogo Completo das Partidas
+            </h3>
+            <p class="text-xs text-white/50">Pesquise e analise todas as partidas válidas cadastradas</p>
+          </div>
+          <div class="relative w-full sm:w-72">
+            <input type="text" id="search-adversario" oninput="applyFilters()" placeholder="Buscar por adversário..." class="w-full text-xs rounded-xl pl-9 pr-3.5 py-2.5 bg-black/50 border border-white/20 text-white placeholder-white/40">
+            <i data-lucide="search" class="w-4 h-4 text-white/40 absolute left-3 top-3"></i>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-white/80">
+            <thead class="text-[11px] font-bold uppercase tracking-wider bg-white/5 text-[#C5A059] border-b border-white/10">
+              <tr>
+                <th class="p-3"># ID</th>
+                <th class="p-3">Data</th>
+                <th class="p-3">Horário</th>
+                <th class="p-3">Competição</th>
+                <th class="p-3">Mando</th>
+                <th class="p-3">Adversário</th>
+                <th class="p-3">Estádio</th>
+                <th class="p-3 text-center">Placar</th>
+                <th class="p-3 text-right">Público Total</th>
+                <th class="p-3 text-right">Visitante</th>
+                <th class="p-3 text-right">Sul Pagantes</th>
+                <th class="p-3 text-right">Ocup. Sul</th>
+                <th class="p-3 text-center">Presença</th>
+              </tr>
+            </thead>
+            <tbody id="table-body" class="divide-y divide-white/5 font-mono text-[12px]"></tbody>
+          </table>
+        </div>
+
+        <div id="table-pagination" class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 text-xs text-white/60"></div>
+      </section>
+    </div>
+
+    <!-- ABA: DESEMPENHO TIME -->
+    <div id="view-desempenho" class="hidden space-y-8">
+      
+      <!-- Filtros Desempenho -->
+      <section class="glass-panel rounded-2xl p-6 shadow-2xl relative z-30">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 border-b border-white/10 pb-3.5">
+          <div class="flex items-center gap-2.5">
+            <div class="p-2 rounded-lg bg-[#0E4735] text-[#C5A059] border border-[#C5A059]/30">
+              <i data-lucide="activity" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <h2 class="text-sm font-bold uppercase tracking-wider text-[#C5A059]">
+                Filtros de Desempenho Esportivo
+              </h2>
+              <p class="text-xs text-white/50">Filtre estatísticas de confrontos consolidados</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <button onclick="resetDesempenhoFilters()" class="text-xs font-semibold text-[#C5A059] hover:text-white transition flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 hover:border-[#C5A059]/60 shadow-sm active:scale-95">
+              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+              <span>Restaurar Padrão</span>
+            </button>
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-900/40 border border-emerald-500/40 text-emerald-300 text-xs font-semibold">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span id="perf-matches-tag">0 partidas</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+          
+          <div class="relative" id="perf-dropdown-container-temporada">
+            <label class="block text-xs font-semibold text-emerald-200/80 mb-1.5 flex items-center gap-1.5"><i data-lucide="calendar" class="w-3.5 h-3.5 text-[#C5A059]"></i> Temporada</label>
+            <button type="button" onclick="togglePerfDropdown('temporada')" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="perf-label-temporada">Todas</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
+            <div id="perf-panel-temporada" class="ms-dropdown-menu hidden absolute top-full left-0 right-0 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><div class="flex items-center justify-between text-[11px] pb-1.5 border-b border-white/10"><button onclick="selectPerfAll('temporada', true)" class="text-[#C5A059] hover:underline font-medium">Todos</button><button onclick="selectPerfAll('temporada', false)" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-48" id="perf-list-temporada"></div></div>
+          </div>
+
+          <div class="relative" id="perf-dropdown-container-competicao">
+            <label class="block text-xs font-semibold text-emerald-200/80 mb-1.5 flex items-center gap-1.5"><i data-lucide="trophy" class="w-3.5 h-3.5 text-[#C5A059]"></i> Competição</label>
+            <button type="button" onclick="togglePerfDropdown('competicao')" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="perf-label-competicao">Todas</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
+            <div id="perf-panel-competicao" class="ms-dropdown-menu hidden absolute top-full left-0 right-0 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><div class="flex items-center justify-between text-[11px] pb-1.5 border-b border-white/10"><button onclick="selectPerfAll('competicao', true)" class="text-[#C5A059] hover:underline font-medium">Todos</button><button onclick="selectPerfAll('competicao', false)" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-48" id="perf-list-competicao"></div></div>
+          </div>
+
+          <div class="relative" id="perf-dropdown-container-adversario">
+            <label class="block text-xs font-semibold text-emerald-200/80 mb-1.5 flex items-center gap-1.5"><i data-lucide="users-2" class="w-3.5 h-3.5 text-[#C5A059]"></i> Adversário</label>
+            <button type="button" onclick="togglePerfDropdown('adversario')" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="perf-label-adversario">Todos</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
+            <div id="perf-panel-adversario" class="ms-dropdown-menu hidden absolute top-full left-0 right-0 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><input type="text" placeholder="Buscar adversário..." oninput="filterPerfOptions('adversario', this.value)" class="w-full text-[11px] rounded-lg px-2.5 py-1.5 bg-black/50 border border-white/15 text-white"><div class="flex items-center justify-between text-[11px] pb-1 border-b border-white/10"><button onclick="selectPerfAll('adversario', true)" class="text-[#C5A059] hover:underline font-medium">Todos</button><button onclick="selectPerfAll('adversario', false)" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-52" id="perf-list-adversario"></div></div>
+          </div>
+
+          <div class="relative" id="perf-dropdown-container-mando">
+            <label class="block text-xs font-semibold text-emerald-200/80 mb-1.5 flex items-center gap-1.5"><i data-lucide="shield" class="w-3.5 h-3.5 text-[#C5A059]"></i> Mando</label>
+            <button type="button" onclick="togglePerfDropdown('mando')" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="perf-label-mando">Todos</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
+            <div id="perf-panel-mando" class="ms-dropdown-menu hidden absolute top-full left-0 right-0 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><div class="flex items-center justify-between text-[11px] pb-1.5 border-b border-white/10"><button onclick="selectPerfAll('mando', true)" class="text-[#C5A059] hover:underline font-medium">Todos</button><button onclick="selectPerfAll('mando', false)" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-48" id="perf-list-mando"></div></div>
+          </div>
+
+          <div class="relative" id="perf-dropdown-container-estadio">
+            <label class="block text-xs font-semibold text-emerald-200/80 mb-1.5 flex items-center gap-1.5"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-[#C5A059]"></i> Estádio</label>
+            <button type="button" onclick="togglePerfDropdown('estadio')" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="perf-label-estadio">Todos</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
+            <div id="perf-panel-estadio" class="ms-dropdown-menu hidden absolute top-full left-0 right-0 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><input type="text" placeholder="Buscar estádio..." oninput="filterPerfOptions('estadio', this.value)" class="w-full text-[11px] rounded-lg px-2.5 py-1.5 bg-black/50 border border-white/15 text-white"><div class="flex items-center justify-between text-[11px] pb-1 border-b border-white/10"><button onclick="selectPerfAll('estadio', true)" class="text-[#C5A059] hover:underline font-medium">Todos</button><button onclick="selectPerfAll('estadio', false)" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-48" id="perf-list-estadio"></div></div>
+          </div>
+
+          <div class="relative" id="perf-dropdown-container-presente">
+            <label class="block text-xs font-semibold text-emerald-200/80 mb-1.5 flex items-center gap-1.5"><i data-lucide="user-check" class="w-3.5 h-3.5 text-[#C5A059]"></i> Rodolfo no estádio</label>
+            <button type="button" onclick="togglePerfDropdown('presente')" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="perf-label-presente">Todos</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
+            <div id="perf-panel-presente" class="ms-dropdown-menu hidden absolute top-full right-0 w-56 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><div class="flex items-center justify-between text-[11px] pb-1.5 border-b border-white/10"><button onclick="selectPerfAll('presente', true)" class="text-[#C5A059] hover:underline font-medium">Todos</button><button onclick="selectPerfAll('presente', false)" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-48" id="perf-list-presente"></div></div>
+          </div>
+
+        </div>
+      </section>
+
+      <section class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between border-l-4 border-l-emerald-500">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-300">Vitórias</span>
+          <div class="flex items-baseline justify-between mt-3">
+            <span id="perf-kpi-vitorias" class="text-2xl font-black text-white">0</span>
+            <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i>
+          </div>
+          <span id="perf-sub-vitorias" class="text-[10px] text-white/40 mt-1">Jogos vencidos</span>
+        </div>
+
+        <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between border-l-4 border-l-amber-500">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-amber-300">Empates</span>
+          <div class="flex items-baseline justify-between mt-3">
+            <span id="perf-kpi-empates" class="text-2xl font-black text-white">0</span>
+            <i data-lucide="minus-circle" class="w-4 h-4 text-amber-400"></i>
+          </div>
+          <span id="perf-sub-empates" class="text-[10px] text-white/40 mt-1">Jogos empatados</span>
+        </div>
+
+        <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between border-l-4 border-l-rose-500">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-rose-300">Derrotas</span>
+          <div class="flex items-baseline justify-between mt-3">
+            <span id="perf-kpi-derrotas" class="text-2xl font-black text-white">0</span>
+            <i data-lucide="x-circle" class="w-4 h-4 text-rose-400"></i>
+          </div>
+          <span id="perf-sub-derrotas" class="text-[10px] text-white/40 mt-1">Jogos perdidos</span>
+        </div>
+
+        <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between border-l-4 border-l-cyan-500">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-cyan-300">Gols Pró (GP)</span>
+          <div class="flex items-baseline justify-between mt-3">
+            <span id="perf-kpi-gp" class="text-2xl font-black text-cyan-300">0</span>
+            <i data-lucide="arrow-up-right" class="w-4 h-4 text-cyan-400"></i>
+          </div>
+          <span id="perf-sub-gp" class="text-[10px] text-white/40 mt-1">Gols marcados</span>
+        </div>
+
+        <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between border-l-4 border-l-purple-500">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-purple-300">Gols Contra (GC)</span>
+          <div class="flex items-baseline justify-between mt-3">
+            <span id="perf-kpi-gc" class="text-2xl font-black text-purple-300">0</span>
+            <i data-lucide="arrow-down-right" class="w-4 h-4 text-purple-400"></i>
+          </div>
+          <span id="perf-sub-gc" class="text-[10px] text-white/40 mt-1">Gols sofridos</span>
+        </div>
+
+        <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between border-l-4 border-l-[#C5A059]">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-[#C5A059]">Aproveitamento</span>
+          <div class="flex items-baseline justify-between mt-3">
+            <span id="perf-kpi-aproveitamento" class="text-2xl font-black text-[#C5A059]">0%</span>
+            <i data-lucide="award" class="w-4 h-4 text-[#C5A059]"></i>
+          </div>
+          <span id="perf-sub-aproveitamento" class="text-[10px] text-white/40 mt-1">Pontos conquistados</span>
+        </div>
+      </section>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="glass-panel rounded-2xl p-6 shadow-xl flex flex-col">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <i data-lucide="pie-chart" class="w-4 h-4 text-[#C5A059]"></i>
+                Distribuição de Resultados
+              </h3>
+              <p class="text-xs text-white/50">Proporção de vitórias, empates e derrotas</p>
+            </div>
+          </div>
+          <div class="relative flex-1 min-h-[300px] flex items-center justify-center">
+            <canvas id="chartResultados"></canvas>
+          </div>
+        </div>
+
+        <div class="glass-panel rounded-2xl p-6 shadow-xl flex flex-col">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <i data-lucide="bar-chart-2" class="w-4 h-4 text-[#C5A059]"></i>
+                Balanço de Gols (Pró vs. Contra)
+              </h3>
+              <p class="text-xs text-white/50">Volume ofensivo vs. solidez defensiva</p>
+            </div>
+          </div>
+          <div class="relative flex-1 min-h-[300px]">
+            <canvas id="chartBalançoGols"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <section class="glass-panel rounded-2xl p-6 shadow-2xl space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i data-lucide="swords" class="w-4 h-4 text-[#C5A059] inline mr-1"></i>
+              Estatísticas Detalhadas por Adversário
+            </h3>
+            <p class="text-xs text-white/50">Confrontos agregados com base nos filtros aplicados</p>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-white/80">
+            <thead class="text-[11px] font-bold uppercase tracking-wider bg-white/5 text-[#C5A059] border-b border-white/10">
+              <tr>
+                <th class="p-3">Adversário</th>
+                <th class="p-3 text-center">Jogos</th>
+                <th class="p-3 text-center text-emerald-400">Vitórias</th>
+                <th class="p-3 text-center text-amber-300">Empates</th>
+                <th class="p-3 text-center text-rose-400">Derrotas</th>
+                <th class="p-3 text-center">GP</th>
+                <th class="p-3 text-center">GC</th>
+                <th class="p-3 text-center">SG</th>
+                <th class="p-3 text-right">Aproveitamento</th>
+              </tr>
+            </thead>
+            <tbody id="perf-table-body" class="divide-y divide-white/5 font-mono text-[12px]"></tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- ABA: CLÁSSICOS -->
+    <div id="view-classicos" class="hidden space-y-8">
+      
+      <!-- Card Informativo Clássicos -->
+      <section class="glass-panel rounded-2xl p-5 sm:p-6 shadow-xl border border-[#C5A059]/30 flex items-start sm:items-center gap-4 relative overflow-hidden">
+        <div class="absolute -right-8 -bottom-8 w-32 h-32 rounded-full bg-gradient-to-br from-[#8A1538]/20 via-[#0E4735]/20 to-[#C5A059]/20 blur-2xl pointer-events-none"></div>
+        <div class="p-3 rounded-xl bg-[#0E4735] text-[#C5A059] border border-[#C5A059]/30 shrink-0 relative z-10">
+          <i data-lucide="book-open" class="w-5 h-5"></i>
+        </div>
+        <div class="relative z-10">
+          <p class="text-sm sm:text-base text-white/90 font-medium leading-relaxed">
+            Base histórica contendo todos os Clássicos do Fluminense contra seus 3 rivais cariocas
+          </p>
+        </div>
+      </section>
+
+      <!-- Filtros Clássicos -->
+      <section class="glass-panel rounded-2xl p-6 shadow-2xl relative z-30">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 border-b border-white/10 pb-3.5">
+          <div class="flex items-center gap-2.5">
+            <div class="p-2 rounded-lg bg-[#0E4735] text-[#C5A059] border border-[#C5A059]/30">
+              <i data-lucide="swords" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <h2 class="text-sm font-bold uppercase tracking-wider text-[#C5A059]">
+                Filtros de Clássicos
+              </h2>
+              <p class="text-xs text-white/50">Base dedicada a confrontos regionais</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <button onclick="resetClassicosFilters()" class="text-xs font-semibold text-[#C5A059] hover:text-white transition flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 hover:border-[#C5A059]/60 shadow-sm active:scale-95">
+              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+              <span>Restaurar Padrão</span>
+            </button>
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-900/40 border border-emerald-500/40 text-emerald-300 text-xs font-semibold">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span id="classicos-matches-tag">0 partidas</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+          
+          <div class="relative" id="classicos-dropdown-container-adversario">
+            <label class="block text-xs font-semibold text-emerald-200/80 mb-1.5 flex items-center gap-1.5"><i data-lucide="users-2" class="w-3.5 h-3.5 text-[#C5A059]"></i> Adversário</label>
+            <button type="button" onclick="toggleClassicosDropdown('adversario')" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="classicos-label-adversario">Todos</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
+            <div id="classicos-panel-adversario" class="ms-dropdown-menu hidden absolute top-full left-0 right-0 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><div class="flex items-center justify-between text-[11px] pb-1.5 border-b border-white/10"><button onclick="selectClassicosAll('adversario', true)" class="text-[#C5A059] hover:underline font-medium">Todos</button><button onclick="selectClassicosAll('adversario', false)" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-48" id="classicos-list-adversario"></div></div>
+          </div>
+
+          <div class="relative" id="classicos-dropdown-container-competicao">
+            <label class="block text-xs font-semibold text-emerald-200/80 mb-1.5 flex items-center gap-1.5"><i data-lucide="trophy" class="w-3.5 h-3.5 text-[#C5A059]"></i> Competição</label>
+            <button type="button" onclick="toggleClassicosDropdown('competicao')" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="classicos-label-competicao">Todas</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
+            <div id="classicos-panel-competicao" class="ms-dropdown-menu hidden absolute top-full left-0 right-0 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><div class="flex items-center justify-between text-[11px] pb-1.5 border-b border-white/10"><button onclick="selectClassicosAll('competicao', true)" class="text-[#C5A059] hover:underline font-medium">Todos</button><button onclick="selectClassicosAll('competicao', false)" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-48" id="classicos-list-competicao"></div></div>
+          </div>
+
+          <div class="relative" id="classicos-dropdown-container-presente">
+            <label class="block text-xs font-semibold text-emerald-200/80 mb-1.5 flex items-center gap-1.5"><i data-lucide="user-check" class="w-3.5 h-3.5 text-[#C5A059]"></i> Rodolfo no estádio</label>
+            <button type="button" onclick="toggleClassicosDropdown('presente')" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="classicos-label-presente">Todos</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
+            <div id="classicos-panel-presente" class="ms-dropdown-menu hidden absolute top-full right-0 w-56 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><div class="flex items-center justify-between text-[11px] pb-1.5 border-b border-white/10"><button onclick="selectClassicosAll('presente', true)" class="text-[#C5A059] hover:underline font-medium">Todos</button><button onclick="selectClassicosAll('presente', false)" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-48" id="classicos-list-presente"></div></div>
+          </div>
+
+          <div class="col-span-1 rounded-xl p-2 bg-[#12201A] border border-[#C5A059]/30 flex flex-col justify-center relative">
+            <label class="text-xs font-semibold text-emerald-200/80 flex items-center justify-between w-full mb-2 px-1">
+              <span class="flex items-center gap-1.5"><i data-lucide="calendar-range" class="w-3.5 h-3.5 text-[#C5A059]"></i> Período (Ano)</span>
+              <span id="classicos-slider-values" class="text-[#C5A059] font-mono text-[10px] bg-black/50 border border-white/10 px-1.5 py-0.5 rounded shadow-inner">-- / --</span>
+            </label>
+            <div class="relative w-full h-1 bg-black/60 rounded-full mx-1 dual-slider-container" style="width: calc(100% - 8px);">
+              <div id="classicos-slider-track" class="absolute h-full bg-[#C5A059]/80 rounded-full z-0 pointer-events-none"></div>
+              <input type="range" id="classicos-ano-min" min="1900" max="2026" value="1900" step="1" oninput="updateClassicosSliderUI()" onchange="applyClassicosFilters()" class="absolute w-full top-1/2 -translate-y-1/2 m-0 h-1">
+              <input type="range" id="classicos-ano-max" min="1900" max="2026" value="2026" step="1" oninput="updateClassicosSliderUI()" onchange="applyClassicosFilters()" class="absolute w-full top-1/2 -translate-y-1/2 m-0 h-1">
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <section class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8 gap-4">
+        <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between border-l-4 border-l-emerald-500">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-300">Vitórias</span>
+          <div class="flex items-baseline justify-between mt-3">
+            <span id="classicos-kpi-vitorias" class="text-2xl font-black text-white">0</span>
+            <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i>
+          </div>
+          <span id="classicos-sub-vitorias" class="text-[10px] text-white/40 mt-1">Jogos vencidos</span>
+        </div>
+
+        <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between border-l-4 border-l-amber-500">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-amber-300">Empates</span>
+          <div class="flex items-baseline justify-between mt-3">
+            <span id="classicos-kpi-empates" class="text-2xl font-black text-white">0</span>
+            <i data-lucide="minus-circle" class="w-4 h-4 text-amber-400"></i>
+          </div>
+          <span id="classicos-sub-empates" class="text-[10px] text-white/40 mt-1">Jogos empatados</span>
+        </div>
+
+        <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between border-l-4 border-l-rose-500">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-rose-300">Derrotas</span>
+          <div class="flex items-baseline justify-between mt-3">
+            <span id="classicos-kpi-derrotas" class="text-2xl font-black text-white">0</span>
+            <i data-lucide="x-circle" class="w-4 h-4 text-rose-400"></i>
+          </div>
+          <span id="classicos-sub-derrotas" class="text-[10px] text-white/40 mt-1">Jogos perdidos</span>
+        </div>
+
+        <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between border-l-4 border-l-cyan-500">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-cyan-300">Gols Pró (GP)</span>
+          <div class="flex items-baseline justify-between mt-3">
+            <span id="classicos-kpi-gp" class="text-2xl font-black text-cyan-300">0</span>
+            <i data-lucide="arrow-up-right" class="w-4 h-4 text-cyan-400"></i>
+          </div>
+          <span id="classicos-sub-gp" class="text-[10px] text-white/40 mt-1">Gols marcados</span>
+        </div>
+
+        <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between border-l-4 border-l-purple-500">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-purple-300">Gols Contra (GC)</span>
+          <div class="flex items-baseline justify-between mt-3">
+            <span id="classicos-kpi-gc" class="text-2xl font-black text-purple-300">0</span>
+            <i data-lucide="arrow-down-right" class="w-4 h-4 text-purple-400"></i>
+          </div>
+          <span id="classicos-sub-gc" class="text-[10px] text-white/40 mt-1">Gols sofridos</span>
+        </div>
+
+        <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between border-l-4 border-l-[#C5A059]">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-[#C5A059]">Aproveitamento</span>
+          <div class="flex items-baseline justify-between mt-3">
+            <span id="classicos-kpi-aproveitamento" class="text-2xl font-black text-[#C5A059]">0%</span>
+            <i data-lucide="award" class="w-4 h-4 text-[#C5A059]"></i>
+          </div>
+          <span id="classicos-sub-aproveitamento" class="text-[10px] text-white/40 mt-1">Pontos conquistados</span>
+        </div>
+
+        <!-- CARD: Média Setor Sul (Clássicos) -->
+        <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between border-l-4 border-l-cyan-500">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-cyan-300">Média Setor Sul</span>
+          <div class="flex items-baseline justify-between mt-3">
+            <span id="classicos-kpi-media-sul" class="text-2xl font-black text-cyan-300">0</span>
+            <i data-lucide="flag" class="w-4 h-4 text-cyan-400"></i>
+          </div>
+          <span id="classicos-kpi-sub-sul" class="text-[10px] text-white/40 mt-1">Maracanã (Tricolor)</span>
+        </div>
+
+        <!-- CARD: Ocupação Média Sul (Clássicos) -->
+        <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between border-l-4 border-l-amber-500">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-amber-300">Ocupação Média Sul</span>
+          <div class="flex items-baseline justify-between mt-3">
+            <span id="classicos-kpi-taxa-sul" class="text-2xl font-black text-amber-300">0%</span>
+            <i data-lucide="pie-chart" class="w-4 h-4 text-amber-400"></i>
+          </div>
+          <span class="text-[10px] text-white/40 mt-1">Capacidade ~20.000</span>
+        </div>
+      </section>
+
+      <!-- GRÁFICO: Evolução do Saldo (V-D) -->
+      <section class="glass-panel rounded-2xl p-6 shadow-2xl space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i data-lucide="line-chart" class="w-4 h-4 text-[#C5A059] inline mr-1"></i>
+              Evolução do Saldo (V-D) vs Rivais
+            </h3>
+            <p class="text-xs text-white/50">Histórico cumulativo de vitórias menos derrotas ao longo do tempo (respeita filtros ativos)</p>
+          </div>
+        </div>
+        <div class="relative w-full h-[400px]">
+          <canvas id="chartEvolucaoClassicos"></canvas>
+        </div>
+      </section>
+
+      <!-- GRÁFICO: Setor Sul Clássicos -->
+      <section class="glass-panel rounded-2xl p-6 shadow-2xl border border-cyan-500/30">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4 mb-6">
+          <div>
+            <h3 class="text-base font-black text-white flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-cyan-400"></span>
+              Público pagante Setor Sul (Clássicos)
+            </h3>
+            <p class="text-xs text-white/60 mt-0.5">
+              Top 10 maiores ocupações do Setor Sul do Maracanã (Pagantes)
+            </p>
+            <p id="classicos-sul-alert-records" class="text-[11px] text-cyan-300 mt-1 font-semibold hidden">
+              Registro de público Setor Sul: <strong id="classicos-sul-record-z">0</strong> jogos (<span id="classicos-sul-record-x">XXXX</span> - <span id="classicos-sul-record-y">YYYY</span>)
+            </p>
+            <p id="classicos-sul-alert-missing" class="text-[10px] text-amber-400 mt-2 flex items-center gap-1.5 font-medium hidden">
+              <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i>
+              <span>Não há registros de público do Setor Sul de <strong id="classicos-sul-missing-count">0</strong> jogos (Maracanã)</span>
+            </p>
+          </div>
+          <div class="flex items-center gap-4 text-xs">
+            <div class="px-3 py-1 rounded-lg bg-white/5 border border-white/10">
+              <span class="text-white/50">Capacidade Base:</span>
+              <span class="font-bold text-white ml-1">20.000 lugares</span>
+            </div>
+            <div class="px-3 py-1 rounded-lg bg-cyan-950/70 border border-cyan-500/40 text-cyan-300">
+              <span class="text-white/50">Partidas no Filtro Atual:</span>
+              <span id="classicos-sul-recorded-count" class="font-bold ml-1">0 jogos</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="relative w-full h-[280px]">
+          <canvas id="chartClassicosSetorSul"></canvas>
+        </div>
+      </section>
+
+      <section class="glass-panel rounded-2xl p-6 shadow-2xl relative z-30">
+        <div class="flex items-center gap-2.5 mb-5 border-b border-white/10 pb-3.5">
+          <div class="p-2 rounded-lg bg-[#0E4735] text-[#C5A059] border border-[#C5A059]/30">
+            <i data-lucide="list-filter" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h2 class="text-sm font-bold uppercase tracking-wider text-[#C5A059]">
+              Lista de Clássicos Filtrados
+            </h2>
+          </div>
+        </div>
+        
+        <div class="overflow-x-auto mt-4">
+          <table class="w-full text-left text-xs text-white/80">
+            <thead class="text-[11px] font-bold uppercase tracking-wider bg-white/5 text-[#C5A059] border-b border-white/10">
+              <tr>
+                <th class="p-3">Data</th>
+                <th class="p-3">Adversário</th>
+                <th class="p-3 text-center">Placar</th>
+                <th class="p-3">Competição</th>
+              </tr>
+            </thead>
+            <tbody id="classicos-table-body" class="divide-y divide-white/5 font-mono text-[12px]">
+              <tr><td colspan="4" class="p-4 text-center text-white/40">Nenhum dado de clássico carregado.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+  </main>
+
+  <footer class="mt-auto border-t border-white/10 bg-[#070D0B]/90 py-6 text-center text-xs text-emerald-200/50">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-center gap-2">
+      <p>Grandes são os outros, o Fluminense é enorme</p>
+    </div>
+  </footer>
+
+  <script>
+    function switchTab(tabName) {
+      const viewCapa = document.getElementById('view-capa');
+      const viewEstadio = document.getElementById('view-estadio');
+      const viewDesempenho = document.getElementById('view-desempenho');
+      const viewClassicos = document.getElementById('view-classicos');
+
+      const btnCapa = document.getElementById('tab-btn-capa');
+      const btnEstadio = document.getElementById('tab-btn-estadio');
+      const btnDesempenho = document.getElementById('tab-btn-desempenho');
+      const btnClassicos = document.getElementById('tab-btn-classicos');
+
+      viewCapa.classList.add('hidden');
+      viewEstadio.classList.add('hidden');
+      viewDesempenho.classList.add('hidden');
+      if (viewClassicos) viewClassicos.classList.add('hidden');
+
+      btnCapa.className = "px-3 py-1.5 rounded-md text-xs font-bold transition text-white/70 hover:text-white";
+      btnEstadio.className = "px-3 py-1.5 rounded-md text-xs font-bold transition text-white/70 hover:text-white";
+      btnDesempenho.className = "px-3 py-1.5 rounded-md text-xs font-bold transition text-white/70 hover:text-white";
+      if (btnClassicos) btnClassicos.className = "px-3 py-1.5 rounded-md text-xs font-bold transition text-white/70 hover:text-white";
+
+      if (tabName === 'capa') {
+        viewCapa.classList.remove('hidden');
+        btnCapa.className = "px-3 py-1.5 rounded-md text-xs font-bold transition bg-[#C5A059] text-[#0A120F]";
+      } else if (tabName === 'estadio') {
+        viewEstadio.classList.remove('hidden');
+        btnEstadio.className = "px-3 py-1.5 rounded-md text-xs font-bold transition bg-[#C5A059] text-[#0A120F]";
+        setTimeout(() => { applyFilters(); }, 50);
+      } else if (tabName === 'desempenho') {
+        viewDesempenho.classList.remove('hidden');
+        btnDesempenho.className = "px-3 py-1.5 rounded-md text-xs font-bold transition bg-[#C5A059] text-[#0A120F]";
+        setTimeout(() => { applyPerfFilters(); }, 50);
+      } else if (tabName === 'classicos') {
+        if (viewClassicos) viewClassicos.classList.remove('hidden');
+        if (btnClassicos) btnClassicos.className = "px-3 py-1.5 rounded-md text-xs font-bold transition bg-[#C5A059] text-[#0A120F]";
+        setTimeout(() => { applyClassicosFilters(); }, 50);
+      }
+      if (window.lucide) lucide.createIcons();
+    }
+
+    const GOOGLE_SHEETS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS599411U7TBv6ry-BmcWeAHYmeZ-AY0pYMaWGcFOcYE5eKQ3ZF0TBDBg5sQqUDiQ/pub?gid=1810912358&single=true&output=csv";
+    const CLASSICOS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTW1huagd5Q9phZyCJE3fit-z1Is8ny15NpTMB1KiHB_wNAopeF9-mecdx0cH4BidxqFS9vTLB6UOvc/pub?gid=1492939094&single=true&output=csv";
+    
+    let MATCHES_DATA = [];
+    let CLASSICOS_DATA = [];
+
+    let selectedState = {
+      temporada: [], competicao: [], adversario: [], estadio: [], dia: [], horario: [],
+      mando: ['Mandante'], 
+      presente: []
+    };
+
+    function parseNumber(val) {
+      if (val === null || val === undefined || val === "" || val === "-") return null;
+      if (typeof val === 'number') return val;
+      const cleanStr = String(val).replace(/\./g, '').replace(/,/g, '.').trim();
+      const num = Number(cleanStr);
+      return isNaN(num) ? null : num;
+    }
+
+    function isValidMatch(placar) {
+      if (!placar) return false;
+      const str = String(placar).trim().toLowerCase();
+      if (str === "-" || str === "" || str.includes("a realizar") || str.includes("adiado")) return false;
+      return true;
+    }
+
+    async function fetchLiveGoogleSheet() {
+      const btnText = document.getElementById("last-update-time");
+      if (btnText) btnText.innerHTML = `Sincronizando com nuvem...`;
+
+      try {
+        const cacheBuster = new Date().getTime();
+        const urlMain = `${GOOGLE_SHEETS_CSV_URL}&_=${cacheBuster}`;
+        const urlClassicos = `${CLASSICOS_CSV_URL}&_=${cacheBuster}`;
+        
+        const [responseMain, responseClassicos] = await Promise.all([
+          fetch(urlMain),
+          fetch(urlClassicos)
+        ]);
+
+        if (!responseMain.ok || !responseClassicos.ok) throw new Error("Erro na comunicação com as bases");
+        
+        const csvTextMain = await responseMain.text();
+        const csvTextClassicos = await responseClassicos.text();
+        
+        Papa.parse(csvTextMain, {
+          header: true,
+          skipEmptyLines: true,
+          complete: function(results) {
+            const rows = results.data;
+            if (!rows || rows.length === 0) return;
+
+            const parsedMatches = [];
+            rows.forEach((row, idx) => {
+              const placar = row['Placar'] || "-";
+              const resultado = row['Resultado'] || "";
+              
+              if (resultado.trim().toLowerCase().includes("a realizar")) return;
+              if (!isValidMatch(placar)) return;
+
+              const season = row['Temporada'] || row['Ano'];
+              if (season == "2008") return;
+
+              const dataVal = row['Data'];
+              let dtStr = dataVal ? String(dataVal).trim().slice(0, 10) : "";
+              let diaSem = row['Dia da Semana'] || "-";
+              let hrStr = row['Horário'] || row['Hora'] || "-";
+              let hrInt = null;
+              if (hrStr && hrStr !== "-") {
+                try { hrInt = parseInt(String(hrStr).split(':')[0], 10); } catch(e) {}
+              }
+
+              let mando = row['Mando'] || row['Casa/Fora/Neutro'] || "-";
+              if (mando === 'C') mando = 'Mandante';
+              else if (mando === 'F') mando = 'Visitante';
+              else if (mando === 'N') mando = 'Neutro';
+
+              const comp = row['Competição'] || row['Torneio'] || "-";
+              if (comp.trim().toLowerCase().includes("amistoso")) return;
+
+              let adv = row['Adversário'] || "A Definir";
+              const estadio = row['Estádio'] || "A Definir";
+              const presVal = row['Presente?'] || row['Presente'] || "Não";
+
+              if (dtStr || comp !== "-" || adv !== "A Definir") {
+                parsedMatches.push({
+                  id: row['ID Jogo'] || `FLU-${String(idx + 1).padStart(3, '0')}`,
+                  ano: Number(season) || (dtStr ? parseInt(dtStr.slice(0, 4), 10) : 2026),
+                  data: dtStr, hora: hrStr, hNum: hrInt, dia: diaSem,
+                  torneio: comp, mando: mando, adv: adv, estadio: estadio,
+                  placar: String(placar), pub: parseNumber(row['Público Total']),
+                  pubVis: parseNumber(row['Público Visitante (Flu)'] || row['Público Visitante']), 
+                  sul: parseNumber(row['Sul Pagantes']),
+                  presente: presVal === "Sim" ? "Sim" : "Não"
+                });
+              }
+            });
+
+            if (parsedMatches.length > 0) {
+              MATCHES_DATA = parsedMatches;
+              updateDynamicYearRange();
+              applyFilters();
+              applyPerfFilters();
+            }
+          }
+        });
+
+        Papa.parse(csvTextClassicos, {
+          header: true,
+          skipEmptyLines: true,
+          complete: function(results) {
+            const rows = results.data;
+            if (!rows || rows.length === 0) return;
+            
+            const parsedClassicos = [];
+            rows.forEach((row, idx) => {
+              let dataStr = row['Data'] || "-";
+              let anoClassico = 2026;
+              if (dataStr !== "-") {
+                const parts = dataStr.split(/[-/]/);
+                if (parts.length >= 3) {
+                   anoClassico = parts[0].length === 4 ? parseInt(parts[0], 10) : parseInt(parts[2], 10);
+                } else {
+                   anoClassico = parseInt(dataStr.slice(-4), 10) || 2026;
+                }
+              }
+
+              let fGols = null, aGols = null;
+              for (let key in row) {
+                const k = key.trim().toLowerCase();
+                if (k === 'fluminense gols') fGols = row[key];
+                if (k === 'adversário gols' || k === 'adversario gols') aGols = row[key];
+              }
+
+              let placar = "-";
+              if (fGols !== null && fGols !== "" && fGols !== "-" && aGols !== null && aGols !== "" && aGols !== "-") {
+                placar = `${fGols}x${aGols}`;
+              } else {
+                placar = row['Placar'] || row['Resultado'] || row['Placar Jogo'] || "-";
+              }
+              
+              const status = row['Status'] || row['Resultado'] || "";
+              
+              if (status.trim().toLowerCase().includes("a realizar") || status.trim().toLowerCase().includes("adiado")) return;
+              if (!isValidMatch(placar)) return;
+              
+              let presVal = row['Rodolfo presente?'] || row['Presente?'] || row['Presente'] || row['Estádio?'] || "Não";
+              presVal = String(presVal).trim();
+
+              parsedClassicos.push({
+                id: idx,
+                adv: row['Adversário'] || row['Adversario'] || row['Clube'] || "-",
+                data: dataStr,
+                ano: anoClassico,
+                torneio: row['Competição'] || row['Torneio'] || row['Competicao'] || "-",
+                estadio: row['Estádio'] || row['Estadio'] || row['Local'] || "-",
+                placar: String(placar),
+                presente: presVal,
+                sul: parseNumber(row['Sul Pagantes'])
+              });
+            });
+            CLASSICOS_DATA = parsedClassicos;
+            initClassicosSlider();
+            applyClassicosFilters();
+          }
+        });
+
+        const now = new Date();
+        const timeStr = now.toLocaleDateString('pt-BR') + ' às ' + now.toLocaleTimeString('pt-BR');
+        if (btnText) btnText.innerHTML = `Última atualização: <strong class="text-white/80">${timeStr}</strong>`;
+
+      } catch (err) {
+        console.warn("Erro ao buscar a base:", err);
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('pt-BR');
+        if (btnText) btnText.innerHTML = `<span class="text-amber-400">Falha às ${timeStr}. Acesse por link HTTPS.</span>`;
+      }
+    }
+  </script>
+
+  <script>
+    let activeCharts = {};
+    let filteredMatches = [];
+    let tableCurrentPage = 1;
+    const tablePageSize = 40; 
+
+    function toggleDropdown(type) {
+      const allPanels = document.querySelectorAll('.ms-dropdown-menu');
+      const targetPanel = document.getElementById(`panel-${type}`);
+      const isClosed = targetPanel.classList.contains('hidden');
+      allPanels.forEach(p => p.classList.add('hidden'));
+      if (isClosed) targetPanel.classList.remove('hidden');
+    }
+
+    document.addEventListener('click', (e) => {
+      const isInside = e.target.closest('[id^="dropdown-container-"], [id^="perf-dropdown-container-"], [id^="classicos-dropdown-container-"]');
+      if (!isInside) document.querySelectorAll('.ms-dropdown-menu').forEach(p => p.classList.add('hidden'));
+    });
+
+    function getMatchesExcluding(excludeDimension) {
+      const searchBox = document.getElementById("search-adversario");
+      const search = searchBox ? searchBox.value.toLowerCase().trim() : "";
+
+      return MATCHES_DATA.filter(m => {
+        if (excludeDimension !== 'temporada' && selectedState.temporada.length > 0 && !selectedState.temporada.includes(String(m.ano))) return false;
+        if (excludeDimension !== 'competicao' && selectedState.competicao.length > 0 && !selectedState.competicao.includes(m.torneio)) return false;
+        if (excludeDimension !== 'mando' && selectedState.mando.length > 0 && !selectedState.mando.includes(m.mando)) return false;
+        if (excludeDimension !== 'estadio' && selectedState.estadio.length > 0 && !selectedState.estadio.includes(m.estadio)) return false;
+        if (excludeDimension !== 'dia' && selectedState.dia.length > 0 && !selectedState.dia.includes(m.dia)) return false;
+        if (excludeDimension !== 'horario' && selectedState.horario.length > 0 && !selectedState.horario.includes(m.hora)) return false;
+        if (excludeDimension !== 'adversario' && selectedState.adversario.length > 0 && !selectedState.adversario.includes(m.adv)) return false;
+        if (excludeDimension !== 'presente' && selectedState.presente.length > 0 && !selectedState.presente.includes(m.presente)) return false;
+        if (search && !m.adv.toLowerCase().includes(search)) return false;
+        return true;
+      });
+    }
+
+    function renderChecklist(type, items, matchingSubset) {
+      const container = document.getElementById(`list-${type}`);
+      if (!container) return;
+      container.innerHTML = '';
+
+      if (items.length === 0) {
+        container.innerHTML = '<div class="text-[11px] text-white/40 p-2 text-center italic">Nenhuma opção disponível</div>';
+        return;
+      }
+
+      items.forEach(item => {
+        const count = matchingSubset.filter(m => {
+          if (type === 'temporada') return String(m.ano) === item.value;
+          if (type === 'competicao') return m.torneio === item.value;
+          if (type === 'mando') return m.mando === item.value;
+          if (type === 'estadio') return m.estadio === item.value;
+          if (type === 'dia') return m.dia === item.value;
+          if (type === 'horario') return m.hora === item.value;
+          if (type === 'adversario') return m.adv === item.value;
+          if (type === 'presente') return m.presente === item.value;
+          return false;
+        }).length;
+
+        const isChecked = selectedState[type].includes(item.value);
+        const row = document.createElement('label');
+        row.className = 'flex items-center justify-between p-1.5 hover:bg-white/5 rounded-lg cursor-pointer text-xs text-white/90 transition select-none';
+        row.setAttribute('data-label', item.label.toLowerCase());
+
+        row.innerHTML = `
+          <div class="flex items-center gap-2 truncate pr-1">
+            <input type="checkbox" class="ms-checkbox rounded" value="${item.value}" ${isChecked ? 'checked' : ''} onchange="onCheckboxChange('${type}', this.value, this.checked)">
+            <span class="truncate">${item.label}</span>
+          </div>
+          <span class="text-[10px] text-white/40 font-mono shrink-0">${count}</span>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    function updateAllDropdowns() {
+      const mandos = ['Mandante', 'Visitante', 'Neutro'].map(m => ({
+        value: m, label: m === 'Mandante' ? 'Mandante (Casa)' : m === 'Visitante' ? 'Visitante (Fora)' : 'Campo Neutro'
+      }));
+      renderChecklist('mando', mandos, getMatchesExcluding('mando'));
+
+      const years = [...new Set(MATCHES_DATA.map(m => m.ano))].sort((a, b) => b - a);
+      renderChecklist('temporada', years.map(y => ({ value: String(y), label: String(y) })), getMatchesExcluding('temporada'));
+
+      const comps = [...new Set(MATCHES_DATA.map(m => m.torneio))].filter(c => c && c !== "-").sort();
+      renderChecklist('competicao', comps.map(c => ({ value: c, label: c })), getMatchesExcluding('competicao'));
+
+      const opponents = [...new Set(MATCHES_DATA.map(m => m.adv))].filter(a => a && a !== "-" && a !== "A Definir").sort((a, b) => a.localeCompare(b, 'pt-BR'));
+      renderChecklist('adversario', opponents.map(adv => ({ value: adv, label: adv })), getMatchesExcluding('adversario'));
+
+      const venues = [...new Set(MATCHES_DATA.map(m => m.estadio))].filter(v => v && v !== "-" && v !== "A Definir").sort();
+      renderChecklist('estadio', venues.map(v => ({ value: v, label: v })), getMatchesExcluding('estadio'));
+
+      const daysOrder = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'];
+      renderChecklist('dia', daysOrder.map(d => ({ value: d, label: d })), getMatchesExcluding('dia'));
+
+      const times = [...new Set(MATCHES_DATA.map(m => m.hora))].filter(h => h && h !== "-").sort();
+      renderChecklist('horario', times.map(h => ({ value: h, label: `${h}h` })), getMatchesExcluding('horario'));
+
+      const presentes = [...new Set(MATCHES_DATA.map(m => m.presente))].filter(p => p).sort();
+      renderChecklist('presente', presentes.map(p => ({ value: p, label: p })), getMatchesExcluding('presente'));
+    }
+
+    function filterDropdownOptions(type, query) {
+      const container = document.getElementById(`list-${type}`);
+      if (!container) return;
+      const rows = container.querySelectorAll('label');
+      const q = query.toLowerCase().trim();
+      rows.forEach(r => {
+        const text = r.getAttribute('data-label') || "";
+        if (!q || text.includes(q)) r.classList.remove('hidden');
+        else r.classList.add('hidden');
+      });
+    }
+
+    function onCheckboxChange(type, value, isChecked) {
+      if (isChecked) {
+        if (!selectedState[type].includes(value)) selectedState[type].push(value);
+      } else {
+        selectedState[type] = selectedState[type].filter(v => v !== value);
+      }
+      applyFilters();
+    }
+
+    function selectAllFilter(type, selectAll) {
+      const container = document.getElementById(`list-${type}`);
+      if (!container) return;
+      const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+      selectedState[type] = [];
+      checkboxes.forEach(cb => {
+        cb.checked = selectAll;
+        if (selectAll) selectedState[type].push(cb.value);
+      });
+      applyFilters();
+    }
+
+    function updateFilterLabels() {
+      const types = ['mando', 'temporada', 'competicao', 'adversario', 'estadio', 'dia', 'horario', 'presente'];
+      types.forEach(t => {
+        const count = selectedState[t].length;
+        const labelEl = document.getElementById(`label-${t}`);
+        if (!labelEl) return;
+        const totalItems = document.querySelectorAll(`#list-${t} input[type="checkbox"]`).length;
+        if (count === 0) {
+          labelEl.textContent = (t === 'mando' || t === 'estadio' || t === 'dia' || t === 'horario' || t === 'adversario' || t === 'presente') ? 'Todos' : 'Todas';
+          labelEl.className = 'truncate pr-1 text-white/80';
+        } else if (count === totalItems && totalItems > 1) {
+          labelEl.textContent = 'Todas Selecionadas';
+          labelEl.className = 'truncate pr-1 text-emerald-300 font-semibold';
+        } else if (count === 1) {
+          labelEl.textContent = selectedState[t][0];
+          labelEl.className = 'truncate pr-1 text-[#C5A059] font-semibold';
+        } else {
+          labelEl.textContent = `${count} selecionados`;
+          labelEl.className = 'truncate pr-1 text-[#C5A059] font-semibold';
+        }
+      });
+      renderActiveBadges();
+    }
+
+    function renderActiveBadges() {
+      const badgesContainer = document.getElementById('active-badges-list');
+      if (!badgesContainer) return;
+      badgesContainer.innerHTML = '';
+      let hasFilters = false;
+      const typeLabels = { mando: 'Mando', temporada: 'Ano', competicao: 'Torneio', adversario: 'Adversário', estadio: 'Estádio', dia: 'Dia', horario: 'Horário', presente: 'Rodolfo' };
+
+      Object.keys(selectedState).forEach(type => {
+        if (selectedState[type].length > 0) {
+          hasFilters = true;
+          selectedState[type].forEach(val => {
+            const pill = document.createElement('span');
+            pill.className = 'ms-pill text-[11px] px-2.5 py-0.5 rounded-full inline-flex items-center gap-1.5';
+            pill.innerHTML = `
+              <span class="text-white/50">${typeLabels[type]}:</span>
+              <strong class="font-medium">${val}</strong>
+              <button onclick="removeFilterItem('${type}', '${val}')" class="hover:text-white transition ml-0.5 text-xs font-bold">&times;</button>
+            `;
+            badgesContainer.appendChild(pill);
+          });
+        }
+      });
+
+      if (hasFilters) {
+        const clearBtn = document.createElement('button');
+        clearBtn.className = 'text-[11px] font-semibold text-rose-300 hover:text-white transition ml-2 underline';
+        clearBtn.textContent = 'Restaurar Padrão';
+        clearBtn.onclick = resetFilters;
+        badgesContainer.appendChild(clearBtn);
+      } else {
+        badgesContainer.innerHTML = '<span class="text-white/50 italic text-[11px]">Nenhum filtro restritivo aplicado.</span>';
+      }
+    }
+
+    function removeFilterItem(type, val) {
+      selectedState[type] = selectedState[type].filter(v => v !== val);
+      applyFilters();
+    }
+
+    function resetFilters() {
+      Object.keys(selectedState).forEach(k => { selectedState[k] = []; });
+      selectedState.mando = ['Mandante'];
+      document.querySelectorAll('#view-estadio input[type="text"]').forEach(input => input.value = '');
+      const searchBox = document.getElementById("search-adversario");
+      if (searchBox) searchBox.value = "";
+      applyFilters();
+    }
+
+    function applyFilters() {
+      const searchBox = document.getElementById("search-adversario");
+      const search = searchBox ? searchBox.value.toLowerCase().trim() : "";
+      
+      updateAllDropdowns();
+      updateFilterLabels();
+
+      filteredMatches = MATCHES_DATA.filter(m => {
+        if (selectedState.temporada.length > 0 && !selectedState.temporada.includes(String(m.ano))) return false;
+        if (selectedState.competicao.length > 0 && !selectedState.competicao.includes(m.torneio)) return false;
+        if (selectedState.mando.length > 0 && !selectedState.mando.includes(m.mando)) return false;
+        if (selectedState.estadio.length > 0 && !selectedState.estadio.includes(m.estadio)) return false;
+        if (selectedState.dia.length > 0 && !selectedState.dia.includes(m.dia)) return false;
+        if (selectedState.horario.length > 0 && !selectedState.horario.includes(m.hora)) return false;
+        if (selectedState.adversario.length > 0 && !selectedState.adversario.includes(m.adv)) return false;
+        if (selectedState.presente.length > 0 && !selectedState.presente.includes(m.presente)) return false;
+        if (search && !m.adv.toLowerCase().includes(search)) return false;
+        return true;
+      });
+
+      tableCurrentPage = 1;
+      updateKpis();
+      updateCharts();
+      renderTable();
+    }
+
+    function fmt(n) {
+      if (n === null || n === undefined || isNaN(n) || n === 0) return "-";
+      return Math.round(n).toLocaleString('pt-BR');
+    }
+
+    function updateKpis() {
+      const validFiltered = filteredMatches;
+
+      document.getElementById("filtered-matches-tag").textContent = `${validFiltered.length} de ${MATCHES_DATA.length} partidas`;
+      document.getElementById("kpi-jogos").textContent = validFiltered.length;
+      document.getElementById("summary-total-games").textContent = `${MATCHES_DATA.length} Jogos`;
+
+      const withPub = validFiltered.filter(m => m.pub !== null && m.pub > 0);
+      const avgGeral = withPub.length ? withPub.reduce((acc, x) => acc + x.pub, 0) / withPub.length : 0;
+      document.getElementById("kpi-media-geral").textContent = avgGeral > 0 ? fmt(avgGeral) : "-";
+      document.getElementById("kpi-sub-geral").textContent = withPub.length > 0 ? `${withPub.length} jogos com público registrado` : "Nenhum público registrado";
+
+      const homeGames = validFiltered.filter(m => m.mando === "Mandante" && m.pub !== null && m.pub > 0);
+      const avgHome = homeGames.length ? homeGames.reduce((acc, x) => acc + x.pub, 0) / homeGames.length : 0;
+      document.getElementById("kpi-media-mandante").textContent = homeGames.length > 0 ? fmt(avgHome) : "-";
+      document.getElementById("kpi-sub-mandante").textContent = homeGames.length > 0 ? `${homeGames.length} jogos em casa` : "Nenhum jogo mandante";
+
+      const visitGames = validFiltered.filter(m => m.pubVis !== null && m.pubVis > 0);
+      const avgVisit = visitGames.length ? visitGames.reduce((acc, x) => acc + x.pubVis, 0) / visitGames.length : 0;
+      document.getElementById("kpi-media-visitante").textContent = visitGames.length > 0 ? fmt(avgVisit) : "-";
+      document.getElementById("kpi-sub-visitante").textContent = visitGames.length > 0 ? `${visitGames.length} jogos com público visitante (Flu)` : "Sem público visitante";
+
+      const sulGames = validFiltered.filter(m => m.estadio === "Maracanã" && m.sul !== null && m.sul > 0);
+      const avgSul = sulGames.length ? sulGames.reduce((acc, x) => acc + x.sul, 0) / sulGames.length : 0;
+      document.getElementById("kpi-media-sul").textContent = sulGames.length > 0 ? fmt(avgSul) : "-";
+      document.getElementById("kpi-sub-sul").textContent = sulGames.length > 0 ? `${sulGames.length} jogos com Setor Sul` : "Sem dados do Setor Sul";
+
+      const taxaSul = avgSul > 0 ? (avgSul / 20000) * 100 : 0;
+      document.getElementById("kpi-taxa-sul").textContent = taxaSul > 0 ? `${taxaSul.toFixed(1)}%` : "-";
+      document.getElementById("sul-recorded-count").textContent = `${sulGames.length} jogos`;
+
+      const missingSulCount = validFiltered.filter(m => m.estadio === "Maracanã" && (m.sul === null || m.sul <= 0)).length;
+      const alertEl = document.getElementById("sul-alert-missing");
+      const countEl = document.getElementById("sul-missing-count");
+      
+      if (alertEl && countEl) {
+        if (missingSulCount > 0) {
+          countEl.textContent = missingSulCount;
+          alertEl.classList.remove("hidden");
+        } else {
+          alertEl.classList.add("hidden");
+        }
+      }
+    }
+
+    function getChartCanvas(id) {
+      if (activeCharts[id]) activeCharts[id].destroy();
+      return document.getElementById(id).getContext('2d');
+    }
+
+    function updateCharts() {
+      const validFiltered = filteredMatches;
+      Chart.defaults.color = '#A3B8B0';
+      Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.07)';
+      Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
+
+      const seasons = [...new Set(validFiltered.map(m => m.ano))].sort((a,b)=>a-b);
+      const seasonData = seasons.map(yr => {
+        const subset = validFiltered.filter(m => m.ano === yr && m.pub !== null && m.pub > 0);
+        return subset.length ? Math.round(subset.reduce((a, b) => a + b.pub, 0) / subset.length) : 0;
+      });
+
+      activeCharts["chartTemporada"] = new Chart(getChartCanvas("chartTemporada"), {
+        type: 'bar',
+        data: {
+          labels: seasons.map(s => s.toString()),
+          datasets: [{ label: 'Média de Público Total', data: seasonData, backgroundColor: '#0E4735', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 8 }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` Público Médio: ${ctx.parsed.y.toLocaleString('pt-BR')} pessoas` } } },
+          scales: { y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } }
+        }
+      });
+
+      const compMap = {};
+      validFiltered.forEach(m => {
+        if (!m.torneio || m.pub === null || m.pub <= 0 || m.torneio === "-") return;
+        if (!compMap[m.torneio]) compMap[m.torneio] = [];
+        compMap[m.torneio].push(m.pub);
+      });
+      const sortedComps = Object.keys(compMap).sort((a, b) => {
+        const avgA = compMap[a].reduce((x, y) => x + y, 0) / compMap[a].length;
+        const avgB = compMap[b].reduce((x, y) => x + y, 0) / compMap[b].length;
+        return avgB - avgA;
+      });
+
+      activeCharts["chartCompeticao"] = new Chart(getChartCanvas("chartCompeticao"), {
+        type: 'bar',
+        data: {
+          labels: sortedComps,
+          datasets: [{ label: 'Média de Público', data: sortedComps.map(c => Math.round(compMap[c].reduce((x, y) => x + y, 0) / compMap[c].length)), backgroundColor: '#0E4735', borderColor: '#22c55e', borderWidth: 1, borderRadius: 6 }]
+        },
+        options: {
+          indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { x: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } }
+        }
+      });
+
+      const daysOrder = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'];
+      const dayData = daysOrder.map(d => {
+        const subset = validFiltered.filter(m => m.dia === d && m.pub !== null && m.pub > 0);
+        return subset.length ? Math.round(subset.reduce((a, b) => a + b.pub, 0) / subset.length) : 0;
+      });
+
+      activeCharts["chartDiaSemana"] = new Chart(getChartCanvas("chartDiaSemana"), {
+        type: 'bar',
+        data: {
+          labels: daysOrder.map(d => d.replace('-feira', '')),
+          datasets: [{ label: 'Média de Público', data: dayData, backgroundColor: daysOrder.map(d => ['Sábado', 'Domingo'].includes(d) ? '#C5A059' : '#0E4735'), borderRadius: 8 }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } }
+        }
+      });
+
+      const hourRanges = [
+        { label: "Manhã (<13h)", min: 0, max: 12 },
+        { label: "Tarde (13h-17h59)", min: 13, max: 17 },
+        { label: "Noite (18h-20h59)", min: 18, max: 20 },
+        { label: "Noite Tardia (≥21h)", min: 21, max: 24 }
+      ];
+      const hourData = hourRanges.map(hr => {
+        const subset = validFiltered.filter(m => m.hNum !== null && m.hNum >= hr.min && m.hNum <= hr.max && m.pub !== null && m.pub > 0);
+        return subset.length ? Math.round(subset.reduce((a, b) => a + b.pub, 0) / subset.length) : 0;
+      });
+
+      activeCharts["chartHorario"] = new Chart(getChartCanvas("chartHorario"), {
+        type: 'line',
+        data: {
+          labels: hourRanges.map(h => h.label),
+          datasets: [{ label: 'Público Médio', data: hourData, borderColor: '#C5A059', backgroundColor: 'rgba(197, 160, 89, 0.15)', borderWidth: 2.5, fill: true, tension: 0.35, pointBackgroundColor: '#8A1538', pointBorderColor: '#FFF', pointRadius: 6 }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } }
+        }
+      });
+
+      const sulMatches = validFiltered
+        .filter(m => m.estadio === "Maracanã" && m.sul !== null && m.sul > 0)
+        .sort((a, b) => b.sul - a.sul)
+        .slice(0, 10);
+
+      activeCharts["chartSetorSul"] = new Chart(getChartCanvas("chartSetorSul"), {
+        type: 'bar',
+        data: {
+          labels: sulMatches.map(m => `${m.adv} (${String(m.ano).slice(2, 4)})`),
+          datasets: [
+            { label: 'Sul Pagantes', data: sulMatches.map(m => m.sul), backgroundColor: '#06b6d4', borderRadius: 6, order: 2 },
+            { label: 'Capacidade Teórica Sul (20k)', data: sulMatches.map(() => 20000), type: 'line', borderColor: '#f59e0b', borderDash: [5, 5], borderWidth: 3, pointRadius: 0, pointHoverRadius: 0, fill: false, order: 1 }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { position: 'top' }, tooltip: { callbacks: { label: ctx => ctx.dataset.type === 'line' ? ` Capacidade Teórica: 20.000 lugares` : ` Sul Pagantes: ${ctx.parsed.y.toLocaleString('pt-BR')} (${((ctx.parsed.y / 20000) * 100).toFixed(1)}% do setor)` } } },
+          scales: { y: { beginAtZero: true, max: 23000, ticks: { callback: v => v.toLocaleString('pt-BR') } } }
+        }
+      });
+    }
+
+    function renderTable() {
+      const validFiltered = filteredMatches;
+      const tbody = document.getElementById("table-body");
+      if (!tbody) return;
+      tbody.innerHTML = "";
+      const start = (tableCurrentPage - 1) * tablePageSize;
+      const end = start + tablePageSize;
+      const pageItems = validFiltered.slice(start, end);
+
+      if (pageItems.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="13" class="p-8 text-center text-white/40 font-sans">Nenhuma partida encontrada para os filtros selecionados.</td></tr>`;
+        document.getElementById("table-pagination").innerHTML = "";
+        return;
+      }
+
+      pageItems.forEach(m => {
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-white/[0.04] transition border-b border-white/5";
+        const isHome = m.mando === "Mandante";
+        const isAway = m.mando === "Visitante";
+        const mandoBadge = isHome ? `<span class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 font-sans text-[10px] font-bold border border-emerald-500/40">Mandante</span>` : isAway ? `<span class="px-2 py-0.5 rounded bg-rose-950 text-rose-300 font-sans text-[10px] font-bold border border-rose-500/40">Visitante</span>` : `<span class="px-2 py-0.5 rounded bg-amber-950 text-amber-300 font-sans text-[10px] font-bold border border-amber-500/40">Neutro</span>`;
+        const sulRate = m.sul ? `${((m.sul / 20000) * 100).toFixed(1)}%` : "-";
+        const presBadge = m.presente === "Sim" ? `<span class="px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 font-sans text-[10px] font-bold border border-cyan-500/40">Sim</span>` : `<span class="text-white/30">Não</span>`;
+
+        tr.innerHTML = `
+          <td class="p-3 text-[#C5A059] font-mono text-[11px] whitespace-nowrap">${m.id}</td>
+          <td class="p-3 text-white/90 whitespace-nowrap">${m.data || "-"}</td>
+          <td class="p-3 text-white/50">${m.hora || "-"}</td>
+          <td class="p-3 font-sans text-[11px] text-white/80 max-w-[170px] truncate" title="${m.torneio}">${m.torneio}</td>
+          <td class="p-3">${mandoBadge}</td>
+          <td class="p-3 font-sans font-bold text-white">${m.adv}</td>
+          <td class="p-3 font-sans text-white/70 max-w-[150px] truncate" title="${m.estadio}">${m.estadio}</td>
+          <td class="p-3 text-center font-bold text-white">${m.placar}</td>
+          <td class="p-3 text-right font-bold text-emerald-400">${fmt(m.pub)}</td>
+          <td class="p-3 text-right text-rose-300">${fmt(m.pubVis)}</td>
+          <td class="p-3 text-right text-cyan-300 font-semibold">${fmt(m.sul)}</td>
+          <td class="p-3 text-right text-amber-300 font-bold">${sulRate}</td>
+          <td class="p-3 text-center">${presBadge}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      const totalPages = Math.ceil(validFiltered.length / tablePageSize) || 1;
+      const pag = document.getElementById("table-pagination");
+      pag.innerHTML = `
+        <div class="font-sans">Mostrando <strong class="text-white">${start + 1}</strong> a <strong class="text-white">${Math.min(end, validFiltered.length)}</strong> de <strong class="text-white">${validFiltered.length}</strong> partidas</div>
+        <div class="flex items-center gap-2 font-sans">
+          <button onclick="navigatePage(-1)" ${tableCurrentPage === 1 ? 'disabled class="opacity-30 cursor-not-allowed"' : 'class="hover:text-[#C5A059] active:scale-95"'} class="px-3 py-1.5 bg-white/5 rounded-lg border border-white/10 transition">Anterior</button>
+          <span class="px-2 text-white/60">Página <strong>${tableCurrentPage}</strong> de <strong>${totalPages}</strong></span>
+          <button onclick="navigatePage(1)" ${tableCurrentPage >= totalPages ? 'disabled class="opacity-30 cursor-not-allowed"' : 'class="hover:text-[#C5A059] active:scale-95"'} class="px-3 py-1.5 bg-white/5 rounded-lg border border-white/10 transition">Próxima</button>
+        </div>
+      `;
+    }
+
+    function navigatePage(direction) {
+      const validFiltered = filteredMatches;
+      const totalPages = Math.ceil(validFiltered.length / tablePageSize) || 1;
+      const newPage = tableCurrentPage + direction;
+      if (newPage >= 1 && newPage <= totalPages) {
+        tableCurrentPage = newPage;
+        renderTable();
+      }
+    }
+  </script>
+
+  <script>
+    const perfState = {
+      temporada: [], competicao: [], adversario: [], mando: [], estadio: [], presente: []
+    };
+
+    function togglePerfDropdown(type) {
+      const allPanels = document.querySelectorAll('.ms-dropdown-menu');
+      const targetPanel = document.getElementById(`perf-panel-${type}`);
+      const isClosed = targetPanel.classList.contains('hidden');
+      allPanels.forEach(p => p.classList.add('hidden'));
+      if (isClosed) targetPanel.classList.remove('hidden');
+    }
+
+    function getPerfMatchesExcluding(excludeDimension) {
+      return MATCHES_DATA.filter(m => {
+        if (excludeDimension !== 'temporada' && perfState.temporada.length > 0 && !perfState.temporada.includes(String(m.ano))) return false;
+        if (excludeDimension !== 'competicao' && perfState.competicao.length > 0 && !perfState.competicao.includes(m.torneio)) return false;
+        if (excludeDimension !== 'adversario' && perfState.adversario.length > 0 && !perfState.adversario.includes(m.adv)) return false;
+        if (excludeDimension !== 'mando' && perfState.mando.length > 0 && !perfState.mando.includes(m.mando)) return false;
+        if (excludeDimension !== 'estadio' && perfState.estadio.length > 0 && !perfState.estadio.includes(m.estadio)) return false;
+        if (excludeDimension !== 'presente' && perfState.presente.length > 0 && !perfState.presente.includes(m.presente)) return false;
+        return true;
+      });
+    }
+
+    function renderPerfChecklist(type, items, matchingSubset) {
+      const container = document.getElementById(`perf-list-${type}`);
+      if (!container) return;
+      container.innerHTML = '';
+
+      if (items.length === 0) {
+        container.innerHTML = '<div class="text-[11px] text-white/40 p-2 text-center italic">Nenhuma opção disponível</div>';
+        return;
+      }
+
+      items.forEach(item => {
+        const count = matchingSubset.filter(m => {
+          if (type === 'temporada') return String(m.ano) === item.value;
+          if (type === 'competicao') return m.torneio === item.value;
+          if (type === 'adversario') return m.adv === item.value;
+          if (type === 'mando') return m.mando === item.value;
+          if (type === 'estadio') return m.estadio === item.value;
+          if (type === 'presente') return m.presente === item.value;
+          return false;
+        }).length;
+
+        const isChecked = perfState[type].includes(item.value);
+        const row = document.createElement('label');
+        row.className = 'flex items-center justify-between p-1.5 hover:bg-white/5 rounded-lg cursor-pointer text-xs text-white/90 transition select-none';
+        row.setAttribute('data-label', item.label.toLowerCase());
+
+        row.innerHTML = `
+          <div class="flex items-center gap-2 truncate pr-1">
+            <input type="checkbox" class="ms-checkbox rounded" value="${item.value}" ${isChecked ? 'checked' : ''} onchange="onPerfCheckboxChange('${type}', this.value, this.checked)">
+            <span class="truncate">${item.label}</span>
+          </div>
+          <span class="text-[10px] text-white/40 font-mono shrink-0">${count}</span>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    function updatePerfDropdowns() {
+      const years = [...new Set(MATCHES_DATA.map(m => m.ano))].sort((a, b) => b - a);
+      renderPerfChecklist('temporada', years.map(y => ({ value: String(y), label: String(y) })), getPerfMatchesExcluding('temporada'));
+
+      const comps = [...new Set(MATCHES_DATA.map(m => m.torneio))].filter(c => c && c !== "-").sort();
+      renderPerfChecklist('competicao', comps.map(c => ({ value: c, label: c })), getPerfMatchesExcluding('competicao'));
+
+      const opponents = [...new Set(MATCHES_DATA.map(m => m.adv))].filter(a => a && a !== "-" && a !== "A Definir").sort((a, b) => a.localeCompare(b, 'pt-BR'));
+      renderPerfChecklist('adversario', opponents.map(adv => ({ value: adv, label: adv })), getPerfMatchesExcluding('adversario'));
+
+      const mandos = ['Mandante', 'Visitante', 'Neutro'].map(m => ({
+        value: m, label: m === 'Mandante' ? 'Mandante (Casa)' : m === 'Visitante' ? 'Visitante (Fora)' : 'Campo Neutro'
+      }));
+      renderPerfChecklist('mando', mandos, getPerfMatchesExcluding('mando'));
+
+      const venues = [...new Set(MATCHES_DATA.map(m => m.estadio))].filter(v => v && v !== "-" && v !== "A Definir").sort();
+      renderPerfChecklist('estadio', venues.map(v => ({ value: v, label: v })), getPerfMatchesExcluding('estadio'));
+
+      const presentes = [...new Set(MATCHES_DATA.map(m => m.presente))].filter(p => p).sort();
+      renderPerfChecklist('presente', presentes.map(p => ({ value: p, label: p })), getPerfMatchesExcluding('presente'));
+    }
+
+    function filterPerfOptions(type, query) {
+      const container = document.getElementById(`perf-list-${type}`);
+      if (!container) return;
+      const rows = container.querySelectorAll('label');
+      const q = query.toLowerCase().trim();
+      rows.forEach(r => {
+        const text = r.getAttribute('data-label') || "";
+        if (!q || text.includes(q)) r.classList.remove('hidden');
+        else r.classList.add('hidden');
+      });
+    }
+
+    function onPerfCheckboxChange(type, value, isChecked) {
+      if (isChecked) {
+        if (!perfState[type].includes(value)) perfState[type].push(value);
+      } else {
+        perfState[type] = perfState[type].filter(v => v !== value);
+      }
+      applyPerfFilters();
+    }
+
+    function selectPerfAll(type, selectAll) {
+      const container = document.getElementById(`perf-list-${type}`);
+      if (!container) return;
+      const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+      perfState[type] = [];
+      checkboxes.forEach(cb => {
+        cb.checked = selectAll;
+        if (selectAll) perfState[type].push(cb.value);
+      });
+      applyPerfFilters();
+    }
+
+    function updatePerfLabels() {
+      const types = ['temporada', 'competicao', 'adversario', 'mando', 'estadio', 'presente'];
+      types.forEach(t => {
+        const count = perfState[t].length;
+        const labelEl = document.getElementById(`perf-label-${t}`);
+        if (!labelEl) return;
+        const totalItems = document.querySelectorAll(`#perf-list-${t} input[type="checkbox"]`).length;
+        if (count === 0) {
+          labelEl.textContent = (t === 'mando' || t === 'adversario' || t === 'estadio' || t === 'presente') ? 'Todos' : 'Todas';
+          labelEl.className = 'truncate pr-1 text-white/80';
+        } else if (count === totalItems && totalItems > 1) {
+          labelEl.textContent = 'Todas Selecionadas';
+          labelEl.className = 'truncate pr-1 text-emerald-300 font-semibold';
+        } else if (count === 1) {
+          labelEl.textContent = perfState[t][0];
+          labelEl.className = 'truncate pr-1 text-[#C5A059] font-semibold';
+        } else {
+          labelEl.textContent = `${count} selecionados`;
+          labelEl.className = 'truncate pr-1 text-[#C5A059] font-semibold';
+        }
+      });
+    }
+
+    function resetDesempenhoFilters() {
+      Object.keys(perfState).forEach(k => { perfState[k] = []; });
+      document.querySelectorAll('#view-desempenho input[type="text"]').forEach(input => input.value = '');
+      applyPerfFilters();
+    }
+
+    function applyPerfFilters() {
+      updatePerfDropdowns();
+      updatePerfLabels();
+
+      const filteredPerf = MATCHES_DATA.filter(m => {
+        if (perfState.temporada.length > 0 && !perfState.temporada.includes(String(m.ano))) return false;
+        if (perfState.competicao.length > 0 && !perfState.competicao.includes(m.torneio)) return false;
+        if (perfState.adversario.length > 0 && !perfState.adversario.includes(m.adv)) return false;
+        if (perfState.mando.length > 0 && !perfState.mando.includes(m.mando)) return false;
+        if (perfState.estadio.length > 0 && !perfState.estadio.includes(m.estadio)) return false;
+        if (perfState.presente.length > 0 && !perfState.presente.includes(m.presente)) return false;
+        return true;
+      });
+
+      document.getElementById('perf-matches-tag').textContent = `${filteredPerf.length} partidas`;
+
+      let vitorias = 0, empates = 0, derrotas = 0, gpTotal = 0, gcTotal = 0;
+      const advStats = {};
+
+      filteredPerf.forEach(m => {
+        const parts = m.placar.split('x').map(p => parseInt(p.trim(), 10));
+        if (parts.length !== 2 || isNaN(parts[0]) || isNaN(parts[1])) return;
+        
+        const fluGols = parts[0], advGols = parts[1];
+        gpTotal += fluGols; gcTotal += advGols;
+
+        let res = 'E';
+        if (fluGols > advGols) { vitorias++; res = 'V'; }
+        else if (fluGols < advGols) { derrotas++; res = 'D'; }
+        else { empates++; res = 'E'; }
+
+        if (!advStats[m.adv]) advStats[m.adv] = { jog: 0, v: 0, e: 0, d: 0, gp: 0, gc: 0 };
+        advStats[m.adv].jog++; advStats[m.adv].gp += fluGols; advStats[m.adv].gc += advGols;
+        if (res === 'V') advStats[m.adv].v++; else if (res === 'E') advStats[m.adv].e++; else if (res === 'D') advStats[m.adv].d++;
+      });
+
+      const totalJogos = filteredPerf.length;
+      const pontosPossiveis = totalJogos * 3;
+      const pontosGanhos = (vitorias * 3) + (empates * 1);
+      const aproveitamento = pontosPossiveis > 0 ? ((pontosGanhos / pontosPossiveis) * 100).toFixed(1) + '%' : '0%';
+
+      document.getElementById('perf-kpi-vitorias').textContent = vitorias;
+      document.getElementById('perf-sub-vitorias').textContent = totalJogos > 0 ? `${((vitorias/totalJogos)*100).toFixed(1)}% dos jogos` : '0%';
+      document.getElementById('perf-kpi-empates').textContent = empates;
+      document.getElementById('perf-sub-empates').textContent = totalJogos > 0 ? `${((empates/totalJogos)*100).toFixed(1)}% dos jogos` : '0%';
+      document.getElementById('perf-kpi-derrotas').textContent = derrotas;
+      document.getElementById('perf-sub-derrotas').textContent = totalJogos > 0 ? `${((derrotas/totalJogos)*100).toFixed(1)}% dos jogos` : '0%';
+      
+      // Aplicando separador de milhar nos cards de Gols Pró e Gols Contra
+      document.getElementById('perf-kpi-gp').textContent = gpTotal.toLocaleString('pt-BR');
+      document.getElementById('perf-sub-gp').textContent = totalJogos > 0 ? `Média ${(gpTotal/totalJogos).toFixed(2)} por jogo` : '0';
+      document.getElementById('perf-kpi-gc').textContent = gcTotal.toLocaleString('pt-BR');
+      document.getElementById('perf-sub-gc').textContent = totalJogos > 0 ? `Média ${(gcTotal/totalJogos).toFixed(2)} por jogo` : '0';
+      
+      document.getElementById('perf-kpi-aproveitamento').textContent = aproveitamento;
+      document.getElementById('perf-sub-aproveitamento').textContent = `${pontosGanhos} de ${pontosPossiveis} pts`;
+
+      updatePerfCharts(vitorias, empates, derrotas, gpTotal, gcTotal);
+      renderPerfTable(advStats);
+    }
+
+    function updatePerfCharts(v, e, d, gp, gc) {
+      if (activeCharts["chartResultados"]) activeCharts["chartResultados"].destroy();
+      activeCharts["chartResultados"] = new Chart(document.getElementById("chartResultados").getContext('2d'), {
+        type: 'doughnut', data: { labels: ['Vitórias', 'Empates', 'Derrotas'], datasets: [{ data: [v, e, d], backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'], borderColor: '#0A120F', borderWidth: 2 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+      });
+
+      if (activeCharts["chartBalançoGols"]) activeCharts["chartBalançoGols"].destroy();
+      activeCharts["chartBalançoGols"] = new Chart(document.getElementById("chartBalançoGols").getContext('2d'), {
+        type: 'bar', data: { labels: ['Gols Pró (GP)', 'Gols Contra (GC)'], datasets: [{ label: 'Total de Gols', data: [gp, gc], backgroundColor: ['#06b6d4', '#a855f7'], borderRadius: 8 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+      });
+    }
+
+    function renderPerfTable(advStats) {
+      const tbody = document.getElementById('perf-table-body');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      const sortedAdversarios = Object.keys(advStats).sort((a, b) => {
+        const sA = advStats[a], sB = advStats[b];
+        if (sB.jog !== sA.jog) return sB.jog - sA.jog;
+        const apA = ((sA.v * 3) + sA.e) / (sA.jog * 3);
+        const apB = ((sB.v * 3) + sB.e) / (sB.jog * 3);
+        return apB - apA;
+      });
+
+      if (sortedAdversarios.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-white/40 italic">Nenhum confronto encontrado para os filtros atuais.</td></tr>`;
+        return;
+      }
+
+      sortedAdversarios.forEach(adv => {
+        const s = advStats[adv];
+        const sg = s.gp - s.gc;
+        const pts = (s.v * 3) + s.e;
+        const ap = ((pts / (s.jog * 3)) * 100).toFixed(1) + '%';
+        const sgColor = sg > 0 ? 'text-emerald-400' : sg < 0 ? 'text-rose-400' : 'text-white/70';
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-white/[0.04] transition border-b border-white/5';
+        tr.innerHTML = `
+          <td class="p-3 font-sans font-bold text-white">${adv}</td>
+          <td class="p-3 text-center text-white/90 font-bold">${s.jog}</td>
+          <td class="p-3 text-center text-emerald-400 font-bold">${s.v}</td>
+          <td class="p-3 text-center text-amber-300">${s.e}</td>
+          <td class="p-3 text-center text-rose-400">${s.d}</td>
+          <td class="p-3 text-center text-cyan-300">${s.gp.toLocaleString('pt-BR')}</td>
+          <td class="p-3 text-center text-purple-300">${s.gc.toLocaleString('pt-BR')}</td>
+          <td class="p-3 text-center font-bold ${sgColor}">${sg > 0 ? '+' + sg.toLocaleString('pt-BR') : sg.toLocaleString('pt-BR')}</td>
+          <td class="p-3 text-right text-[#C5A059] font-bold">${ap}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function updateDynamicYearRange() {
+      if (!MATCHES_DATA || MATCHES_DATA.length === 0) return;
+      const years = MATCHES_DATA.map(m => m.ano);
+      const minYear = Math.min(...years);
+      const maxYear = Math.max(...years);
+      document.querySelectorAll('.dynamic-year-range').forEach(el => { el.textContent = `${minYear}-${maxYear}`; });
+    }
+
+    const classicosState = { competicao: [], adversario: [], presente: [], minAno: null, maxAno: null };
+
+    function initClassicosSlider() {
+      if (CLASSICOS_DATA.length === 0) return;
+      const years = CLASSICOS_DATA.map(c => c.ano).filter(a => !isNaN(a) && a > 1900);
+      if (years.length === 0) return;
+      
+      const minYear = Math.min(...years);
+      const maxYear = Math.max(...years);
+
+      const minInput = document.getElementById('classicos-ano-min');
+      const maxInput = document.getElementById('classicos-ano-max');
+      
+      if(minInput && maxInput) {
+        minInput.min = minYear; minInput.max = maxYear;
+        maxInput.min = minYear; maxInput.max = maxYear;
+        
+        if (!classicosState.minAno || classicosState.minAno < minYear) classicosState.minAno = minYear;
+        if (!classicosState.maxAno || classicosState.maxAno > maxYear) classicosState.maxAno = maxYear;
+        
+        minInput.value = classicosState.minAno;
+        maxInput.value = classicosState.maxAno;
+        
+        updateClassicosSliderUI();
+      }
+    }
+
+    function updateClassicosSliderUI() {
+      const minInput = document.getElementById('classicos-ano-min');
+      const maxInput = document.getElementById('classicos-ano-max');
+      const track = document.getElementById('classicos-slider-track');
+      const valuesDisplay = document.getElementById('classicos-slider-values');
+      
+      if(!minInput || !maxInput || !track) return;
+
+      let minVal = parseInt(minInput.value);
+      let maxVal = parseInt(maxInput.value);
+      
+      if (minVal > maxVal) {
+        let tmp = minVal;
+        minVal = maxVal;
+        maxVal = tmp;
+      }
+
+      minInput.value = minVal;
+      maxInput.value = maxVal;
+      
+      classicosState.minAno = minVal;
+      classicosState.maxAno = maxVal;
+
+      if(valuesDisplay) valuesDisplay.textContent = `${minVal} - ${maxVal}`;
+      
+      const range = parseInt(minInput.max) - parseInt(minInput.min);
+      if (range > 0) {
+        const leftPercent = ((minVal - parseInt(minInput.min)) / range) * 100;
+        const rightPercent = ((maxVal - parseInt(minInput.min)) / range) * 100;
+        track.style.left = leftPercent + '%';
+        track.style.width = (rightPercent - leftPercent) + '%';
+      }
+    }
+
+    function toggleClassicosDropdown(type) {
+      const allPanels = document.querySelectorAll('.ms-dropdown-menu');
+      const targetPanel = document.getElementById(`classicos-panel-${type}`);
+      const isClosed = targetPanel.classList.contains('hidden');
+      allPanels.forEach(p => p.classList.add('hidden'));
+      if (isClosed) targetPanel.classList.remove('hidden');
+    }
+
+    function getClassicosExcluding(excludeDimension) {
+      return CLASSICOS_DATA.filter(m => {
+        if (excludeDimension !== 'competicao' && classicosState.competicao.length > 0 && !classicosState.competicao.includes(m.torneio)) return false;
+        if (excludeDimension !== 'adversario' && classicosState.adversario.length > 0 && !classicosState.adversario.includes(m.adv)) return false;
+        if (excludeDimension !== 'presente' && classicosState.presente.length > 0 && !classicosState.presente.includes(m.presente)) return false;
+        if (classicosState.minAno && m.ano < classicosState.minAno) return false;
+        if (classicosState.maxAno && m.ano > classicosState.maxAno) return false;
+        return true;
+      });
+    }
+
+    function renderClassicosChecklist(type, items, matchingSubset) {
+      const container = document.getElementById(`classicos-list-${type}`);
+      if (!container) return;
+      container.innerHTML = '';
+      if (items.length === 0) {
+        container.innerHTML = '<div class="text-[11px] text-white/40 p-2 text-center italic">Nenhuma opção disponível</div>';
+        return;
+      }
+      items.forEach(item => {
+        const count = matchingSubset.filter(m => {
+          if (type === 'competicao') return m.torneio === item.value;
+          if (type === 'adversario') return m.adv === item.value;
+          if (type === 'presente') return m.presente === item.value;
+          return false;
+        }).length;
+        const isChecked = classicosState[type].includes(item.value);
+        const row = document.createElement('label');
+        row.className = 'flex items-center justify-between p-1.5 hover:bg-white/5 rounded-lg cursor-pointer text-xs text-white/90 transition select-none';
+        row.innerHTML = `
+          <div class="flex items-center gap-2 truncate pr-1">
+            <input type="checkbox" class="ms-checkbox rounded" value="${item.value}" ${isChecked ? 'checked' : ''} onchange="onClassicosCheckboxChange('${type}', this.value, this.checked)">
+            <span class="truncate">${item.label}</span>
+          </div>
+          <span class="text-[10px] text-white/40 font-mono shrink-0">${count}</span>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    function updateClassicosDropdowns() {
+      const comps = [...new Set(CLASSICOS_DATA.map(m => m.torneio))].filter(c => c && c !== "-").sort();
+      renderClassicosChecklist('competicao', comps.map(c => ({ value: c, label: c })), getClassicosExcluding('competicao'));
+
+      const opponents = [...new Set(CLASSICOS_DATA.map(m => m.adv))].filter(a => a && a !== "-" && a !== "A Definir").sort((a, b) => a.localeCompare(b, 'pt-BR'));
+      renderClassicosChecklist('adversario', opponents.map(adv => ({ value: adv, label: adv })), getClassicosExcluding('adversario'));
+
+      const presentes = [...new Set(CLASSICOS_DATA.map(m => m.presente))].filter(p => p).sort();
+      renderClassicosChecklist('presente', presentes.map(p => ({ value: p, label: p })), getClassicosExcluding('presente'));
+    }
+
+    function onClassicosCheckboxChange(type, value, isChecked) {
+      if (isChecked) {
+        if (!classicosState[type].includes(value)) classicosState[type].push(value);
+      } else {
+        classicosState[type] = classicosState[type].filter(v => v !== value);
+      }
+      applyClassicosFilters();
+    }
+
+    function selectClassicosAll(type, selectAll) {
+      const container = document.getElementById(`classicos-list-${type}`);
+      if (!container) return;
+      const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+      classicosState[type] = [];
+      checkboxes.forEach(cb => {
+        cb.checked = selectAll;
+        if (selectAll) classicosState[type].push(cb.value);
+      });
+      applyClassicosFilters();
+    }
+
+    function updateClassicosLabels() {
+      const types = ['competicao', 'adversario', 'presente'];
+      types.forEach(t => {
+        const count = classicosState[t].length;
+        const labelEl = document.getElementById(`classicos-label-${t}`);
+        if (!labelEl) return;
+        const totalItems = document.querySelectorAll(`#classicos-list-${t} input[type="checkbox"]`).length;
+        if (count === 0) {
+          labelEl.textContent = 'Todas';
+          labelEl.className = 'truncate pr-1 text-white/80';
+        } else if (count === totalItems && totalItems > 1) {
+          labelEl.textContent = 'Todas Selecionadas';
+          labelEl.className = 'truncate pr-1 text-emerald-300 font-semibold';
+        } else if (count === 1) {
+          labelEl.textContent = classicosState[t][0];
+          labelEl.className = 'truncate pr-1 text-[#C5A059] font-semibold';
+        } else {
+          labelEl.textContent = `${count} selecionados`;
+          labelEl.className = 'truncate pr-1 text-[#C5A059] font-semibold';
+        }
+      });
+    }
+
+    function resetClassicosFilters() {
+      classicosState.competicao = [];
+      classicosState.adversario = [];
+      classicosState.presente = [];
+      
+      if (CLASSICOS_DATA.length > 0) {
+        const years = CLASSICOS_DATA.map(c => c.ano).filter(a => !isNaN(a) && a > 1900);
+        classicosState.minAno = Math.min(...years);
+        classicosState.maxAno = Math.max(...years);
+      }
+
+      initClassicosSlider();
+      applyClassicosFilters();
+    }
+
+    function applyClassicosFilters() {
+      updateClassicosDropdowns();
+      updateClassicosLabels();
+
+      const filteredClassicos = CLASSICOS_DATA.filter(m => {
+        if (classicosState.competicao.length > 0 && !classicosState.competicao.includes(m.torneio)) return false;
+        if (classicosState.adversario.length > 0 && !classicosState.adversario.includes(m.adv)) return false;
+        if (classicosState.presente.length > 0 && !classicosState.presente.includes(m.presente)) return false;
+        
+        if (classicosState.minAno && m.ano < classicosState.minAno) return false;
+        if (classicosState.maxAno && m.ano > classicosState.maxAno) return false;
+
+        return true;
+      });
+
+      const tag = document.getElementById('classicos-matches-tag');
+      if (tag) tag.textContent = `${filteredClassicos.length} partidas`;
+
+      let v = 0, e = 0, d = 0, gp = 0, gc = 0;
+      filteredClassicos.forEach(m => {
+        const placarLimpo = m.placar.toLowerCase().replace(/\s+/g, '').replace('-', 'x');
+        const parts = placarLimpo.split('x').map(p => parseInt(p, 10));
+        
+        if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+           gp += parts[0];
+           gc += parts[1];
+           if (parts[0] > parts[1]) v++;
+           else if (parts[0] < parts[1]) d++;
+           else e++;
+        }
+      });
+
+      const total = filteredClassicos.length;
+      const ptsPossiveis = total * 3;
+      const ptsGanhos = (v * 3) + e;
+      const aprov = ptsPossiveis > 0 ? ((ptsGanhos / ptsPossiveis) * 100).toFixed(1) + '%' : '0%';
+
+      document.getElementById('classicos-kpi-vitorias').textContent = v;
+      document.getElementById('classicos-sub-vitorias').textContent = total > 0 ? `${((v/total)*100).toFixed(1)}% dos jogos` : '0%';
+      document.getElementById('classicos-kpi-empates').textContent = e;
+      document.getElementById('classicos-sub-empates').textContent = total > 0 ? `${((e/total)*100).toFixed(1)}% dos jogos` : '0%';
+      document.getElementById('classicos-kpi-derrotas').textContent = d;
+      document.getElementById('classicos-sub-derrotas').textContent = total > 0 ? `${((d/total)*100).toFixed(1)}% dos jogos` : '0%';
+      
+      document.getElementById('classicos-kpi-gp').textContent = gp.toLocaleString('pt-BR');
+      document.getElementById('classicos-sub-gp').textContent = total > 0 ? `Média ${(gp/total).toFixed(2)} por jogo` : '0';
+      document.getElementById('classicos-kpi-gc').textContent = gc.toLocaleString('pt-BR');
+      document.getElementById('classicos-sub-gc').textContent = total > 0 ? `Média ${(gc/total).toFixed(2)} por jogo` : '0';
+      
+      document.getElementById('classicos-kpi-aproveitamento').textContent = aprov;
+      document.getElementById('classicos-sub-aproveitamento').textContent = `${ptsGanhos} de ${ptsPossiveis} pts`;
+
+      updateClassicosChart(filteredClassicos);
+
+      const getTimestamp = (d) => {
+          if (!d || d === "-") return 0;
+          const parts = d.split(/[-/.]/);
+          if (parts.length === 3) {
+              const y = parts[0].length === 4 ? parseInt(parts[0]) : (parts[2].length === 2 ? 2000 + parseInt(parts[2]) : parseInt(parts[2]));
+              const m = parseInt(parts[1]) - 1;
+              const day = parts[0].length === 4 ? parseInt(parts[2]) : parseInt(parts[0]);
+              return new Date(y, m, day).getTime();
+          }
+          return 0;
+      };
+
+      const normalizeAdv = (a) => {
+          if (!a) return "";
+          let s = a.toLowerCase().trim();
+          if (s.includes('vasco')) return 'vasco';
+          if (s.includes('flamengo')) return 'flamengo';
+          if (s.includes('botafogo')) return 'botafogo';
+          return s;
+      };
+
+      const isMatchInFilteredClassicos = (m) => {
+          const mAdv = normalizeAdv(m.adv);
+          const mTime = getTimestamp(m.data);
+          
+          return filteredClassicos.some(c => {
+              if (normalizeAdv(c.adv) !== mAdv) return false;
+              if (c.ano !== m.ano) return false;
+              const cTime = getTimestamp(c.data);
+              if (Math.abs(mTime - cTime) <= 4 * 86400000) return true;
+              return false;
+          });
+      };
+
+      const sulMatchesClassicos = MATCHES_DATA.filter(m => {
+          if (!m.estadio || m.estadio.trim().toLowerCase().replace('ã', 'a').replace('á', 'a') !== "maracana") return false;
+          if (m.sul === null || m.sul <= 0) return false;
+          return isMatchInFilteredClassicos(m);
+      });
+
+      const avgSulClassicos = sulMatchesClassicos.length ? sulMatchesClassicos.reduce((acc, x) => acc + x.sul, 0) / sulMatchesClassicos.length : 0;
+      
+      let xxxx = "-", yyyy = "-";
+      if (sulMatchesClassicos.length > 0) {
+          const years = sulMatchesClassicos.map(m => m.ano).filter(y => !isNaN(y));
+          xxxx = Math.min(...years);
+          yyyy = Math.max(...years);
+      }
+      
+      const elMediaSul = document.getElementById("classicos-kpi-media-sul");
+      const elSubSul = document.getElementById("classicos-kpi-sub-sul");
+      if (elMediaSul) elMediaSul.textContent = sulMatchesClassicos.length > 0 ? fmt(avgSulClassicos) : "-";
+      if (elSubSul) elSubSul.textContent = sulMatchesClassicos.length > 0 ? `${sulMatchesClassicos.length} jogos (${xxxx} - ${yyyy})` : "Sem dados do Setor Sul";
+
+      const taxaSulClassicos = avgSulClassicos > 0 ? (avgSulClassicos / 20000) * 100 : 0;
+      const elTaxaSul = document.getElementById("classicos-kpi-taxa-sul");
+      if (elTaxaSul) elTaxaSul.textContent = taxaSulClassicos > 0 ? `${taxaSulClassicos.toFixed(1)}%` : "-";
+
+      const recordedCountEl = document.getElementById("classicos-sul-recorded-count");
+      if (recordedCountEl) recordedCountEl.textContent = `${sulMatchesClassicos.length} jogos`;
+
+      const alertRecordsEl = document.getElementById("classicos-sul-alert-records");
+      if (alertRecordsEl) {
+          if (sulMatchesClassicos.length > 0) {
+              document.getElementById("classicos-sul-record-z").textContent = sulMatchesClassicos.length;
+              document.getElementById("classicos-sul-record-x").textContent = xxxx;
+              document.getElementById("classicos-sul-record-y").textContent = yyyy;
+              alertRecordsEl.classList.remove("hidden");
+          } else {
+              alertRecordsEl.classList.add("hidden");
+          }
+      }
+
+      const missingSulCountClassicos = MATCHES_DATA.filter(m => {
+          if (!m.estadio || m.estadio.trim().toLowerCase().replace('ã', 'a').replace('á', 'a') !== "maracana") return false;
+          if (!isMatchInFilteredClassicos(m)) return false;
+          return m.sul === null || m.sul <= 0;
+      }).length;
+
+      const classicosAlertEl = document.getElementById("classicos-sul-alert-missing");
+      const classicosCountEl = document.getElementById("classicos-sul-missing-count");
+      
+      if (classicosAlertEl && classicosCountEl) {
+        if (missingSulCountClassicos > 0) {
+          classicosCountEl.textContent = missingSulCountClassicos;
+          classicosAlertEl.classList.remove("hidden");
+        } else {
+          classicosAlertEl.classList.add("hidden");
+        }
+      }
+
+      const topSulMatchesClassicos = [...sulMatchesClassicos]
+        .sort((a, b) => b.sul - a.sul)
+        .slice(0, 10);
+
+      if (activeCharts["chartClassicosSetorSul"]) activeCharts["chartClassicosSetorSul"].destroy();
+      
+      const canvasClassicosSul = document.getElementById("chartClassicosSetorSul");
+      if (canvasClassicosSul) {
+          if (topSulMatchesClassicos.length > 0) {
+              activeCharts["chartClassicosSetorSul"] = new Chart(canvasClassicosSul.getContext('2d'), {
+                type: 'bar',
+                data: {
+                  labels: topSulMatchesClassicos.map(m => `${m.adv} (${String(m.ano).slice(2, 4)})`),
+                  datasets: [
+                    { label: 'Sul Pagantes', data: topSulMatchesClassicos.map(m => m.sul), backgroundColor: '#06b6d4', borderRadius: 6, order: 2 },
+                    { label: 'Capacidade Teórica Sul (20k)', data: topSulMatchesClassicos.map(() => 20000), type: 'line', borderColor: '#f59e0b', borderDash: [5, 5], borderWidth: 3, pointRadius: 0, pointHoverRadius: 0, fill: false, order: 1 }
+                  ]
+                },
+                options: {
+                  responsive: true, maintainAspectRatio: false,
+                  plugins: { legend: { position: 'top' }, tooltip: { callbacks: { label: ctx => ctx.dataset.type === 'line' ? ` Capacidade Teórica: 20.000 lugares` : ` Sul Pagantes: ${ctx.parsed.y.toLocaleString('pt-BR')} (${((ctx.parsed.y / 20000) * 100).toFixed(1)}% do setor)` } } },
+                  scales: { y: { beginAtZero: true, max: 23000, ticks: { callback: v => v.toLocaleString('pt-BR') } } }
+                }
+              });
+          } else {
+              const ctx = canvasClassicosSul.getContext('2d');
+              ctx.clearRect(0, 0, canvasClassicosSul.width, canvasClassicosSul.height);
+          }
+      }
+
+      renderClassicosTable(filteredClassicos);
+    }
+
+    function parseDateCustom(str) {
+      if (!str || str === "-") return new Date(2026, 0, 1).getTime();
+      const p = str.split(/[-/]/);
+      if (p.length === 3) {
+        if (p[0].length === 4) return new Date(p[0], p[1]-1, p[2]).getTime();
+        return new Date(p[2], p[1]-1, p[0]).getTime();
+      }
+      return new Date(2026, 0, 1).getTime();
+    }
+
+    function updateClassicosChart(data) {
+      const sortedData = [...data].sort((a, b) => parseDateCustom(a.data) - parseDateCustom(b.data));
+
+      let vFla = 0, vVas = 0, vBot = 0, vTot = 0;
+      const labels = [], dFla = [], dVas = [], dBot = [], dTot = [];
+
+      sortedData.forEach(c => {
+         const placarLimpo = c.placar.toLowerCase().replace(/\s+/g, '').replace('-', 'x');
+         const parts = placarLimpo.split('x').map(p => parseInt(p, 10));
+         
+         if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+             let diff = parts[0] - parts[1];
+             if (diff > 0) {
+                 vTot++;
+                 if (c.adv.toLowerCase().includes('flamengo')) vFla++;
+                 if (c.adv.toLowerCase().includes('vasco')) vVas++;
+                 if (c.adv.toLowerCase().includes('botafogo')) vBot++;
+             } else if (diff < 0) {
+                 vTot--;
+                 if (c.adv.toLowerCase().includes('flamengo')) vFla--;
+                 if (c.adv.toLowerCase().includes('vasco')) vVas--;
+                 if (c.adv.toLowerCase().includes('botafogo')) vBot--;
+             }
+         }
+         
+         labels.push(c.data);
+         dFla.push(vFla);
+         dVas.push(vVas);
+         dBot.push(vBot);
+         dTot.push(vTot);
+      });
+
+      if (activeCharts["chartEvolucaoClassicos"]) activeCharts["chartEvolucaoClassicos"].destroy();
+      
+      activeCharts["chartEvolucaoClassicos"] = new Chart(document.getElementById("chartEvolucaoClassicos").getContext('2d'), {
+         type: 'line',
+         data: {
+             labels: labels,
+             datasets: [
+                 { label: 'Saldo Total', data: dTot, borderColor: '#22c55e', backgroundColor: '#22c55e', borderWidth: 2.5, tension: 0, pointRadius: 0, pointHoverRadius: 5 },
+                 { label: 'Botafogo', data: dBot, borderColor: '#ffffff', backgroundColor: '#ffffff', borderWidth: 1.5, tension: 0, pointRadius: 0, pointHoverRadius: 4 },
+                 { label: 'Vasco', data: dVas, borderColor: '#9ca3af', backgroundColor: '#9ca3af', borderWidth: 1.5, tension: 0, pointRadius: 0, pointHoverRadius: 4 },
+                 { label: 'Flamengo', data: dFla, borderColor: '#ef4444', backgroundColor: '#ef4444', borderWidth: 1.5, tension: 0, pointRadius: 0, pointHoverRadius: 4 }
+             ]
+         },
+         options: {
+             responsive: true, maintainAspectRatio: false,
+             interaction: { mode: 'index', intersect: false },
+             plugins: { 
+                 legend: { position: 'bottom', labels: { color: 'rgba(255,255,255,0.7)', usePointStyle: true, boxWidth: 8 } },
+                 tooltip: { callbacks: { title: (items) => `Data: ${items[0].label}` } }
+             },
+             scales: {
+                 x: { ticks: { maxTicksLimit: 10, color: 'rgba(255,255,255,0.4)' }, grid: { display: false } },
+                 y: { 
+                     grid: { 
+                         color: (ctx) => ctx.tick && ctx.tick.value === 0 ? 'rgba(255, 255, 255, 0.4)' : 'rgba(255,255,255,0.05)',
+                         lineWidth: (ctx) => ctx.tick && ctx.tick.value === 0 ? 2 : 1
+                     }, 
+                     ticks: { color: 'rgba(255,255,255,0.6)' }
+                 }
+             }
+         }
+      });
+    }
+
+    function renderClassicosTable(data) {
+      const tbody = document.getElementById('classicos-table-body');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      if (data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-white/40 italic">Nenhum clássico encontrado para os filtros selecionados.</td></tr>`;
+        return;
+      }
+      data.forEach(c => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-white/[0.04] transition border-b border-white/5';
+        tr.innerHTML = `
+          <td class="p-3 text-white/90">${c.data}</td>
+          <td class="p-3 font-sans font-bold text-white">${c.adv}</td>
+          <td class="p-3 text-center font-bold text-white">${c.placar}</td>
+          <td class="p-3 font-sans text-[11px] text-white/80 max-w-[170px] truncate" title="${c.torneio}">${c.torneio}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    window.onload = function() {
+      if (window.lucide) lucide.createIcons();
+      fetchLiveGoogleSheet();
+    };
+  </script>
+</body>
+</html>

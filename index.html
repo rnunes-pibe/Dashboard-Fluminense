@@ -81,7 +81,6 @@
       background: var(--flu-gold);
     }
 
-    /* CSS Customizado para o Slider Duplo da Aba Clássicos */
     .dual-slider-container {
       position: relative;
     }
@@ -114,7 +113,6 @@
   <header class="border-b border-white/10 bg-[#070D0B]/95 sticky top-0 z-50 backdrop-blur-md">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
       
-      <!-- Lado Esquerdo: Logo + Título + Botão de Atualização Integrado -->
       <div class="flex items-start gap-4">
         <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-[#8A1538] via-[#0E4735] to-[#C5A059] flex items-center justify-center p-0.5 shadow-xl shrink-0 mt-1">
           <div class="w-full h-full bg-[#0B1512] rounded-[14px] flex items-center justify-center font-black text-[#C5A059] text-xl sm:text-2xl tracking-tighter border border-[#C5A059]/40">
@@ -143,7 +141,6 @@
         </div>
       </div>
 
-      <!-- Lado Direito: Abas Navegação -->
       <div class="flex items-center gap-2 flex-wrap mt-2 md:mt-0">
         <div class="inline-flex p-1 rounded-lg bg-[#0B1512] border border-[#C5A059]/30">
           <button onclick="switchTab('capa')" id="tab-btn-capa" class="px-3 py-1.5 rounded-md text-xs font-bold transition bg-[#C5A059] text-[#0A120F]">
@@ -165,7 +162,6 @@
 
   <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
     
-    <!-- ABA: CAPA -->
     <div id="view-capa" class="space-y-8">
       <section class="glass-panel rounded-3xl p-8 sm:p-12 shadow-2xl relative overflow-hidden border border-[#C5A059]/40">
         <div class="absolute -right-16 -bottom-16 w-80 h-80 rounded-full bg-gradient-to-br from-[#8A1538]/20 via-[#0E4735]/30 to-[#C5A059]/10 blur-3xl pointer-events-none"></div>
@@ -182,7 +178,7 @@
           
           <p class="text-sm sm:text-base text-emerald-100/80 leading-relaxed">
             Dados de Público e Desempenho em jogos oficiais (<span class="dynamic-year-range">...</span>) <br>
-            Histórico com todos os clássicos</span>
+            Histórico com todos os clássicos
           </p>
 
           <div class="pt-4 flex flex-wrap items-center gap-4">
@@ -221,10 +217,8 @@
       </div>
     </div>
 
-    <!-- ABA: OCUPAÇÃO ESTÁDIO -->
     <div id="view-estadio" class="hidden space-y-8">
 
-      <!-- Card Informativo OCUPAÇÃO ESTÁDIO -->
       <section class="glass-panel rounded-2xl p-5 sm:p-6 shadow-xl border border-[#C5A059]/30 flex items-start sm:items-center gap-4 relative overflow-hidden">
         <div class="absolute -right-8 -bottom-8 w-32 h-32 rounded-full bg-gradient-to-br from-[#8A1538]/20 via-[#0E4735]/20 to-[#C5A059]/20 blur-2xl pointer-events-none"></div>
         <div class="p-3 rounded-xl bg-[#0E4735] text-[#C5A059] border border-[#C5A059]/30 shrink-0 relative z-10">
@@ -232,12 +226,13 @@
         </div>
         <div class="relative z-10">
           <p class="text-sm sm:text-base text-white/90 font-medium leading-relaxed">
-            Base com jogos oficiais (<span class="dynamic-year-range">...</span>)
+            Base com jogos oficiais (<span class="dynamic-year-range">...</span>) <br>
+            Público como visitante não está completo, clubes não divulgam 100% de forma correta <br>
+            Conmebol não divulga público fora do Brasil, nem disponibilza maioria dos boletins financeiros dos jogos no Brasil 
           </p>
         </div>
       </section>
       
-      <!-- Filtros Estádio -->
       <section class="glass-panel rounded-2xl p-6 shadow-2xl relative z-30">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 border-b border-white/10 pb-3.5">
           <div class="flex items-center gap-2.5">
@@ -388,7 +383,92 @@
         </div>
       </section>
 
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <section id="section-top-visitante" class="glass-panel rounded-2xl p-6 shadow-2xl border border-rose-500/30 hidden">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4 mb-6">
+          <div>
+            <h3 class="text-base font-black text-white flex items-center gap-2">
+              <i data-lucide="map-pin" class="w-4 h-4 text-rose-900"></i>
+              Top 10 Estádios - Fluminense Visitante 
+            </h3>
+            <p class="text-xs text-white/60 mt-0.5">
+              Maiores médias de público pagante (torcida visitante do Fluminense)
+            </p>
+          </div>
+        </div>
+        <div class="relative w-full h-[280px]">
+          <canvas id="chartTopVisitante"></canvas>
+        </div>
+      </section>
+
+      <!-- CONVÊINER LADO A LADO: VISITANTE POR TEMPORADA E COMPETIÇÃO -->
+      <div id="section-visitante-dupla" class="grid grid-cols-1 lg:grid-cols-2 gap-6 hidden">
+        
+        <div class="glass-panel rounded-2xl p-6 shadow-xl flex flex-col border border-rose-500/30">
+          <div class="flex items-center justify-between mb-4 border-b border-white/10 pb-3">
+            <div>
+              <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <i data-lucide="trending-up" class="w-4 h-4 text-rose-900"></i>
+                Público Médio Fluminense Visitante por Temporada
+              </h3>
+              <p class="text-xs text-white/60">Evolução da média de público presente (torcida Tricolor visitante) em cada temporada</p>
+            </div>
+          </div>
+          <div class="relative flex-1 min-h-[300px]">
+            <canvas id="chartVisitanteTemporada"></canvas>
+          </div>
+        </div>
+
+        <div class="glass-panel rounded-2xl p-6 shadow-xl flex flex-col border border-rose-900/30">
+          <div class="flex items-center justify-between mb-4 border-b border-white/10 pb-3">
+            <div>
+              <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <i data-lucide="award" class="w-4 h-4 text-rose-500"></i>
+                Público Médio Fluminense Visitante por Competição
+              </h3>
+              <p class="text-xs text-white/50">Média de torcedores tricolores como visitantes</p>
+            </div>
+          </div>
+          <div class="relative flex-1 min-h-[300px]">
+            <canvas id="chartVisitanteCompeticao"></canvas>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- NOVO CONTÊINER: COMPARATIVO DUPLO MANDANTE E VISITANTE -->
+      <div id="section-comparativo-duplo" class="grid grid-cols-1 lg:grid-cols-2 gap-6 hidden">
+        <div class="glass-panel rounded-2xl p-6 shadow-xl flex flex-col border border-[#C5A059]/30">
+          <div class="flex items-center justify-between mb-4 border-b border-white/10 pb-3">
+            <div>
+              <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <i data-lucide="bar-chart-2" class="w-4 h-4 text-[#C5A059]"></i>
+                Público Médio por Temporada (mandante e visitante)
+              </h3>
+              <p class="text-xs text-white/60">Comparativo agrupado entre a média em casa e como visitante</p>
+            </div>
+          </div>
+          <div class="relative flex-1 min-h-[300px]">
+            <canvas id="chartComparativoTemporada"></canvas>
+          </div>
+        </div>
+
+        <div class="glass-panel rounded-2xl p-6 shadow-xl flex flex-col border border-[#C5A059]/30">
+          <div class="flex items-center justify-between mb-4 border-b border-white/10 pb-3">
+            <div>
+              <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <i data-lucide="award" class="w-4 h-4 text-[#C5A059]"></i>
+                Público Médio por Competição (mandante e visitante)
+              </h3>
+              <p class="text-xs text-white/60">Comparativo agrupado de apelo de torcida por torneio</p>
+            </div>
+          </div>
+          <div class="relative flex-1 min-h-[300px]">
+            <canvas id="chartComparativoCompeticao"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div id="section-geral-temporada-competicao" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="glass-panel rounded-2xl p-6 shadow-xl flex flex-col">
           <div class="flex items-center justify-between mb-4">
             <div>
@@ -420,7 +500,7 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div id="section-geral-dia-horario" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="glass-panel rounded-2xl p-6 shadow-xl flex flex-col">
           <div class="flex items-center justify-between mb-4">
             <div>
@@ -526,23 +606,8 @@
       </section>
     </div>
 
-    <!-- ABA: DESEMPENHO TIME -->
     <div id="view-desempenho" class="hidden space-y-8">
       
-      <!-- Card Informativo DESEMPENHO TIME -->
-      <section class="glass-panel rounded-2xl p-5 sm:p-6 shadow-xl border border-[#C5A059]/30 flex items-start sm:items-center gap-4 relative overflow-hidden">
-        <div class="absolute -right-8 -bottom-8 w-32 h-32 rounded-full bg-gradient-to-br from-[#8A1538]/20 via-[#0E4735]/20 to-[#C5A059]/20 blur-2xl pointer-events-none"></div>
-        <div class="p-3 rounded-xl bg-[#0E4735] text-[#C5A059] border border-[#C5A059]/30 shrink-0 relative z-10">
-          <i data-lucide="book-open" class="w-5 h-5"></i>
-        </div>
-        <div class="relative z-10">
-          <p class="text-sm sm:text-base text-white/90 font-medium leading-relaxed">
-            Base com jogos oficiais (<span class="dynamic-year-range">...</span>)
-          </p>
-        </div>
-      </section>
-
-      <!-- Filtros Desempenho -->
       <section class="glass-panel rounded-2xl p-6 shadow-2xl relative z-30">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 border-b border-white/10 pb-3.5">
           <div class="flex items-center gap-2.5">
@@ -570,12 +635,6 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
           
-          <div class="relative" id="perf-dropdown-container-mando">
-            <label class="block text-xs font-semibold text-emerald-200/80 mb-1.5 flex items-center gap-1.5"><i data-lucide="shield" class="w-3.5 h-3.5 text-[#C5A059]"></i> Mando</label>
-            <button type="button" onclick="togglePerfDropdown('mando')" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="perf-label-mando">Todos</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
-            <div id="perf-panel-mando" class="ms-dropdown-menu hidden absolute top-full left-0 right-0 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><div class="flex items-center justify-between text-[11px] pb-1.5 border-b border-white/10"><button onclick="selectPerfAll('mando', true)" class="text-[#C5A059] hover:underline font-medium">Todos</button><button onclick="selectPerfAll('mando', false)" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-48" id="perf-list-mando"></div></div>
-          </div>
-
           <div class="relative" id="perf-dropdown-container-temporada">
             <label class="block text-xs font-semibold text-emerald-200/80 mb-1.5 flex items-center gap-1.5"><i data-lucide="calendar" class="w-3.5 h-3.5 text-[#C5A059]"></i> Temporada</label>
             <button type="button" onclick="togglePerfDropdown('temporada')" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="perf-label-temporada">Todas</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
@@ -592,6 +651,12 @@
             <label class="block text-xs font-semibold text-emerald-200/80 mb-1.5 flex items-center gap-1.5"><i data-lucide="users-2" class="w-3.5 h-3.5 text-[#C5A059]"></i> Adversário</label>
             <button type="button" onclick="togglePerfDropdown('adversario')" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="perf-label-adversario">Todos</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
             <div id="perf-panel-adversario" class="ms-dropdown-menu hidden absolute top-full left-0 right-0 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><input type="text" placeholder="Buscar adversário..." oninput="filterPerfOptions('adversario', this.value)" class="w-full text-[11px] rounded-lg px-2.5 py-1.5 bg-black/50 border border-white/15 text-white"><div class="flex items-center justify-between text-[11px] pb-1 border-b border-white/10"><button onclick="selectPerfAll('adversario', true)" class="text-[#C5A059] hover:underline font-medium">Todos</button><button onclick="selectPerfAll('adversario', false)" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-52" id="perf-list-adversario"></div></div>
+          </div>
+
+          <div class="relative" id="perf-dropdown-container-mando">
+            <label class="block text-xs font-semibold text-emerald-200/80 mb-1.5 flex items-center gap-1.5"><i data-lucide="shield" class="w-3.5 h-3.5 text-[#C5A059]"></i> Mando</label>
+            <button type="button" onclick="togglePerfDropdown('mando')" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="perf-label-mando">Todos</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
+            <div id="perf-panel-mando" class="ms-dropdown-menu hidden absolute top-full left-0 right-0 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><div class="flex items-center justify-between text-[11px] pb-1.5 border-b border-white/10"><button onclick="selectPerfAll('mando', true)" class="text-[#C5A059] hover:underline font-medium">Todos</button><button onclick="selectPerfAll('mando', false)" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-48" id="perf-list-mando"></div></div>
           </div>
 
           <div class="relative" id="perf-dropdown-container-estadio">
@@ -611,7 +676,7 @@
 
       <section class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between border-l-4 border-l-emerald-500">
-          <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-300">Vitórias</span>
+          <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-200/70">Vitórias</span>
           <div class="flex items-baseline justify-between mt-3">
             <span id="perf-kpi-vitorias" class="text-2xl font-black text-white">0</span>
             <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i>
@@ -730,10 +795,8 @@
 
     </div>
 
-    <!-- ABA: CLÁSSICOS -->
     <div id="view-classicos" class="hidden space-y-8">
       
-      <!-- Card Informativo Clássicos -->
       <section class="glass-panel rounded-2xl p-5 sm:p-6 shadow-xl border border-[#C5A059]/30 flex items-start sm:items-center gap-4 relative overflow-hidden">
         <div class="absolute -right-8 -bottom-8 w-32 h-32 rounded-full bg-gradient-to-br from-[#8A1538]/20 via-[#0E4735]/20 to-[#C5A059]/20 blur-2xl pointer-events-none"></div>
         <div class="p-3 rounded-xl bg-[#0E4735] text-[#C5A059] border border-[#C5A059]/30 shrink-0 relative z-10">
@@ -741,12 +804,11 @@
         </div>
         <div class="relative z-10">
           <p class="text-sm sm:text-base text-white/90 font-medium leading-relaxed">
-            Base histórica contendo todos os Clássicos do Fluminense contra 3 rivais cariocas
+            Base histórica contendo todos os Clássicos do Fluminense contra seus 3 rivais cariocas
           </p>
         </div>
       </section>
 
-      <!-- Filtros Clássicos -->
       <section class="glass-panel rounded-2xl p-6 shadow-2xl relative z-30">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 border-b border-white/10 pb-3.5">
           <div class="flex items-center gap-2.5">
@@ -862,7 +924,6 @@
           <span id="classicos-sub-aproveitamento" class="text-[10px] text-white/40 mt-1">Pontos conquistados</span>
         </div>
 
-        <!-- CARD: Média Setor Sul (Clássicos) -->
         <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between border-l-4 border-l-cyan-500">
           <span class="text-[11px] font-bold uppercase tracking-wider text-cyan-300">Média Setor Sul</span>
           <div class="flex items-baseline justify-between mt-3">
@@ -872,7 +933,6 @@
           <span id="classicos-kpi-sub-sul" class="text-[10px] text-white/40 mt-1">Maracanã (Tricolor)</span>
         </div>
 
-        <!-- CARD: Ocupação Média Sul (Clássicos) -->
         <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between border-l-4 border-l-amber-500">
           <span class="text-[11px] font-bold uppercase tracking-wider text-amber-300">Ocupação Média Sul</span>
           <div class="flex items-baseline justify-between mt-3">
@@ -883,7 +943,6 @@
         </div>
       </section>
 
-      <!-- GRÁFICO: Evolução do Saldo (V-D) -->
       <section class="glass-panel rounded-2xl p-6 shadow-2xl space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
           <div>
@@ -899,7 +958,6 @@
         </div>
       </section>
 
-      <!-- GRÁFICO: Setor Sul Clássicos -->
       <section class="glass-panel rounded-2xl p-6 shadow-2xl border border-cyan-500/30">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4 mb-6">
           <div>
@@ -1271,7 +1329,7 @@
       });
     }
 
-    function updateAllDropdowns() {
+function updateAllDropdowns() {
       const mandos = ['Mandante', 'Visitante', 'Neutro'].map(m => ({
         value: m, label: m === 'Mandante' ? 'Mandante (Casa)' : m === 'Visitante' ? 'Visitante (Fora)' : 'Campo Neutro'
       }));
@@ -1286,14 +1344,23 @@
       const opponents = [...new Set(MATCHES_DATA.map(m => m.adv))].filter(a => a && a !== "-" && a !== "A Definir").sort((a, b) => a.localeCompare(b, 'pt-BR'));
       renderChecklist('adversario', opponents.map(adv => ({ value: adv, label: adv })), getMatchesExcluding('adversario'));
 
-      const venues = [...new Set(MATCHES_DATA.map(m => m.estadio))].filter(v => v && v !== "-" && v !== "A Definir").sort();
-      renderChecklist('estadio', venues.map(v => ({ value: v, label: v })), getMatchesExcluding('estadio'));
+      // Estádio (Filtro Inteligente / Cascata)
+      const validEstadioMatches = getMatchesExcluding('estadio');
+      const venues = [...new Set(validEstadioMatches.map(m => m.estadio))].filter(v => v && v !== "-" && v !== "A Definir").sort();
+      renderChecklist('estadio', venues.map(v => ({ value: v, label: v })), validEstadioMatches);
 
+      // --- ATUALIZAÇÃO: Dia da Semana (Filtro Inteligente / Cascata) ---
+      const validDiaMatches = getMatchesExcluding('dia');
+      const diasEncontrados = [...new Set(validDiaMatches.map(m => m.dia))].filter(d => d && d !== "-");
       const daysOrder = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'];
-      renderChecklist('dia', daysOrder.map(d => ({ value: d, label: d })), getMatchesExcluding('dia'));
+      // Ordena os dias encontrados de acordo com a ordem natural da semana
+      diasEncontrados.sort((a, b) => daysOrder.indexOf(a) - daysOrder.indexOf(b)); 
+      renderChecklist('dia', diasEncontrados.map(d => ({ value: d, label: d })), validDiaMatches);
 
-      const times = [...new Set(MATCHES_DATA.map(m => m.hora))].filter(h => h && h !== "-").sort();
-      renderChecklist('horario', times.map(h => ({ value: h, label: `${h}h` })), getMatchesExcluding('horario'));
+      // --- ATUALIZAÇÃO: Horário (Filtro Inteligente / Cascata) ---
+      const validHorarioMatches = getMatchesExcluding('horario');
+      const times = [...new Set(validHorarioMatches.map(m => m.hora))].filter(h => h && h !== "-").sort();
+      renderChecklist('horario', times.map(h => ({ value: h, label: `${h}h` })), validHorarioMatches);
 
       const presentes = [...new Set(MATCHES_DATA.map(m => m.presente))].filter(p => p).sort();
       renderChecklist('presente', presentes.map(p => ({ value: p, label: p })), getMatchesExcluding('presente'));
@@ -1455,7 +1522,7 @@
       const visitGames = validFiltered.filter(m => m.pubVis !== null && m.pubVis > 0);
       const avgVisit = visitGames.length ? visitGames.reduce((acc, x) => acc + x.pubVis, 0) / visitGames.length : 0;
       document.getElementById("kpi-media-visitante").textContent = visitGames.length > 0 ? fmt(avgVisit) : "-";
-      document.getElementById("kpi-sub-visitante").textContent = visitGames.length > 0 ? `${visitGames.length} jogos com público visitante (Flu)` : "Sem público visitante";
+      document.getElementById("kpi-sub-visitante").textContent = visitGames.length > 0 ? `${visitGames.length} jogos com público visitante` : "Sem público visitante";
 
       const sulGames = validFiltered.filter(m => m.estadio === "Maracanã" && m.sul !== null && m.sul > 0);
       const avgSul = sulGames.length ? sulGames.reduce((acc, x) => acc + x.sul, 0) / sulGames.length : 0;
@@ -1492,20 +1559,31 @@
       Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
 
       const seasons = [...new Set(validFiltered.map(m => m.ano))].sort((a,b)=>a-b);
-      const seasonData = seasons.map(yr => {
+      const seasonDataArr = seasons.map(yr => {
         const subset = validFiltered.filter(m => m.ano === yr && m.pub !== null && m.pub > 0);
-        return subset.length ? Math.round(subset.reduce((a, b) => a + b.pub, 0) / subset.length) : 0;
+        return { avg: subset.length ? Math.round(subset.reduce((a, b) => a + b.pub, 0) / subset.length) : 0, count: subset.length };
       });
 
       activeCharts["chartTemporada"] = new Chart(getChartCanvas("chartTemporada"), {
         type: 'bar',
         data: {
           labels: seasons.map(s => s.toString()),
-          datasets: [{ label: 'Média de Público Total', data: seasonData, backgroundColor: '#0E4735', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 8 }]
+          datasets: [{ label: 'Média de Público Total', data: seasonDataArr.map(d => d.avg), backgroundColor: '#0E4735', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 8, customCount: seasonDataArr.map(d => d.count) }]
         },
         options: {
           responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` Público Médio: ${ctx.parsed.y.toLocaleString('pt-BR')} pessoas` } } },
+          plugins: { 
+            legend: { display: false }, 
+            tooltip: { 
+              callbacks: { 
+                label: ctx => {
+                    let jogos = ctx.dataset.customCount[ctx.dataIndex];
+                    let pl = jogos > 1 ? 'jogos' : 'jogo';
+                    return ` Média: ${ctx.parsed.y.toLocaleString('pt-BR')} pessoas (${jogos} ${pl})`; 
+                }
+              } 
+            } 
+          },
           scales: { y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } }
         }
       });
@@ -1526,30 +1604,57 @@
         type: 'bar',
         data: {
           labels: sortedComps,
-          datasets: [{ label: 'Média de Público', data: sortedComps.map(c => Math.round(compMap[c].reduce((x, y) => x + y, 0) / compMap[c].length)), backgroundColor: '#0E4735', borderColor: '#22c55e', borderWidth: 1, borderRadius: 6 }]
+          datasets: [{ 
+            label: 'Média de Público', 
+            data: sortedComps.map(c => Math.round(compMap[c].reduce((x, y) => x + y, 0) / compMap[c].length)), 
+            backgroundColor: '#0E4735', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6,
+            customCount: sortedComps.map(c => compMap[c].length)
+          }]
         },
         options: {
           indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
+          plugins: { 
+            legend: { display: false },
+            tooltip: { 
+              callbacks: { 
+                label: ctx => {
+                    let jogos = ctx.dataset.customCount[ctx.dataIndex];
+                    let pl = jogos > 1 ? 'jogos' : 'jogo';
+                    return ` Média: ${ctx.parsed.x.toLocaleString('pt-BR')} pessoas (${jogos} ${pl})`; 
+                }
+              } 
+            }
+          },
           scales: { x: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } }
         }
       });
 
       const daysOrder = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'];
-      const dayData = daysOrder.map(d => {
+      const dayDataArr = daysOrder.map(d => {
         const subset = validFiltered.filter(m => m.dia === d && m.pub !== null && m.pub > 0);
-        return subset.length ? Math.round(subset.reduce((a, b) => a + b.pub, 0) / subset.length) : 0;
+        return { avg: subset.length ? Math.round(subset.reduce((a, b) => a + b.pub, 0) / subset.length) : 0, count: subset.length };
       });
 
       activeCharts["chartDiaSemana"] = new Chart(getChartCanvas("chartDiaSemana"), {
         type: 'bar',
         data: {
           labels: daysOrder.map(d => d.replace('-feira', '')),
-          datasets: [{ label: 'Média de Público', data: dayData, backgroundColor: daysOrder.map(d => ['Sábado', 'Domingo'].includes(d) ? '#C5A059' : '#0E4735'), borderRadius: 8 }]
+          datasets: [{ label: 'Média de Público', data: dayDataArr.map(d => d.avg), backgroundColor: daysOrder.map(d => ['Sábado', 'Domingo'].includes(d) ? '#C5A059' : '#0E4735'), borderRadius: 8, customCount: dayDataArr.map(d => d.count) }]
         },
         options: {
           responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
+          plugins: { 
+              legend: { display: false },
+              tooltip: { 
+                  callbacks: { 
+                    label: ctx => {
+                        let jogos = ctx.dataset.customCount[ctx.dataIndex];
+                        let pl = jogos > 1 ? 'jogos' : 'jogo';
+                        return ` Média: ${ctx.parsed.y.toLocaleString('pt-BR')} pessoas (${jogos} ${pl})`; 
+                    }
+                  } 
+              }
+          },
           scales: { y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } }
         }
       });
@@ -1560,20 +1665,31 @@
         { label: "Noite (18h-20h59)", min: 18, max: 20 },
         { label: "Noite Tardia (≥21h)", min: 21, max: 24 }
       ];
-      const hourData = hourRanges.map(hr => {
+      const hourDataArr = hourRanges.map(hr => {
         const subset = validFiltered.filter(m => m.hNum !== null && m.hNum >= hr.min && m.hNum <= hr.max && m.pub !== null && m.pub > 0);
-        return subset.length ? Math.round(subset.reduce((a, b) => a + b.pub, 0) / subset.length) : 0;
+        return { avg: subset.length ? Math.round(subset.reduce((a, b) => a + b.pub, 0) / subset.length) : 0, count: subset.length };
       });
 
       activeCharts["chartHorario"] = new Chart(getChartCanvas("chartHorario"), {
         type: 'line',
         data: {
           labels: hourRanges.map(h => h.label),
-          datasets: [{ label: 'Público Médio', data: hourData, borderColor: '#C5A059', backgroundColor: 'rgba(197, 160, 89, 0.15)', borderWidth: 2.5, fill: true, tension: 0.35, pointBackgroundColor: '#8A1538', pointBorderColor: '#FFF', pointRadius: 6 }]
+          datasets: [{ label: 'Público Médio', data: hourDataArr.map(d => d.avg), borderColor: '#C5A059', backgroundColor: 'rgba(197, 160, 89, 0.15)', borderWidth: 2.5, fill: true, tension: 0.35, pointBackgroundColor: '#8A1538', pointBorderColor: '#FFF', pointRadius: 6, customCount: hourDataArr.map(d => d.count) }]
         },
         options: {
           responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
+          plugins: { 
+              legend: { display: false },
+              tooltip: { 
+                  callbacks: { 
+                    label: ctx => {
+                        let jogos = ctx.dataset.customCount[ctx.dataIndex];
+                        let pl = jogos > 1 ? 'jogos' : 'jogo';
+                        return ` Média: ${ctx.parsed.y.toLocaleString('pt-BR')} pessoas (${jogos} ${pl})`; 
+                    }
+                  } 
+              }
+          },
           scales: { y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } }
         }
       });
@@ -1595,9 +1711,322 @@
         options: {
           responsive: true, maintainAspectRatio: false,
           plugins: { legend: { position: 'top' }, tooltip: { callbacks: { label: ctx => ctx.dataset.type === 'line' ? ` Capacidade Teórica: 20.000 lugares` : ` Sul Pagantes: ${ctx.parsed.y.toLocaleString('pt-BR')} (${((ctx.parsed.y / 20000) * 100).toFixed(1)}% do setor)` } } },
-          scales: { y: { beginAtZero: true, max: 22000, ticks: { callback: v => v.toLocaleString('pt-BR') } } }
+          scales: { y: { beginAtZero: true, max: 23000, ticks: { callback: v => v.toLocaleString('pt-BR') } } }
         }
       });
+
+      // Variável de controle para saber se apenas Mandante e Visitante estão selecionados
+      const isDuplaMando = selectedState.mando.length === 2 && selectedState.mando.includes("Mandante") && selectedState.mando.includes("Visitante");
+
+      // INÍCIO: LÓGICA CONDICIONAL DOS GRÁFICOS DE VISITANTE
+      const topVisitanteSection = document.getElementById("section-top-visitante");
+      const visitanteDuplaSection = document.getElementById("section-visitante-dupla");
+      
+      if (topVisitanteSection) {
+        const mostraVisitante = selectedState.mando.length === 0 || selectedState.mando.includes("Visitante");
+        
+        if (mostraVisitante) {
+          topVisitanteSection.classList.remove("hidden");
+          
+          if (visitanteDuplaSection) {
+             if (isDuplaMando) {
+                 visitanteDuplaSection.classList.add("hidden");
+             } else {
+                 visitanteDuplaSection.classList.remove("hidden");
+             }
+          }
+          
+          const visitMatches = validFiltered.filter(m => m.pubVis !== null && m.pubVis > 0);
+          
+          // 1. Top 10 Estádios Visitante
+          const estadioMap = {};
+          visitMatches.forEach(m => {
+            if (!estadioMap[m.estadio]) estadioMap[m.estadio] = { sum: 0, count: 0 };
+            estadioMap[m.estadio].sum += m.pubVis;
+            estadioMap[m.estadio].count += 1;
+          });
+
+          const topEstadios = Object.keys(estadioMap)
+            .map(est => ({ est, avg: Math.round(estadioMap[est].sum / estadioMap[est].count), count: estadioMap[est].count }))
+            .sort((a, b) => b.avg - a.avg)
+            .slice(0, 10);
+
+          if (activeCharts["chartTopVisitante"]) activeCharts["chartTopVisitante"].destroy();
+          
+          if (topEstadios.length > 0) {
+            activeCharts["chartTopVisitante"] = new Chart(getChartCanvas("chartTopVisitante"), {
+              type: 'bar',
+              data: {
+                labels: topEstadios.map(e => e.est),
+                datasets: [{ 
+                    label: 'Média de Público', 
+                    data: topEstadios.map(e => e.avg), 
+                    backgroundColor: '#870A28', 
+                    borderColor: '#C5A059', 
+                    borderWidth: 1.5, 
+                    borderRadius: 6,
+                    customCount: topEstadios.map(e => e.count) 
+                }]
+              },
+              options: {
+                indexAxis: 'y',
+                responsive: true, maintainAspectRatio: false,
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: { 
+                        callbacks: { 
+                            label: ctx => {
+                                let jogos = ctx.dataset.customCount[ctx.dataIndex];
+                                let pl = jogos > 1 ? 'jogos' : 'jogo';
+                                return ` Média: ${ctx.parsed.x.toLocaleString('pt-BR')} pessoas (${jogos} ${pl})`; 
+                            }
+                        } 
+                    }
+                },
+                scales: { x: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } }
+              }
+            });
+          } else {
+             const ctx = getChartCanvas("chartTopVisitante");
+             ctx.font = "12px 'Plus Jakarta Sans', sans-serif";
+             ctx.fillStyle = "rgba(255,255,255,0.4)";
+             ctx.textAlign = "center";
+             ctx.fillText("Nenhum dado de público visitante para os filtros atuais.", ctx.canvas.width / 2, 50);
+          }
+
+          // 2. Média Visitante por Temporada
+          if (visitanteDuplaSection) {
+              const visitSeasons = [...new Set(visitMatches.map(m => m.ano))].sort((a,b)=>a-b);
+              const visitSeasonDataArr = visitSeasons.map(yr => {
+                const subset = visitMatches.filter(m => m.ano === yr);
+                return { avg: subset.length ? Math.round(subset.reduce((a, b) => a + b.pubVis, 0) / subset.length) : 0, count: subset.length };
+              });
+
+              if (activeCharts["chartVisitanteTemporada"]) activeCharts["chartVisitanteTemporada"].destroy();
+
+              if (visitSeasonDataArr.length > 0) {
+                activeCharts["chartVisitanteTemporada"] = new Chart(getChartCanvas("chartVisitanteTemporada"), {
+                  type: 'bar',
+                  data: {
+                    labels: visitSeasons.map(s => s.toString()),
+                    datasets: [{ 
+                      label: 'Média de Público Visitante', 
+                      data: visitSeasonDataArr.map(d => d.avg), 
+                      backgroundColor: '#870A28', 
+                      borderColor: '#C5A059', 
+                      borderWidth: 1.5, 
+                      borderRadius: 8, 
+                      customCount: visitSeasonDataArr.map(d => d.count) 
+                    }]
+                  },
+                  options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { 
+                      legend: { display: false }, 
+                      tooltip: { 
+                        callbacks: { 
+                          label: ctx => {
+                              let jogos = ctx.dataset.customCount[ctx.dataIndex];
+                              let pl = jogos > 1 ? 'jogos' : 'jogo';
+                              return ` Média: ${ctx.parsed.y.toLocaleString('pt-BR')} pessoas (${jogos} ${pl})`; 
+                          }
+                        } 
+                      } 
+                    },
+                    scales: { y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } }
+                  }
+                });
+              } else {
+                 const ctx = getChartCanvas("chartVisitanteTemporada");
+                 ctx.font = "12px 'Plus Jakarta Sans', sans-serif";
+                 ctx.fillStyle = "rgba(255,255,255,0.4)";
+                 ctx.textAlign = "center";
+                 ctx.fillText("Nenhum dado de público visitante por temporada para os filtros atuais.", ctx.canvas.width / 2, 50);
+              }
+          }
+
+          // 3. Média Visitante por Competição
+          if (visitanteDuplaSection) {
+              const compVisMap = {};
+              visitMatches.forEach(m => {
+                if (!m.torneio || m.torneio === "-") return;
+                if (!compVisMap[m.torneio]) compVisMap[m.torneio] = [];
+                compVisMap[m.torneio].push(m.pubVis);
+              });
+
+              const sortedCompsVis = Object.keys(compVisMap).sort((a, b) => {
+                const avgA = compVisMap[a].reduce((x, y) => x + y, 0) / compVisMap[a].length;
+                const avgB = compVisMap[b].reduce((x, y) => x + y, 0) / compVisMap[b].length;
+                return avgB - avgA;
+              });
+
+              if (activeCharts["chartVisitanteCompeticao"]) activeCharts["chartVisitanteCompeticao"].destroy();
+              
+              if (sortedCompsVis.length > 0) {
+                activeCharts["chartVisitanteCompeticao"] = new Chart(getChartCanvas("chartVisitanteCompeticao"), {
+                  type: 'bar',
+                  data: {
+                    labels: sortedCompsVis,
+                    datasets: [{ 
+                      label: 'Média de Público Visitante', 
+                      data: sortedCompsVis.map(c => Math.round(compVisMap[c].reduce((x, y) => x + y, 0) / compVisMap[c].length)), 
+                      backgroundColor: '#870A28', 
+                      borderColor: '#C5A059', 
+                      borderWidth: 1.5, 
+                      borderRadius: 8,
+                      customCount: sortedCompsVis.map(c => compVisMap[c].length)
+                    }]
+                  },
+                  options: {
+                    indexAxis: 'y',
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { 
+                      legend: { display: false },
+                      tooltip: { 
+                        callbacks: { 
+                          label: ctx => {
+                            let jogos = ctx.dataset.customCount[ctx.dataIndex];
+                            let pl = jogos > 1 ? 'jogos' : 'jogo';
+                            return ` Média: ${ctx.parsed.x.toLocaleString('pt-BR')} pessoas (${jogos} ${pl})`; 
+                          }
+                        } 
+                      }
+                    },
+                    scales: { x: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } }
+                  }
+                });
+              } else {
+                 const ctx = getChartCanvas("chartVisitanteCompeticao");
+                 ctx.font = "12px 'Plus Jakarta Sans', sans-serif";
+                 ctx.fillStyle = "rgba(255,255,255,0.4)";
+                 ctx.textAlign = "center";
+                 ctx.fillText("Nenhum dado de visitante por competição para os filtros atuais.", ctx.canvas.width / 2, 50);
+              }
+          }
+
+        } else {
+          topVisitanteSection.classList.add("hidden");
+          if (visitanteDuplaSection) visitanteDuplaSection.classList.add("hidden");
+        }
+      }
+      // FIM: LÓGICA DO GRÁFICO CONDICIONAL
+      
+      // INÍCIO: LÓGICA CONDICIONAL COMPARATIVO DUPLO (MANDANTE + VISITANTE)
+      const comparativoDuploSection = document.getElementById("section-comparativo-duplo");
+      if (comparativoDuploSection) {
+        if (isDuplaMando) {
+          comparativoDuploSection.classList.remove("hidden");
+          
+          // 1. Temporada Dupla
+          const compSeasons = [...new Set(validFiltered.map(m => m.ano))].sort((a,b)=>a-b);
+          const dataMandanteTemp = [], countMandanteTemp = [], dataVisitanteTemp = [], countVisitanteTemp = [];
+
+          compSeasons.forEach(yr => {
+            const mandMatches = validFiltered.filter(m => m.ano === yr && m.mando === 'Mandante' && m.pub !== null && m.pub > 0);
+            const visMatches = validFiltered.filter(m => m.ano === yr && m.mando === 'Visitante' && m.pubVis !== null && m.pubVis > 0);
+            
+            dataMandanteTemp.push(mandMatches.length ? Math.round(mandMatches.reduce((a,b)=>a+b.pub,0)/mandMatches.length) : 0);
+            countMandanteTemp.push(mandMatches.length);
+            
+            dataVisitanteTemp.push(visMatches.length ? Math.round(visMatches.reduce((a,b)=>a+b.pubVis,0)/visMatches.length) : 0);
+            countVisitanteTemp.push(visMatches.length);
+          });
+
+          if (activeCharts["chartComparativoTemporada"]) activeCharts["chartComparativoTemporada"].destroy();
+          activeCharts["chartComparativoTemporada"] = new Chart(getChartCanvas("chartComparativoTemporada"), {
+            type: 'bar',
+            data: {
+              labels: compSeasons.map(String),
+              datasets: [
+                { label: 'Média Mandante', data: dataMandanteTemp, backgroundColor: '#0E4735', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: countMandanteTemp },
+                { label: 'Média Visitante', data: dataVisitanteTemp, backgroundColor: '#870A28', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: countVisitanteTemp }
+              ]
+            },
+            options: {
+              responsive: true, maintainAspectRatio: false,
+              plugins: {
+                legend: { display: true, position: 'top', labels: { color: 'rgba(255,255,255,0.7)', font: {family: "'Plus Jakarta Sans', sans-serif"} } },
+                tooltip: {
+                  callbacks: {
+                    label: ctx => {
+                      let jogos = ctx.dataset.customCount[ctx.dataIndex];
+                      let pl = jogos > 1 ? 'jogos' : 'jogo';
+                      return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} pessoas (${jogos} ${pl})`;
+                    }
+                  }
+                }
+              },
+              scales: { y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } }
+            }
+          });
+
+          // 2. Competição Dupla
+          const compNames = [...new Set(validFiltered.map(m => m.torneio))].filter(c => c && c !== "-");
+          const compStats = compNames.map(c => {
+             const mandMatches = validFiltered.filter(m => m.torneio === c && m.mando === 'Mandante' && m.pub !== null && m.pub > 0);
+             const visMatches = validFiltered.filter(m => m.torneio === c && m.mando === 'Visitante' && m.pubVis !== null && m.pubVis > 0);
+             return {
+               comp: c,
+               mandAvg: mandMatches.length ? Math.round(mandMatches.reduce((a,b)=>a+b.pub,0)/mandMatches.length) : 0,
+               mandCount: mandMatches.length,
+               visAvg: visMatches.length ? Math.round(visMatches.reduce((a,b)=>a+b.pubVis,0)/visMatches.length) : 0,
+               visCount: visMatches.length
+             };
+          }).filter(s => s.mandCount > 0 || s.visCount > 0).sort((a,b) => b.mandAvg - a.mandAvg);
+
+          if (activeCharts["chartComparativoCompeticao"]) activeCharts["chartComparativoCompeticao"].destroy();
+          activeCharts["chartComparativoCompeticao"] = new Chart(getChartCanvas("chartComparativoCompeticao"), {
+            type: 'bar',
+            data: {
+              labels: compStats.map(s => s.comp),
+              datasets: [
+                { label: 'Média Mandante', data: compStats.map(s => s.mandAvg), backgroundColor: '#0E4735', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: compStats.map(s => s.mandCount) },
+                { label: 'Média Visitante', data: compStats.map(s => s.visAvg), backgroundColor: '#870A28', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: compStats.map(s => s.visCount) }
+              ]
+            },
+            options: {
+              indexAxis: 'y',
+              responsive: true, maintainAspectRatio: false,
+              plugins: {
+                legend: { display: true, position: 'top', labels: { color: 'rgba(255,255,255,0.7)', font: {family: "'Plus Jakarta Sans', sans-serif"} } },
+                tooltip: {
+                  callbacks: {
+                    label: ctx => {
+                      let jogos = ctx.dataset.customCount[ctx.dataIndex];
+                      let pl = jogos > 1 ? 'jogos' : 'jogo';
+                      return ` ${ctx.dataset.label}: ${ctx.parsed.x.toLocaleString('pt-BR')} pessoas (${jogos} ${pl})`;
+                    }
+                  }
+                }
+              },
+              scales: { x: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } }
+            }
+          });
+        } else {
+          comparativoDuploSection.classList.add("hidden");
+        }
+      }
+      // FIM: LÓGICA CONDICIONAL COMPARATIVO DUPLO
+
+      // INÍCIO: LÓGICA CONDICIONAL PARA ESCONDER GRÁFICOS GERAIS SE APENAS VISITANTE OU SE DUPLO
+      const secGeralTempComp = document.getElementById("section-geral-temporada-competicao");
+      const secGeralDiaHora = document.getElementById("section-geral-dia-horario");
+      
+      if (secGeralTempComp && secGeralDiaHora) {
+        const isSomenteVisitante = selectedState.mando.length === 1 && selectedState.mando.includes("Visitante");
+        
+        if (isSomenteVisitante) {
+          secGeralTempComp.classList.add("hidden");
+          secGeralDiaHora.classList.add("hidden");
+        } else if (isDuplaMando) {
+          secGeralTempComp.classList.add("hidden");
+          secGeralDiaHora.classList.remove("hidden");
+        } else {
+          secGeralTempComp.classList.remove("hidden");
+          secGeralDiaHora.classList.remove("hidden");
+        }
+      }
+      // FIM: LÓGICA CONDICIONAL GRÁFICOS GERAIS
     }
 
     function renderTable() {
@@ -1859,7 +2288,6 @@
       document.getElementById('perf-kpi-derrotas').textContent = derrotas;
       document.getElementById('perf-sub-derrotas').textContent = totalJogos > 0 ? `${((derrotas/totalJogos)*100).toFixed(1)}% dos jogos` : '0%';
       
-      // Aplicando separador de milhar nos cards de Gols Pró e Gols Contra
       document.getElementById('perf-kpi-gp').textContent = gpTotal.toLocaleString('pt-BR');
       document.getElementById('perf-sub-gp').textContent = totalJogos > 0 ? `Média ${(gpTotal/totalJogos).toFixed(2)} por jogo` : '0';
       document.getElementById('perf-kpi-gc').textContent = gcTotal.toLocaleString('pt-BR');
@@ -1935,7 +2363,9 @@
       const maxYear = Math.max(...years);
       document.querySelectorAll('.dynamic-year-range').forEach(el => { el.textContent = `${minYear}-${maxYear}`; });
     }
+  </script>
 
+  <script>
     const classicosState = { competicao: [], adversario: [], presente: [], minAno: null, maxAno: null };
 
     function initClassicosSlider() {
@@ -2281,7 +2711,7 @@
                 options: {
                   responsive: true, maintainAspectRatio: false,
                   plugins: { legend: { position: 'top' }, tooltip: { callbacks: { label: ctx => ctx.dataset.type === 'line' ? ` Capacidade Teórica: 20.000 lugares` : ` Sul Pagantes: ${ctx.parsed.y.toLocaleString('pt-BR')} (${((ctx.parsed.y / 20000) * 100).toFixed(1)}% do setor)` } } },
-                  scales: { y: { beginAtZero: true, max: 22000, ticks: { callback: v => v.toLocaleString('pt-BR') } } }
+                  scales: { y: { beginAtZero: true, max: 23000, ticks: { callback: v => v.toLocaleString('pt-BR') } } }
                 }
               });
           } else {

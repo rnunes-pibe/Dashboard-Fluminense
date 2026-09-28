@@ -445,23 +445,6 @@
         </div>
       </section>
 
-      <section id="section-top-visitante" class="glass-panel rounded-2xl p-6 shadow-2xl border border-rose-500/30 hidden">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4 mb-6">
-          <div>
-            <h3 class="text-base font-black text-white flex items-center gap-2">
-              <i data-lucide="map-pin" class="w-4 h-4 text-rose-900"></i>
-              Top 10 Estádios - Fluminense Visitante 
-            </h3>
-            <p class="text-xs text-white/60 mt-0.5">
-              Maiores médias de público pagante (torcida visitante do Fluminense)
-            </p>
-          </div>
-        </div>
-        <div class="relative w-full h-[280px]">
-          <canvas id="chartTopVisitante"></canvas>
-        </div>
-      </section>
-
       <!-- CONVÊINER LADO A LADO: VISITANTE POR TEMPORADA E COMPETIÇÃO -->
       <div id="section-visitante-dupla" class="grid grid-cols-1 lg:grid-cols-2 gap-6 hidden">
         
@@ -562,6 +545,23 @@
         </div>
       </div>
 
+      <section id="section-top-visitante" class="glass-panel rounded-2xl p-6 shadow-2xl border border-rose-500/30 hidden">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4 mb-6">
+          <div>
+            <h3 class="text-base font-black text-white flex items-center gap-2">
+              <i data-lucide="map-pin" class="w-4 h-4 text-rose-900"></i>
+              Top 10 Estádios - Fluminense Visitante 
+            </h3>
+            <p class="text-xs text-white/60 mt-0.5">
+              Maiores médias de público pagante (torcida visitante do Fluminense)
+            </p>
+          </div>
+        </div>
+        <div class="relative w-full h-[280px]">
+          <canvas id="chartTopVisitante"></canvas>
+        </div>
+      </section>
+
       <div id="section-geral-dia-horario" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="glass-panel rounded-2xl p-6 shadow-xl flex flex-col">
           <div class="flex items-center justify-between mb-4">
@@ -628,43 +628,69 @@
 
       <section class="glass-panel rounded-2xl p-6 shadow-2xl space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
-          <div>
-            <h3 class="text-base font-bold text-white flex items-center gap-2">
-              <i data-lucide="list-filter" class="w-4 h-4 text-[#C5A059]"></i>
-              Catálogo Completo das Partidas
-            </h3>
-            <p class="text-xs text-white/50">Pesquise e analise todas as partidas válidas cadastradas</p>
+          <div class="flex items-center gap-2 bg-[#0B1512] p-1 rounded-lg border border-[#C5A059]/30 overflow-x-auto">
+            <button onclick="switchTableTab('catalogo')" id="tab-inner-catalogo" class="px-4 py-2 text-xs font-bold rounded-md bg-[#C5A059] text-[#0A120F] transition whitespace-nowrap">
+              Catálogo de Partidas
+            </button>
+            <button onclick="switchTableTab('estatisticas')" id="tab-inner-estatisticas" class="px-4 py-2 text-xs font-bold text-white/70 hover:text-white rounded-md transition whitespace-nowrap hover:bg-white/5">
+              Estatísticas por Adversário
+            </button>
           </div>
-          <div class="relative w-full sm:w-72">
+          <div id="search-container-catalogo" class="relative w-full sm:w-72">
             <input type="text" id="search-adversario" oninput="applyFilters()" placeholder="Buscar por adversário..." class="w-full text-xs rounded-xl pl-9 pr-3.5 py-2.5 bg-black/50 border border-white/20 text-white placeholder-white/40">
             <i data-lucide="search" class="w-4 h-4 text-white/40 absolute left-3 top-3"></i>
           </div>
         </div>
 
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs text-white/80">
-            <thead class="text-[11px] font-bold uppercase tracking-wider bg-white/5 text-[#C5A059] border-b border-white/10">
-              <tr>
-                <th class="p-3"># ID</th>
-                <th class="p-3">Data</th>
-                <th class="p-3">Horário</th>
-                <th class="p-3">Competição</th>
-                <th class="p-3">Mando</th>
-                <th class="p-3">Adversário</th>
-                <th class="p-3">Estádio</th>
-                <th class="p-3 text-center">Placar</th>
-                <th class="p-3 text-right">Público Total</th>
-                <th class="p-3 text-right">Visitante</th>
-                <th class="p-3 text-right">Sul Pagantes</th>
-                <th class="p-3 text-right">Ocup. Sul</th>
-                <th class="p-3 text-center">Presença</th>
-              </tr>
-            </thead>
-            <tbody id="table-body" class="divide-y divide-white/5 font-mono text-[12px]"></tbody>
-          </table>
+        <!-- CONTEÚDO: CATÁLOGO DE PARTIDAS -->
+        <div id="content-catalogo" class="space-y-4">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-white/80">
+              <thead class="text-[11px] font-bold uppercase tracking-wider bg-white/5 text-[#C5A059] border-b border-white/10">
+                <tr>
+                  <th class="p-3"># ID</th>
+                  <th class="p-3">Data</th>
+                  <th class="p-3">Horário</th>
+                  <th class="p-3">Competição</th>
+                  <th class="p-3">Mando</th>
+                  <th class="p-3">Adversário</th>
+                  <th class="p-3">Estádio</th>
+                  <th class="p-3 text-center">Placar</th>
+                  <th class="p-3 text-right">Público Total</th>
+                  <th class="p-3 text-right">Visitante</th>
+                  <th class="p-3 text-right">Sul Pagantes</th>
+                  <th class="p-3 text-right">Ocup. Sul</th>
+                  <th class="p-3 text-center">Presença</th>
+                </tr>
+              </thead>
+              <tbody id="table-body" class="divide-y divide-white/5 font-mono text-[12px]"></tbody>
+            </table>
+          </div>
+
+          <div id="table-pagination" class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 text-xs text-white/60"></div>
         </div>
 
-        <div id="table-pagination" class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 text-xs text-white/60"></div>
+        <!-- CONTEÚDO: ESTATÍSTICAS POR ADVERSÁRIO -->
+        <div id="content-estatisticas" class="hidden space-y-4">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-white/80">
+              <thead class="text-[11px] font-bold uppercase tracking-wider bg-white/5 text-[#C5A059] border-b border-white/10">
+                <tr>
+                  <th class="p-3">Adversário</th>
+                  <th class="p-3 text-center">Jogos</th>
+                  <th class="p-3 text-center text-emerald-400">Vitórias</th>
+                  <th class="p-3 text-center text-amber-300">Empates</th>
+                  <th class="p-3 text-center text-rose-400">Derrotas</th>
+                  <th class="p-3 text-center">GP</th>
+                  <th class="p-3 text-center">GC</th>
+                  <th class="p-3 text-center">SG</th>
+                  <th class="p-3 text-right">Aproveitamento</th>
+                </tr>
+              </thead>
+              <tbody id="estadio-adv-table-body" class="divide-y divide-white/5 font-mono text-[12px]"></tbody>
+            </table>
+          </div>
+        </div>
       </section>
     </div>
 
@@ -1094,6 +1120,28 @@
   </footer>
 
   <script>
+    function switchTableTab(tab) {
+      const contentCatalogo = document.getElementById('content-catalogo');
+      const contentEstatisticas = document.getElementById('content-estatisticas');
+      const btnCatalogo = document.getElementById('tab-inner-catalogo');
+      const btnEstatisticas = document.getElementById('tab-inner-estatisticas');
+      const searchContainer = document.getElementById('search-container-catalogo');
+
+      if (tab === 'catalogo') {
+        contentCatalogo.classList.remove('hidden');
+        contentEstatisticas.classList.add('hidden');
+        btnCatalogo.className = "px-4 py-2 text-xs font-bold rounded-md bg-[#C5A059] text-[#0A120F] transition whitespace-nowrap";
+        btnEstatisticas.className = "px-4 py-2 text-xs font-bold text-white/70 hover:text-white rounded-md transition whitespace-nowrap hover:bg-white/5";
+        if (searchContainer) searchContainer.style.display = 'block';
+      } else {
+        contentCatalogo.classList.add('hidden');
+        contentEstatisticas.classList.remove('hidden');
+        btnEstatisticas.className = "px-4 py-2 text-xs font-bold rounded-md bg-[#C5A059] text-[#0A120F] transition whitespace-nowrap";
+        btnCatalogo.className = "px-4 py-2 text-xs font-bold text-white/70 hover:text-white rounded-md transition whitespace-nowrap hover:bg-white/5";
+        if (searchContainer) searchContainer.style.display = 'none';
+      }
+    }
+
     function switchTab(tabName) {
       const viewCapa = document.getElementById('view-capa');
       const viewEstadio = document.getElementById('view-estadio');
@@ -1610,14 +1658,23 @@ function updateAllDropdowns() {
 
       // NOVO: Cálculo de Desempenho para a aba Estádio
       let vitorias = 0, empates = 0, derrotas = 0, gpTotal = 0, gcTotal = 0;
+      const advStatsEstadio = {}; // Objeto para armazenar as estatísticas por adversário
+
       validFiltered.forEach(m => {
         const parts = m.placar.split('x').map(p => parseInt(p.trim(), 10));
         if (parts.length !== 2 || isNaN(parts[0]) || isNaN(parts[1])) return;
         const fluGols = parts[0], advGols = parts[1];
         gpTotal += fluGols; gcTotal += advGols;
-        if (fluGols > advGols) vitorias++;
-        else if (fluGols < advGols) derrotas++;
-        else empates++;
+        
+        let res = 'E';
+        if (fluGols > advGols) { vitorias++; res = 'V'; }
+        else if (fluGols < advGols) { derrotas++; res = 'D'; }
+        else { empates++; res = 'E'; }
+
+        // Agrupa os dados para a nova tabela
+        if (!advStatsEstadio[m.adv]) advStatsEstadio[m.adv] = { jog: 0, v: 0, e: 0, d: 0, gp: 0, gc: 0 };
+        advStatsEstadio[m.adv].jog++; advStatsEstadio[m.adv].gp += fluGols; advStatsEstadio[m.adv].gc += advGols;
+        if (res === 'V') advStatsEstadio[m.adv].v++; else if (res === 'E') advStatsEstadio[m.adv].e++; else if (res === 'D') advStatsEstadio[m.adv].d++;
       });
       const totalJogosPerf = validFiltered.length;
       const ptsPossiveis = totalJogosPerf * 3;
@@ -1639,6 +1696,8 @@ function updateAllDropdowns() {
         document.getElementById('estadio-kpi-aproveitamento').textContent = aproveitamento;
         document.getElementById('estadio-sub-aproveitamento').textContent = `${ptsGanhos} de ${ptsPossiveis} pts`;
       }
+      
+      renderEstadioAdvTable(advStatsEstadio);
     }
 
     function getChartCanvas(id) {
@@ -1809,8 +1868,8 @@ function updateAllDropdowns() {
         }
       });
 
-      // Variável de controle para saber se apenas Mandante e Visitante estão selecionados
-      const isDuplaMando = selectedState.mando.length === 2 && selectedState.mando.includes("Mandante") && selectedState.mando.includes("Visitante");
+      // Variável de controle para saber se Mandante e Visitante estão selecionados (incluindo Neutro ou Todos)
+      const isDuplaMando = (selectedState.mando.includes("Mandante") && selectedState.mando.includes("Visitante")) || selectedState.mando.length === 0;
 
       // INÍCIO: LÓGICA CONDICIONAL DOS GRÁFICOS DE VISITANTE
       const topVisitanteSection = document.getElementById("section-top-visitante");
@@ -2175,6 +2234,48 @@ function updateAllDropdowns() {
           <button onclick="navigatePage(1)" ${tableCurrentPage >= totalPages ? 'disabled class="opacity-30 cursor-not-allowed"' : 'class="hover:text-[#C5A059] active:scale-95"'} class="px-3 py-1.5 bg-white/5 rounded-lg border border-white/10 transition">Próxima</button>
         </div>
       `;
+    }
+
+    function renderEstadioAdvTable(advStats) {
+      const tbody = document.getElementById('estadio-adv-table-body');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      const sortedAdversarios = Object.keys(advStats).sort((a, b) => {
+        const sA = advStats[a], sB = advStats[b];
+        if (sB.jog !== sA.jog) return sB.jog - sA.jog;
+        const apA = ((sA.v * 3) + sA.e) / (sA.jog * 3);
+        const apB = ((sB.v * 3) + sB.e) / (sB.jog * 3);
+        return apB - apA;
+      });
+
+      if (sortedAdversarios.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-white/40 italic">Nenhum confronto encontrado para os filtros atuais.</td></tr>`;
+        return;
+      }
+
+      sortedAdversarios.forEach(adv => {
+        const s = advStats[adv];
+        const sg = s.gp - s.gc;
+        const pts = (s.v * 3) + s.e;
+        const ap = ((pts / (s.jog * 3)) * 100).toFixed(1) + '%';
+        const sgColor = sg > 0 ? 'text-emerald-400' : sg < 0 ? 'text-rose-400' : 'text-white/70';
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-white/[0.04] transition border-b border-white/5';
+        tr.innerHTML = `
+          <td class="p-3 font-sans font-bold text-white">${adv}</td>
+          <td class="p-3 text-center text-white/90 font-bold">${s.jog}</td>
+          <td class="p-3 text-center text-emerald-400 font-bold">${s.v}</td>
+          <td class="p-3 text-center text-amber-300">${s.e}</td>
+          <td class="p-3 text-center text-rose-400">${s.d}</td>
+          <td class="p-3 text-center text-cyan-300">${s.gp.toLocaleString('pt-BR')}</td>
+          <td class="p-3 text-center text-purple-300">${s.gc.toLocaleString('pt-BR')}</td>
+          <td class="p-3 text-center font-bold ${sgColor}">${sg > 0 ? '+' + sg.toLocaleString('pt-BR') : sg.toLocaleString('pt-BR')}</td>
+          <td class="p-3 text-right text-[#C5A059] font-bold">${ap}</td>
+        `;
+        tbody.appendChild(tr);
+      });
     }
 
     function navigatePage(direction) {

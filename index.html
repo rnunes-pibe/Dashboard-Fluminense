@@ -147,9 +147,9 @@
             Início
           </button>
           <button onclick="switchTab('estadio')" id="tab-btn-estadio" class="px-3 py-1.5 rounded-md text-xs font-bold transition text-white/70 hover:text-white">
-            Ocupação Estádio
+            Público e Desempenho
           </button>
-          <button onclick="switchTab('desempenho')" id="tab-btn-desempenho" class="px-3 py-1.5 rounded-md text-xs font-bold transition text-white/70 hover:text-white">
+          <button onclick="switchTab('desempenho')" id="tab-btn-desempenho" class="px-3 py-1.5 rounded-md text-xs font-bold transition text-white/70 hover:text-white" style="display: none;">
             Desempenho
           </button>
           <button onclick="switchTab('classicos')" id="tab-btn-classicos" class="px-3 py-1.5 rounded-md text-xs font-bold transition text-white/70 hover:text-white">
@@ -184,9 +184,9 @@
           <div class="pt-4 flex flex-wrap items-center gap-4">
             <button onclick="switchTab('estadio')" class="px-6 py-3.5 rounded-xl bg-gradient-to-r from-[#8A1538] to-[#0E4735] hover:opacity-90 text-white font-bold text-sm shadow-xl shadow-black/50 transition flex items-center gap-2.5 active:scale-95 border border-[#C5A059]/40">
               <i data-lucide="bar-chart-3" class="w-4 h-4 text-[#C5A059]"></i>
-              <span>Ocupação Estádio</span>
+              <span>Público e Desempenho</span>
             </button>
-            <button onclick="switchTab('desempenho')" class="px-6 py-3.5 rounded-xl bg-[#0E4735] hover:bg-[#12201A] text-[#C5A059] font-bold text-sm border border-[#C5A059]/40 transition flex items-center gap-2.5 active:scale-95 shadow-xl">
+            <button onclick="switchTab('desempenho')" class="px-6 py-3.5 rounded-xl bg-[#0E4735] hover:bg-[#12201A] text-[#C5A059] font-bold text-sm border border-[#C5A059]/40 transition flex items-center gap-2.5 active:scale-95 shadow-xl" style="display: none;">
               <i data-lucide="activity" class="w-4 h-4"></i>
               <span>Desempenho</span>
             </button>
@@ -228,7 +228,8 @@
           <p class="text-sm sm:text-base text-white/90 font-medium leading-relaxed">
             - Base com jogos oficiais (<span class="dynamic-year-range">...</span>) <br>
             - Jogos Conmebol - Poucos boletins financeiros disponíveis, muitos dados preenchidos com informações da imprensa <br>
-            - Público como visitante não está completo e pode conter erros: <br>
+            - Público como visitante: <br>
+            &nbsp &nbsp - Não está 100% completo e pode conter erros. Quando houve dúvida, foi estimado para baixo <br>
             &nbsp &nbsp - Clubes não divulgam boletim financeiro 100% correto, alguns documentos sequer discriminam visitante <br>
             &nbsp &nbsp - Ocultado quando mandante jogou na 'casa do Fluminense'. Exemplo: Cariacica e Brasília <br>
             &nbsp &nbsp - Ocultado quando mandante era clube pequeno no campeonato Carioca <br>
@@ -384,6 +385,63 @@
             <i data-lucide="pie-chart" class="w-4 h-4 text-amber-400"></i>
           </div>
           <span class="text-[10px] text-white/40 mt-1">Capacidade ~20.000</span>
+        </div>
+      </section>
+
+      <!-- NOVO: Cópia dos cards de desempenho para a aba Estádio -->
+      <section class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between border-l-4 border-l-emerald-500">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-300">Vitórias</span>
+          <div class="flex items-baseline justify-between mt-3">
+            <span id="estadio-kpi-vitorias" class="text-2xl font-black text-white">0</span>
+            <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i>
+          </div>
+          <span id="estadio-sub-vitorias" class="text-[10px] text-white/40 mt-1">Jogos vencidos</span>
+        </div>
+
+        <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between border-l-4 border-l-amber-500">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-amber-300">Empates</span>
+          <div class="flex items-baseline justify-between mt-3">
+            <span id="estadio-kpi-empates" class="text-2xl font-black text-white">0</span>
+            <i data-lucide="minus-circle" class="w-4 h-4 text-amber-400"></i>
+          </div>
+          <span id="estadio-sub-empates" class="text-[10px] text-white/40 mt-1">Jogos empatados</span>
+        </div>
+
+        <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between border-l-4 border-l-rose-500">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-rose-300">Derrotas</span>
+          <div class="flex items-baseline justify-between mt-3">
+            <span id="estadio-kpi-derrotas" class="text-2xl font-black text-white">0</span>
+            <i data-lucide="x-circle" class="w-4 h-4 text-rose-400"></i>
+          </div>
+          <span id="estadio-sub-derrotas" class="text-[10px] text-white/40 mt-1">Jogos perdidos</span>
+        </div>
+
+        <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between border-l-4 border-l-cyan-500">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-cyan-300">Gols Pró (GP)</span>
+          <div class="flex items-baseline justify-between mt-3">
+            <span id="estadio-kpi-gp" class="text-2xl font-black text-cyan-300">0</span>
+            <i data-lucide="arrow-up-right" class="w-4 h-4 text-cyan-400"></i>
+          </div>
+          <span id="estadio-sub-gp" class="text-[10px] text-white/40 mt-1">Gols marcados</span>
+        </div>
+
+        <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between border-l-4 border-l-purple-500">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-purple-300">Gols Contra (GC)</span>
+          <div class="flex items-baseline justify-between mt-3">
+            <span id="estadio-kpi-gc" class="text-2xl font-black text-purple-300">0</span>
+            <i data-lucide="arrow-down-right" class="w-4 h-4 text-purple-400"></i>
+          </div>
+          <span id="estadio-sub-gc" class="text-[10px] text-white/40 mt-1">Gols sofridos</span>
+        </div>
+
+        <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between border-l-4 border-l-[#C5A059]">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-[#C5A059]">Aproveitamento</span>
+          <div class="flex items-baseline justify-between mt-3">
+            <span id="estadio-kpi-aproveitamento" class="text-2xl font-black text-[#C5A059]">0%</span>
+            <i data-lucide="award" class="w-4 h-4 text-[#C5A059]"></i>
+          </div>
+          <span id="estadio-sub-aproveitamento" class="text-[10px] text-white/40 mt-1">Pontos conquistados</span>
         </div>
       </section>
 
@@ -610,7 +668,7 @@
       </section>
     </div>
 
-    <div id="view-desempenho" class="hidden space-y-8">
+    <div id="view-desempenho" class="hidden space-y-8" style="display: none;">
       
       <section class="glass-panel rounded-2xl p-6 shadow-2xl relative z-30">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 border-b border-white/10 pb-3.5">
@@ -680,7 +738,7 @@
 
       <section class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between border-l-4 border-l-emerald-500">
-          <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-200/70">Vitórias</span>
+          <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-300">Vitórias</span>
           <div class="flex items-baseline justify-between mt-3">
             <span id="perf-kpi-vitorias" class="text-2xl font-black text-white">0</span>
             <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i>
@@ -1548,6 +1606,38 @@ function updateAllDropdowns() {
         } else {
           alertEl.classList.add("hidden");
         }
+      }
+
+      // NOVO: Cálculo de Desempenho para a aba Estádio
+      let vitorias = 0, empates = 0, derrotas = 0, gpTotal = 0, gcTotal = 0;
+      validFiltered.forEach(m => {
+        const parts = m.placar.split('x').map(p => parseInt(p.trim(), 10));
+        if (parts.length !== 2 || isNaN(parts[0]) || isNaN(parts[1])) return;
+        const fluGols = parts[0], advGols = parts[1];
+        gpTotal += fluGols; gcTotal += advGols;
+        if (fluGols > advGols) vitorias++;
+        else if (fluGols < advGols) derrotas++;
+        else empates++;
+      });
+      const totalJogosPerf = validFiltered.length;
+      const ptsPossiveis = totalJogosPerf * 3;
+      const ptsGanhos = (vitorias * 3) + empates;
+      const aproveitamento = ptsPossiveis > 0 ? ((ptsGanhos / ptsPossiveis) * 100).toFixed(1) + '%' : '0%';
+
+      const elEstadioVitorias = document.getElementById('estadio-kpi-vitorias');
+      if (elEstadioVitorias) {
+        elEstadioVitorias.textContent = vitorias;
+        document.getElementById('estadio-sub-vitorias').textContent = totalJogosPerf > 0 ? `${((vitorias/totalJogosPerf)*100).toFixed(1)}% dos jogos` : '0%';
+        document.getElementById('estadio-kpi-empates').textContent = empates;
+        document.getElementById('estadio-sub-empates').textContent = totalJogosPerf > 0 ? `${((empates/totalJogosPerf)*100).toFixed(1)}% dos jogos` : '0%';
+        document.getElementById('estadio-kpi-derrotas').textContent = derrotas;
+        document.getElementById('estadio-sub-derrotas').textContent = totalJogosPerf > 0 ? `${((derrotas/totalJogosPerf)*100).toFixed(1)}% dos jogos` : '0%';
+        document.getElementById('estadio-kpi-gp').textContent = gpTotal.toLocaleString('pt-BR');
+        document.getElementById('estadio-sub-gp').textContent = totalJogosPerf > 0 ? `Média ${(gpTotal/totalJogosPerf).toFixed(2)} por jogo` : '0';
+        document.getElementById('estadio-kpi-gc').textContent = gcTotal.toLocaleString('pt-BR');
+        document.getElementById('estadio-sub-gc').textContent = totalJogosPerf > 0 ? `Média ${(gcTotal/totalJogosPerf).toFixed(2)} por jogo` : '0';
+        document.getElementById('estadio-kpi-aproveitamento').textContent = aproveitamento;
+        document.getElementById('estadio-sub-aproveitamento').textContent = `${ptsGanhos} de ${ptsPossiveis} pts`;
       }
     }
 

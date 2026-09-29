@@ -227,8 +227,9 @@
         <div class="relative z-10">
           <p class="text-sm sm:text-base text-white/90 font-medium leading-relaxed">
             - Base com jogos oficiais (<span class="dynamic-year-range">...</span>) <br>
+            - Campo Neutro (Final Libertadores e Copa do Mundo) não foi estimado público tricolor como mandante, nem visitante <br>
             - Jogos Conmebol - Poucos boletins financeiros disponíveis, muitos dados preenchidos com informações da imprensa <br>
-            - Público como visitante: <br>
+            - Público jogando como visitante: <br>
             &nbsp &nbsp - Não está 100% completo e pode conter erros. Quando houve dúvida, foi estimado para baixo <br>
             &nbsp &nbsp - Clubes não divulgam boletim financeiro 100% correto, alguns documentos sequer discriminam visitante <br>
             &nbsp &nbsp - Ocultado quando mandante jogou na 'casa do Fluminense'. Exemplo: Cariacica e Brasília <br>
@@ -332,6 +333,16 @@
         </div>
       </section>
 
+      <!-- Card Separador: Público -->
+      <div class="glass-panel rounded-xl p-4 flex items-center gap-3 border-l-4 border-l-[#C5A059]">
+        <div class="p-2 rounded-lg bg-[#0E4735] text-[#C5A059] border border-[#C5A059]/30">
+          <i data-lucide="users" class="w-4 h-4"></i>
+        </div>
+        <h3 class="text-sm font-bold uppercase tracking-wider text-[#C5A059]">
+          Público
+        </h3>
+      </div>
+
       <section class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between border-l-4 border-l-emerald-500">
           <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-200/70">Partidas Filtradas</span>
@@ -352,7 +363,7 @@
         </div>
 
         <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between border-l-4 border-l-teal-500">
-          <span class="text-[11px] font-bold uppercase tracking-wider text-teal-300">Média Mandante</span>
+          <span class="text-[11px] font-bold uppercase tracking-wider text-teal-300">Média Flu Mandante</span>
           <div class="flex items-baseline justify-between mt-3">
             <span id="kpi-media-mandante" class="text-2xl font-black text-teal-300">0</span>
             <i data-lucide="home" class="w-4 h-4 text-teal-400"></i>
@@ -361,7 +372,7 @@
         </div>
 
         <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between border-l-4 border-l-rose-500">
-          <span class="text-[11px] font-bold uppercase tracking-wider text-rose-300">Média Visitante</span>
+          <span class="text-[11px] font-bold uppercase tracking-wider text-rose-300">Média Flu Visitante</span>
           <div class="flex items-baseline justify-between mt-3">
             <span id="kpi-media-visitante" class="text-2xl font-black text-rose-300">0</span>
             <i data-lucide="plane" class="w-4 h-4 text-rose-400"></i>
@@ -387,6 +398,16 @@
           <span class="text-[10px] text-white/40 mt-1">Capacidade ~20.000</span>
         </div>
       </section>
+
+      <!-- Card Separador: Desempenho -->
+      <div class="glass-panel rounded-xl p-4 flex items-center gap-3 border-l-4 border-l-[#C5A059]">
+        <div class="p-2 rounded-lg bg-[#0E4735] text-[#C5A059] border border-[#C5A059]/30">
+          <i data-lucide="activity" class="w-4 h-4"></i>
+        </div>
+        <h3 class="text-sm font-bold uppercase tracking-wider text-[#C5A059]">
+          Desempenho
+        </h3>
+      </div>
 
       <!-- NOVO: Cópia dos cards de desempenho para a aba Estádio -->
       <section class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -1627,17 +1648,17 @@ function updateAllDropdowns() {
       const homeGames = validFiltered.filter(m => m.mando === "Mandante" && m.pub !== null && m.pub > 0);
       const avgHome = homeGames.length ? homeGames.reduce((acc, x) => acc + x.pub, 0) / homeGames.length : 0;
       document.getElementById("kpi-media-mandante").textContent = homeGames.length > 0 ? fmt(avgHome) : "-";
-      document.getElementById("kpi-sub-mandante").textContent = homeGames.length > 0 ? `${homeGames.length} jogos em casa` : "Nenhum jogo mandante";
+      document.getElementById("kpi-sub-mandante").textContent = homeGames.length > 0 ? `${homeGames.length} jogos com mando do Fluminense` : "Nenhum jogo mandante";
 
       const visitGames = validFiltered.filter(m => m.pubVis !== null && m.pubVis > 0);
       const avgVisit = visitGames.length ? visitGames.reduce((acc, x) => acc + x.pubVis, 0) / visitGames.length : 0;
       document.getElementById("kpi-media-visitante").textContent = visitGames.length > 0 ? fmt(avgVisit) : "-";
-      document.getElementById("kpi-sub-visitante").textContent = visitGames.length > 0 ? `${visitGames.length} jogos com público visitante` : "Sem público visitante";
+      document.getElementById("kpi-sub-visitante").textContent = visitGames.length > 0 ? `${visitGames.length} jogos com Tricolores visitantes` : "Sem público visitante";
 
       const sulGames = validFiltered.filter(m => m.estadio === "Maracanã" && m.sul !== null && m.sul > 0);
       const avgSul = sulGames.length ? sulGames.reduce((acc, x) => acc + x.sul, 0) / sulGames.length : 0;
       document.getElementById("kpi-media-sul").textContent = sulGames.length > 0 ? fmt(avgSul) : "-";
-      document.getElementById("kpi-sub-sul").textContent = sulGames.length > 0 ? `${sulGames.length} jogos com Setor Sul` : "Sem dados do Setor Sul";
+      document.getElementById("kpi-sub-sul").textContent = sulGames.length > 0 ? `${sulGames.length} jogos com Tricolores no Setor Sul` : "Sem dados do Setor Sul";
 
       const taxaSul = avgSul > 0 ? (avgSul / 20000) * 100 : 0;
       document.getElementById("kpi-taxa-sul").textContent = taxaSul > 0 ? `${taxaSul.toFixed(1)}%` : "-";

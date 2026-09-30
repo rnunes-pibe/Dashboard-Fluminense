@@ -227,7 +227,7 @@
         <div class="relative z-10">
           <p class="text-sm sm:text-base text-white/90 font-medium leading-relaxed">
             - Base com jogos oficiais (<span class="dynamic-year-range">...</span>) <br>
-            - Campo Neutro (Final Libertadores e Copa do Mundo) não foi estimado público tricolor como mandante, nem visitante <br>
+            - Campo Neutro (Final Libertadores e Copa do Mundo): Não foi estimado público tricolor como mandante, nem visitante <br>
             - Jogos Conmebol - Poucos boletins financeiros disponíveis, muitos dados preenchidos com informações da imprensa <br>
             - Público jogando como visitante: <br>
             &nbsp &nbsp - Não está 100% completo e pode conter erros. Quando houve dúvida, foi estimado para baixo <br>
@@ -582,6 +582,66 @@
           <canvas id="chartTopVisitante"></canvas>
         </div>
       </section>
+
+      <div id="section-comparativo-duplo-dia-hora" class="grid grid-cols-1 lg:grid-cols-2 gap-6 hidden">
+        <div class="glass-panel rounded-2xl p-6 shadow-xl flex flex-col border border-[#C5A059]/30">
+          <div class="flex items-center justify-between mb-4 border-b border-white/10 pb-3">
+            <div>
+              <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <i data-lucide="calendar-days" class="w-4 h-4 text-[#C5A059]"></i>
+                Média de Público por Dia da Semana (mandante e visitante)
+              </h3>
+            </div>
+          </div>
+          <div class="relative flex-1 min-h-[300px]">
+            <canvas id="chartComparativoDiaSemana"></canvas>
+          </div>
+        </div>
+
+        <div class="glass-panel rounded-2xl p-6 shadow-xl flex flex-col border border-[#C5A059]/30">
+          <div class="flex items-center justify-between mb-4 border-b border-white/10 pb-3">
+            <div>
+              <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <i data-lucide="clock" class="w-4 h-4 text-[#C5A059]"></i>
+                Média de Público por Faixa de Horário (mandante e visitante)
+              </h3>
+            </div>
+          </div>
+          <div class="relative flex-1 min-h-[300px]">
+            <canvas id="chartComparativoHorario"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div id="section-visitante-dia-horario" class="grid grid-cols-1 lg:grid-cols-2 gap-6 hidden">
+        <div class="glass-panel rounded-2xl p-6 shadow-xl flex flex-col border border-rose-500/30">
+          <div class="flex items-center justify-between mb-4 border-b border-white/10 pb-3">
+            <div>
+              <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <i data-lucide="calendar-days" class="w-4 h-4 text-rose-900"></i>
+                Média de Público Flu Visitante por Dia da Semana
+              </h3>
+            </div>
+          </div>
+          <div class="relative flex-1 min-h-[300px]">
+            <canvas id="chartVisitanteDiaSemana"></canvas>
+          </div>
+        </div>
+
+        <div class="glass-panel rounded-2xl p-6 shadow-xl flex flex-col border border-rose-900/30">
+          <div class="flex items-center justify-between mb-4 border-b border-white/10 pb-3">
+            <div>
+              <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <i data-lucide="clock" class="w-4 h-4 text-rose-500"></i>
+                Média de Público Flu Visitante por Faixa de Horário
+              </h3>
+            </div>
+          </div>
+          <div class="relative flex-1 min-h-[300px]">
+            <canvas id="chartVisitanteHorario"></canvas>
+          </div>
+        </div>
+      </div>
 
       <div id="section-geral-dia-horario" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="glass-panel rounded-2xl p-6 shadow-xl flex flex-col">
@@ -1895,6 +1955,7 @@ function updateAllDropdowns() {
       // INÍCIO: LÓGICA CONDICIONAL DOS GRÁFICOS DE VISITANTE
       const topVisitanteSection = document.getElementById("section-top-visitante");
       const visitanteDuplaSection = document.getElementById("section-visitante-dupla");
+      const visitanteDiaHorarioSection = document.getElementById("section-visitante-dia-horario");
       
       if (topVisitanteSection) {
         const mostraVisitante = selectedState.mando.length === 0 || selectedState.mando.includes("Visitante");
@@ -1905,8 +1966,10 @@ function updateAllDropdowns() {
           if (visitanteDuplaSection) {
              if (isDuplaMando) {
                  visitanteDuplaSection.classList.add("hidden");
+                 if (visitanteDiaHorarioSection) visitanteDiaHorarioSection.classList.add("hidden");
              } else {
                  visitanteDuplaSection.classList.remove("hidden");
+                 if (visitanteDiaHorarioSection) visitanteDiaHorarioSection.classList.remove("hidden");
              }
           }
           
@@ -2076,20 +2139,132 @@ function updateAllDropdowns() {
                  ctx.textAlign = "center";
                  ctx.fillText("Nenhum dado de visitante por competição para os filtros atuais.", ctx.canvas.width / 2, 50);
               }
+              
+              // 4. Média Visitante por Dia da Semana
+              if (visitanteDiaHorarioSection) {
+                  const daysOrderVis = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'];
+                  const dayVisDataArr = daysOrderVis.map(d => {
+                    const subset = visitMatches.filter(m => m.dia === d);
+                    return { avg: subset.length ? Math.round(subset.reduce((a, b) => a + b.pubVis, 0) / subset.length) : 0, count: subset.length };
+                  });
+
+                  if (activeCharts["chartVisitanteDiaSemana"]) activeCharts["chartVisitanteDiaSemana"].destroy();
+                  
+                  if (dayVisDataArr.some(d => d.count > 0)) {
+                      activeCharts["chartVisitanteDiaSemana"] = new Chart(getChartCanvas("chartVisitanteDiaSemana"), {
+                          type: 'bar',
+                          data: {
+                              labels: daysOrderVis.map(d => d.replace('-feira', '')),
+                              datasets: [{
+                                  label: 'Média de Público Visitante',
+                                  data: dayVisDataArr.map(d => d.avg),
+                                  backgroundColor: '#870A28',
+                                  borderColor: '#C5A059',
+                                  borderWidth: 1.5,
+                                  borderRadius: 8,
+                                  customCount: dayVisDataArr.map(d => d.count)
+                              }]
+                          },
+                          options: {
+                              responsive: true, maintainAspectRatio: false,
+                              plugins: {
+                                  legend: { display: false },
+                                  tooltip: {
+                                      callbacks: {
+                                          label: ctx => {
+                                              let jogos = ctx.dataset.customCount[ctx.dataIndex];
+                                              let pl = jogos > 1 ? 'jogos' : 'jogo';
+                                              return ` Média: ${ctx.parsed.y.toLocaleString('pt-BR')} pessoas (${jogos} ${pl})`;
+                                          }
+                                      }
+                                  }
+                              },
+                              scales: { y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } }
+                          }
+                      });
+                  } else {
+                     const ctx = getChartCanvas("chartVisitanteDiaSemana");
+                     ctx.font = "12px 'Plus Jakarta Sans', sans-serif";
+                     ctx.fillStyle = "rgba(255,255,255,0.4)";
+                     ctx.textAlign = "center";
+                     ctx.fillText("Nenhum dado de público visitante por dia para os filtros atuais.", ctx.canvas.width / 2, 50);
+                  }
+
+                  // 5. Média Visitante por Horário
+                  const hourRangesVis = [
+                    { label: "Manhã (<13h)", min: 0, max: 12 },
+                    { label: "Tarde (13h-17h59)", min: 13, max: 17 },
+                    { label: "Noite (18h-20h59)", min: 18, max: 20 },
+                    { label: "Noite Tardia (≥21h)", min: 21, max: 24 }
+                  ];
+                  const hourVisDataArr = hourRangesVis.map(hr => {
+                    const subset = visitMatches.filter(m => m.hNum !== null && m.hNum >= hr.min && m.hNum <= hr.max);
+                    return { avg: subset.length ? Math.round(subset.reduce((a, b) => a + b.pubVis, 0) / subset.length) : 0, count: subset.length };
+                  });
+
+                  if (activeCharts["chartVisitanteHorario"]) activeCharts["chartVisitanteHorario"].destroy();
+
+                  if (hourVisDataArr.some(d => d.count > 0)) {
+                      activeCharts["chartVisitanteHorario"] = new Chart(getChartCanvas("chartVisitanteHorario"), {
+                          type: 'line',
+                          data: {
+                              labels: hourRangesVis.map(h => h.label),
+                              datasets: [{
+                                  label: 'Média de Público Visitante',
+                                  data: hourVisDataArr.map(d => d.avg),
+                                  borderColor: '#C5A059',
+                                  backgroundColor: 'rgba(197, 160, 89, 0.15)',
+                                  borderWidth: 2.5,
+                                  fill: true,
+                                  tension: 0.35,
+                                  pointBackgroundColor: '#870A28',
+                                  pointBorderColor: '#FFF',
+                                  pointRadius: 6,
+                                  customCount: hourVisDataArr.map(d => d.count)
+                              }]
+                          },
+                          options: {
+                              responsive: true, maintainAspectRatio: false,
+                              plugins: {
+                                  legend: { display: false },
+                                  tooltip: {
+                                      callbacks: {
+                                          label: ctx => {
+                                              let jogos = ctx.dataset.customCount[ctx.dataIndex];
+                                              let pl = jogos > 1 ? 'jogos' : 'jogo';
+                                              return ` Média: ${ctx.parsed.y.toLocaleString('pt-BR')} pessoas (${jogos} ${pl})`;
+                                          }
+                                      }
+                                  }
+                              },
+                              scales: { y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } }
+                          }
+                      });
+                  } else {
+                     const ctx = getChartCanvas("chartVisitanteHorario");
+                     ctx.font = "12px 'Plus Jakarta Sans', sans-serif";
+                     ctx.fillStyle = "rgba(255,255,255,0.4)";
+                     ctx.textAlign = "center";
+                     ctx.fillText("Nenhum dado de visitante por horário para os filtros atuais.", ctx.canvas.width / 2, 50);
+                  }
+              }
           }
 
         } else {
           topVisitanteSection.classList.add("hidden");
           if (visitanteDuplaSection) visitanteDuplaSection.classList.add("hidden");
+          if (visitanteDiaHorarioSection) visitanteDiaHorarioSection.classList.add("hidden");
         }
       }
       // FIM: LÓGICA DO GRÁFICO CONDICIONAL
       
       // INÍCIO: LÓGICA CONDICIONAL COMPARATIVO DUPLO (MANDANTE + VISITANTE)
       const comparativoDuploSection = document.getElementById("section-comparativo-duplo");
+      const comparativoDuploDiaHoraSection = document.getElementById("section-comparativo-duplo-dia-hora");
       if (comparativoDuploSection) {
         if (isDuplaMando) {
           comparativoDuploSection.classList.remove("hidden");
+          if (comparativoDuploDiaHoraSection) comparativoDuploDiaHoraSection.classList.remove("hidden");
           
           // 1. Temporada Dupla
           const compSeasons = [...new Set(validFiltered.map(m => m.ano))].sort((a,b)=>a-b);
@@ -2176,8 +2351,102 @@ function updateAllDropdowns() {
               scales: { x: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } }
             }
           });
+
+          // 3. Dia da Semana Duplo
+          if (comparativoDuploDiaHoraSection) {
+            const daysOrderDuplo = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'];
+            const dataMandanteDia = [], countMandanteDia = [], dataVisitanteDia = [], countVisitanteDia = [];
+
+            daysOrderDuplo.forEach(d => {
+              const mandMatches = validFiltered.filter(m => m.dia === d && m.mando === 'Mandante' && m.pub !== null && m.pub > 0);
+              const visMatches = validFiltered.filter(m => m.dia === d && m.mando === 'Visitante' && m.pubVis !== null && m.pubVis > 0);
+              
+              dataMandanteDia.push(mandMatches.length ? Math.round(mandMatches.reduce((a,b)=>a+b.pub,0)/mandMatches.length) : 0);
+              countMandanteDia.push(mandMatches.length);
+              
+              dataVisitanteDia.push(visMatches.length ? Math.round(visMatches.reduce((a,b)=>a+b.pubVis,0)/visMatches.length) : 0);
+              countVisitanteDia.push(visMatches.length);
+            });
+
+            if (activeCharts["chartComparativoDiaSemana"]) activeCharts["chartComparativoDiaSemana"].destroy();
+            activeCharts["chartComparativoDiaSemana"] = new Chart(getChartCanvas("chartComparativoDiaSemana"), {
+              type: 'bar',
+              data: {
+                labels: daysOrderDuplo.map(d => d.replace('-feira', '')),
+                datasets: [
+                  { label: 'Média Mandante', data: dataMandanteDia, backgroundColor: '#0E4735', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: countMandanteDia },
+                  { label: 'Média Visitante', data: dataVisitanteDia, backgroundColor: '#870A28', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: countVisitanteDia }
+                ]
+              },
+              options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                  legend: { display: true, position: 'top', labels: { color: 'rgba(255,255,255,0.7)', font: {family: "'Plus Jakarta Sans', sans-serif"} } },
+                  tooltip: {
+                    callbacks: {
+                      label: ctx => {
+                        let jogos = ctx.dataset.customCount[ctx.dataIndex];
+                        let pl = jogos > 1 ? 'jogos' : 'jogo';
+                        return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} pessoas (${jogos} ${pl})`;
+                      }
+                    }
+                  }
+                },
+                scales: { y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } }
+              }
+            });
+
+            // 4. Horário Duplo
+            const hourRangesDuplo = [
+              { label: "Manhã (<13h)", min: 0, max: 12 },
+              { label: "Tarde (13h-17h59)", min: 13, max: 17 },
+              { label: "Noite (18h-20h59)", min: 18, max: 20 },
+              { label: "Noite Tardia (≥21h)", min: 21, max: 24 }
+            ];
+            const dataMandanteHora = [], countMandanteHora = [], dataVisitanteHora = [], countVisitanteHora = [];
+
+            hourRangesDuplo.forEach(hr => {
+              const mandMatches = validFiltered.filter(m => m.hNum !== null && m.hNum >= hr.min && m.hNum <= hr.max && m.mando === 'Mandante' && m.pub !== null && m.pub > 0);
+              const visMatches = validFiltered.filter(m => m.hNum !== null && m.hNum >= hr.min && m.hNum <= hr.max && m.mando === 'Visitante' && m.pubVis !== null && m.pubVis > 0);
+              
+              dataMandanteHora.push(mandMatches.length ? Math.round(mandMatches.reduce((a,b)=>a+b.pub,0)/mandMatches.length) : 0);
+              countMandanteHora.push(mandMatches.length);
+              
+              dataVisitanteHora.push(visMatches.length ? Math.round(visMatches.reduce((a,b)=>a+b.pubVis,0)/visMatches.length) : 0);
+              countVisitanteHora.push(visMatches.length);
+            });
+
+            if (activeCharts["chartComparativoHorario"]) activeCharts["chartComparativoHorario"].destroy();
+            activeCharts["chartComparativoHorario"] = new Chart(getChartCanvas("chartComparativoHorario"), {
+              type: 'line',
+              data: {
+                labels: hourRangesDuplo.map(h => h.label),
+                datasets: [
+                  { label: 'Média Mandante', data: dataMandanteHora, borderColor: '#10b981', backgroundColor: 'transparent', borderWidth: 2.5, fill: false, tension: 0.35, pointBackgroundColor: '#0E4735', pointBorderColor: '#10b981', pointRadius: 5, customCount: countMandanteHora },
+                  { label: 'Média Visitante', data: dataVisitanteHora, borderColor: '#f43f5e', backgroundColor: 'transparent', borderWidth: 2.5, fill: false, tension: 0.35, pointBackgroundColor: '#870A28', pointBorderColor: '#f43f5e', pointRadius: 5, customCount: countVisitanteHora }
+                ]
+              },
+              options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                  legend: { display: true, position: 'top', labels: { color: 'rgba(255,255,255,0.7)', font: {family: "'Plus Jakarta Sans', sans-serif"} } },
+                  tooltip: {
+                    callbacks: {
+                      label: ctx => {
+                        let jogos = ctx.dataset.customCount[ctx.dataIndex];
+                        let pl = jogos > 1 ? 'jogos' : 'jogo';
+                        return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} pessoas (${jogos} ${pl})`;
+                      }
+                    }
+                  }
+                },
+                scales: { y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } }
+              }
+            });
+          }
         } else {
           comparativoDuploSection.classList.add("hidden");
+          if (comparativoDuploDiaHoraSection) comparativoDuploDiaHoraSection.classList.add("hidden");
         }
       }
       // FIM: LÓGICA CONDICIONAL COMPARATIVO DUPLO
@@ -2194,7 +2463,7 @@ function updateAllDropdowns() {
           secGeralDiaHora.classList.add("hidden");
         } else if (isDuplaMando) {
           secGeralTempComp.classList.add("hidden");
-          secGeralDiaHora.classList.remove("hidden");
+          secGeralDiaHora.classList.add("hidden");
         } else {
           secGeralTempComp.classList.remove("hidden");
           secGeralDiaHora.classList.remove("hidden");

@@ -159,7 +159,6 @@
 
   <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
     
-    <!-- VIEW CAPA -->
     <div id="view-capa" class="space-y-8">
       <section class="glass-panel rounded-3xl p-8 sm:p-12 shadow-2xl relative overflow-hidden border border-[#C5A059]/40">
         <div class="absolute -right-16 -bottom-16 w-80 h-80 rounded-full bg-gradient-to-br from-[#8A1538]/20 via-[#0E4735]/30 to-[#C5A059]/10 blur-3xl pointer-events-none"></div>
@@ -549,6 +548,22 @@
         </div>
       </div>
 
+      <!-- NOVO GRÁFICO: Desempenho por Temporada -->
+      <section class="glass-panel rounded-2xl p-6 shadow-2xl space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i data-lucide="bar-chart-2" class="w-4 h-4 text-[#C5A059] inline mr-1"></i>
+              Desempenho por Temporada
+            </h3>
+            <p class="text-xs text-white/50">Histórico de vitórias, empates e derrotas ao longo dos anos filtrados</p>
+          </div>
+        </div>
+        <div class="relative w-full h-[300px]">
+          <canvas id="chartDesempenhoTemporada"></canvas>
+        </div>
+      </section>
+
       <section class="glass-panel rounded-2xl p-6 shadow-2xl border border-cyan-500/30">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4 mb-6">
           <div>
@@ -880,7 +895,7 @@
 
     let selectedState = {
       temporada: [], competicao: [], adversario: [], estadio: [], dia: [], horario: [],
-      mando: ['Mandante'], 
+      mando: [], 
       presente: []
     };
 
@@ -1639,7 +1654,49 @@
         }
       }
 
-      // 6. SETOR SUL
+      // 6. DESEMPENHO POR TEMPORADA (NOVO GRÁFICO)
+      const vTemporada = [], eTemporada = [], dTemporada = [];
+      seasons.forEach(yr => {
+          const matchesYr = validFiltered.filter(m => m.ano === yr);
+          let v = 0, e = 0, d = 0;
+          matchesYr.forEach(m => {
+              const parts = m.placar.split('x').map(p => parseInt(p.trim(), 10));
+              if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+                  if (parts[0] > parts[1]) v++;
+                  else if (parts[0] < parts[1]) d++;
+                  else e++;
+              }
+          });
+          vTemporada.push(v);
+          eTemporada.push(e);
+          dTemporada.push(d);
+      });
+
+      if (activeCharts["chartDesempenhoTemporada"]) activeCharts["chartDesempenhoTemporada"].destroy();
+      activeCharts["chartDesempenhoTemporada"] = new Chart(getChartCanvas("chartDesempenhoTemporada"), {
+        type: 'bar',
+        data: {
+          labels: seasons.map(String),
+          datasets: [
+            { label: 'Vitórias', data: vTemporada, backgroundColor: '#10b981', borderRadius: 4 },
+            { label: 'Empates', data: eTemporada, backgroundColor: '#f59e0b', borderRadius: 4 },
+            { label: 'Derrotas', data: dTemporada, backgroundColor: '#f43f5e', borderRadius: 4 }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { 
+            legend: { position: 'top', labels: { color: 'rgba(255,255,255,0.7)' } },
+            tooltip: { mode: 'index', intersect: false }
+          },
+          scales: {
+            x: { stacked: false, ticks: { color: 'rgba(255,255,255,0.7)' }, grid: { display: false } },
+            y: { beginAtZero: true, ticks: { color: 'rgba(255,255,255,0.7)' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+          }
+        }
+      });
+
+      // 7. SETOR SUL
       const sulMatches = validFiltered.filter(m => m.estadio === "Maracanã" && m.sul !== null && m.sul > 0).sort((a, b) => b.sul - a.sul).slice(0, 10);
       
       const ctxSul = getChartCanvas("chartSetorSul");
@@ -1919,7 +1976,6 @@
     function renderClassicosChecklist(type, items, matchingSubset) {
       const container = document.getElementById(`classicos-list-${type}`);
       if (!container) return;
-      
       if (items.length === 0) {
         container.innerHTML = '<div class="text-[11px] text-white/40 p-2 text-center italic">Nenhuma opção disponível</div>';
         return;

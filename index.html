@@ -1328,7 +1328,7 @@
 
     function resetFilters() {
       Object.keys(selectedState).forEach(k => { selectedState[k] = []; });
-      selectedState.mando = ['Mandante'];
+      selectedState.mando = [];
       document.querySelectorAll('#view-estadio input[type="text"]').forEach(input => input.value = '');
       const searchBox = document.getElementById("search-adversario");
       if (searchBox) searchBox.value = "";

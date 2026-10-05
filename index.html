@@ -1726,12 +1726,12 @@
         type: 'bar',
         data: {
           labels: sulMatches.map(m => {
-            if (!m.data || m.data === "-") return `${m.adv} (-)`;
+            if (!m.data || m.data === "-") return [`${m.adv}`, `(-)`];
             const p = m.data.split(/[-/]/);
             const dia = p[0].length === 4 ? p[2] : p[0];
             const mes = p[1];
             const ano = p[0].length === 4 ? p[0].slice(2, 4) : p[2].slice(2, 4);
-            return `${m.adv} (${dia}-${mes}-${ano})`;
+            return [`${m.adv}`, `(${dia}-${mes}-${ano})`];
           }),
           datasets: [
             { 
@@ -2252,12 +2252,12 @@
                 type: 'bar',
                 data: {
                   labels: topSulMatchesClassicos.map(m => {
-                    if (!m.data || m.data === "-") return `${m.adv} (-)`;
+                    if (!m.data || m.data === "-") return [`${m.adv}`, `(-)`];
                     const p = m.data.split(/[-/]/);
                     const dia = p[0].length === 4 ? p[2] : p[0];
                     const mes = p[1];
                     const ano = p[0].length === 4 ? p[0].slice(2, 4) : p[2].slice(2, 4);
-                    return `${m.adv} (${dia}-${mes}-${ano})`;
+                    return [`${m.adv}`, `(${dia}-${mes}-${ano})`];
                   }),
                   datasets: [
                     { label: 'Sul Pagantes', data: topSulMatchesClassicos.map(m => m.sul), backgroundColor: degradeClassico, borderRadius: 6, order: 2 },

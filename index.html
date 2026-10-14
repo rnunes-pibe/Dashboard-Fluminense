@@ -607,7 +607,7 @@
             </button>
           </div>
           <div id="search-container-catalogo" class="relative w-full sm:w-72">
-            <input type="text" id="search-adversario" oninput="applyFilters()" placeholder="Buscar por adversário..." class="w-full text-xs rounded-xl pl-9 pr-3.5 py-2.5 bg-black/50 border border-white/20 text-white placeholder-white/40">
+            <input type="text" id="search-adversario" oninput="debouncedApplyFilters()" placeholder="Buscar por adversário..." class="w-full text-xs rounded-xl pl-9 pr-3.5 py-2.5 bg-black/50 border border-white/20 text-white placeholder-white/40">
             <i data-lucide="search" class="w-4 h-4 text-white/40 absolute left-3 top-3"></i>
           </div>
         </div>
@@ -849,31 +849,57 @@
         </div>
       </section>
 
-      <section class="glass-panel rounded-2xl p-6 shadow-2xl relative z-30">
-        <div class="flex items-center gap-2.5 mb-5 border-b border-white/10 pb-3.5">
-          <div class="p-2 rounded-lg bg-[#0E4735] text-[#C5A059] border border-[#C5A059]/30">
-            <i data-lucide="list-filter" class="w-4 h-4"></i>
-          </div>
-          <div>
-            <h2 class="text-sm font-bold uppercase tracking-wider text-[#C5A059]">
-              Lista de Clássicos Filtrados
-            </h2>
+      <section class="glass-panel rounded-2xl p-6 shadow-2xl space-y-4 relative z-30">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
+          <div class="flex items-center gap-2 bg-[#0B1512] p-1 rounded-lg border border-[#C5A059]/30 overflow-x-auto">
+            <button onclick="switchClassicosTableTab('catalogo')" id="tab-classicos-catalogo" class="px-4 py-2 text-xs font-bold rounded-md bg-[#C5A059] text-[#0A120F] transition whitespace-nowrap">
+              Catálogo de Partidas
+            </button>
+            <button onclick="switchClassicosTableTab('estatisticas')" id="tab-classicos-estatisticas" class="px-4 py-2 text-xs font-bold text-white/70 hover:text-white rounded-md transition whitespace-nowrap hover:bg-white/5">
+              Estatísticas por Adversário
+            </button>
           </div>
         </div>
-        <div class="overflow-x-auto mt-4">
-          <table class="w-full text-left text-xs text-white/80">
-            <thead class="text-[11px] font-bold uppercase tracking-wider bg-white/5 text-[#C5A059] border-b border-white/10">
-              <tr>
-                <th class="p-3">Data</th>
-                <th class="p-3">Adversário</th>
-                <th class="p-3 text-center">Placar</th>
-                <th class="p-3">Competição</th>
-              </tr>
-            </thead>
-            <tbody id="classicos-table-body" class="divide-y divide-white/5 font-mono text-[12px]">
-              <tr><td colspan="4" class="p-4 text-center text-white/40">Nenhum dado de clássico carregado.</td></tr>
-            </tbody>
-          </table>
+
+        <!-- CONTEÚDO 1: Catálogo de Partidas CLÁSSICOS -->
+        <div id="content-classicos-catalogo" class="space-y-4">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-white/80">
+              <thead class="text-[11px] font-bold uppercase tracking-wider bg-white/5 text-[#C5A059] border-b border-white/10">
+                <tr>
+                  <th class="p-3">Data</th>
+                  <th class="p-3">Adversário</th>
+                  <th class="p-3 text-center">Placar</th>
+                  <th class="p-3">Competição</th>
+                </tr>
+              </thead>
+              <tbody id="classicos-table-body" class="divide-y divide-white/5 font-mono text-[12px]">
+                <tr><td colspan="4" class="p-4 text-center text-white/40">Nenhum dado de clássico carregado.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- CONTEÚDO 2: ESTATÍSTICAS POR ADVERSÁRIO (CLÁSSICOS) -->
+        <div id="content-classicos-estatisticas" class="hidden space-y-4">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-white/80">
+              <thead class="text-[11px] font-bold uppercase tracking-wider bg-white/5 text-[#C5A059] border-b border-white/10">
+                <tr>
+                  <th class="p-3">Adversário</th>
+                  <th class="p-3 text-center">Jogos</th>
+                  <th class="p-3 text-center text-emerald-400">Vitórias</th>
+                  <th class="p-3 text-center text-amber-300">Empates</th>
+                  <th class="p-3 text-center text-rose-400">Derrotas</th>
+                  <th class="p-3 text-center">GP</th>
+                  <th class="p-3 text-center">GC</th>
+                  <th class="p-3 text-center">SG</th>
+                  <th class="p-3 text-right">Aproveitamento</th>
+                </tr>
+              </thead>
+              <tbody id="classicos-adv-table-body" class="divide-y divide-white/5 font-mono text-[12px]"></tbody>
+            </table>
+          </div>
         </div>
       </section>
     </div>
@@ -904,7 +930,80 @@
     let activeCharts = {};
     let filteredMatches = [];
     let tableCurrentPage = 1;
-    const tablePageSize = 40; 
+    const tablePageSize = 40;
+    let searchDebounceTimer = null;
+
+    // --- FUNÇÕES UTILITÁRIAS E DE PRÉ-PROCESSAMENTO ---
+    function debouncedApplyFilters() {
+      if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+      searchDebounceTimer = setTimeout(() => {
+        applyFilters();
+      }, 180);
+    }
+
+    function normalizeAdv(a) {
+      if (!a) return "";
+      const s = a.toLowerCase().trim();
+      if (s.includes('vasco')) return 'vasco';
+      if (s.includes('flamengo')) return 'flamengo';
+      if (s.includes('botafogo')) return 'botafogo';
+      return s;
+    }
+
+    function computeTimestamp(d) {
+      if (!d || d === "-") return 0;
+      const parts = d.split(/[-/.]/);
+      if (parts.length === 3) {
+        const y = parts[0].length === 4 ? parseInt(parts[0], 10) : (parts[2].length === 2 ? 2000 + parseInt(parts[2], 10) : parseInt(parts[2], 10));
+        const m = parseInt(parts[1], 10) - 1;
+        const day = parts[0].length === 4 ? parseInt(parts[2], 10) : parseInt(parts[0], 10);
+        return new Date(y, m, day).getTime();
+      }
+      return 0;
+    }
+
+    function computeSortDate(str) {
+      if (!str || str === "-") return new Date(2026, 0, 1).getTime();
+      const p = str.split(/[-/]/);
+      if (p.length === 3) {
+        if (p[0].length === 4) return new Date(p[0], p[1] - 1, p[2]).getTime();
+        return new Date(p[2], p[1] - 1, p[0]).getTime();
+      }
+      return new Date(2026, 0, 1).getTime();
+    }
+
+    function parseScore(placarStr, normalizeHyphen = false) {
+      if (!placarStr) return { gf: null, ga: null };
+      let clean = String(placarStr);
+      if (normalizeHyphen) {
+        clean = clean.toLowerCase().replace(/\s+/g, '').replace('-', 'x');
+      }
+      const parts = clean.split('x').map(p => parseInt(p.trim(), 10));
+      if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+        return { gf: parts[0], ga: parts[1] };
+      }
+      return { gf: null, ga: null };
+    }
+
+    function parseNumber(val) {
+      if (val === null || val === undefined || val === "" || val === "-") return null;
+      if (typeof val === 'number') return val;
+      const cleanStr = String(val).replace(/\./g, '').replace(/,/g, '.').trim();
+      const num = Number(cleanStr);
+      return isNaN(num) ? null : num;
+    }
+
+    function isValidMatch(placar) {
+      if (!placar) return false;
+      const str = String(placar).trim().toLowerCase();
+      if (str === "-" || str === "" || str.includes("a realizar") || str.includes("adiado")) return false;
+      return true;
+    }
+
+    function fmt(n) {
+      if (n === null || n === undefined || isNaN(n) || n === 0) return "-";
+      return Math.round(n).toLocaleString('pt-BR');
+    }
 
     document.addEventListener('click', (e) => {
       const isInside = e.target.closest('[id^="dropdown-container-"], [id^="classicos-dropdown-container-"]');
@@ -930,6 +1029,25 @@
         btnEstatisticas.className = "px-4 py-2 text-xs font-bold rounded-md bg-[#C5A059] text-[#0A120F] transition whitespace-nowrap";
         btnCatalogo.className = "px-4 py-2 text-xs font-bold text-white/70 hover:text-white rounded-md transition whitespace-nowrap hover:bg-white/5";
         if (searchContainer) searchContainer.style.display = 'none';
+      }
+    }
+
+    function switchClassicosTableTab(tab) {
+      const contentCatalogo = document.getElementById('content-classicos-catalogo');
+      const contentEstatisticas = document.getElementById('content-classicos-estatisticas');
+      const btnCatalogo = document.getElementById('tab-classicos-catalogo');
+      const btnEstatisticas = document.getElementById('tab-classicos-estatisticas');
+
+      if (tab === 'catalogo') {
+        contentCatalogo.classList.remove('hidden');
+        contentEstatisticas.classList.add('hidden');
+        btnCatalogo.className = "px-4 py-2 text-xs font-bold rounded-md bg-[#C5A059] text-[#0A120F] transition whitespace-nowrap";
+        btnEstatisticas.className = "px-4 py-2 text-xs font-bold text-white/70 hover:text-white rounded-md transition whitespace-nowrap hover:bg-white/5";
+      } else {
+        contentCatalogo.classList.add('hidden');
+        contentEstatisticas.classList.remove('hidden');
+        btnEstatisticas.className = "px-4 py-2 text-xs font-bold rounded-md bg-[#C5A059] text-[#0A120F] transition whitespace-nowrap";
+        btnCatalogo.className = "px-4 py-2 text-xs font-bold text-white/70 hover:text-white rounded-md transition whitespace-nowrap hover:bg-white/5";
       }
     }
 
@@ -963,21 +1081,6 @@
         setTimeout(() => { applyClassicosFilters(); }, 50);
       }
       if (window.lucide) lucide.createIcons();
-    }
-
-    function parseNumber(val) {
-      if (val === null || val === undefined || val === "" || val === "-") return null;
-      if (typeof val === 'number') return val;
-      const cleanStr = String(val).replace(/\./g, '').replace(/,/g, '.').trim();
-      const num = Number(cleanStr);
-      return isNaN(num) ? null : num;
-    }
-
-    function isValidMatch(placar) {
-      if (!placar) return false;
-      const str = String(placar).trim().toLowerCase();
-      if (str === "-" || str === "" || str.includes("a realizar") || str.includes("adiado")) return false;
-      return true;
     }
 
     async function fetchLiveGoogleSheet() {
@@ -1039,12 +1142,29 @@
               const presVal = row['Presente?'] || row['Presente'] || "Não";
 
               if (dtStr || comp !== "-" || adv !== "A Definir") {
+                const placarStr = String(placar);
+                const score = parseScore(placarStr, false);
+                const isMaracanaNorm = estadio.trim().toLowerCase().replace('ã', 'a').replace('á', 'a') === "maracana";
+
                 parsedMatches.push({
                   id: row['ID Jogo'] || `FLU-${String(idx + 1).padStart(3, '0')}`,
                   ano: Number(season) || (dtStr ? parseInt(dtStr.slice(0, 4), 10) : 2026),
-                  data: dtStr, hora: hrStr, hNum: hrInt, dia: diaSem,
-                  torneio: comp, mando: mando, adv: adv, estadio: estadio,
-                  placar: String(placar), pub: parseNumber(row['Público Total']),
+                  data: dtStr,
+                  timestamp: computeTimestamp(dtStr),
+                  hora: hrStr,
+                  hNum: hrInt,
+                  dia: diaSem,
+                  torneio: comp,
+                  mando: mando,
+                  adv: adv,
+                  advLower: adv.toLowerCase(),
+                  advNorm: normalizeAdv(adv),
+                  estadio: estadio,
+                  isMaracanaNorm: isMaracanaNorm,
+                  placar: placarStr,
+                  gf: score.gf,
+                  ga: score.ga,
+                  pub: parseNumber(row['Público Total']),
                   pubVis: parseNumber(row['Público Visitante (Flu)'] || row['Público Visitante']), 
                   sul: parseNumber(row['Sul Pagantes']),
                   presente: presVal === "Sim" ? "Sim" : "Não"
@@ -1102,14 +1222,23 @@
               let presVal = row['Rodolfo presente?'] || row['Presente?'] || row['Presente'] || row['Estádio?'] || "Não";
               presVal = String(presVal).trim();
 
+              const advName = row['Adversário'] || row['Adversario'] || row['Clube'] || "-";
+              const placarStr = String(placar);
+              const score = parseScore(placarStr, true);
+
               parsedClassicos.push({
                 id: idx,
-                adv: row['Adversário'] || row['Adversario'] || row['Clube'] || "-",
+                adv: advName,
+                advNorm: normalizeAdv(advName),
                 data: dataStr,
+                timestamp: computeTimestamp(dataStr),
+                sortTime: computeSortDate(dataStr),
                 ano: anoClassico,
                 torneio: row['Competição'] || row['Torneio'] || row['Competicao'] || "-",
                 estadio: row['Estádio'] || row['Estadio'] || row['Local'] || "-",
-                placar: String(placar),
+                placar: placarStr,
+                gf: score.gf,
+                ga: score.ga,
                 presente: presVal,
                 sul: parseNumber(row['Sul Pagantes'])
               });
@@ -1151,16 +1280,25 @@
       const searchBox = document.getElementById("search-adversario");
       const search = searchBox ? searchBox.value.toLowerCase().trim() : "";
 
+      const setTemp = excludeDimension !== 'temporada' && selectedState.temporada.length > 0 ? new Set(selectedState.temporada) : null;
+      const setComp = excludeDimension !== 'competicao' && selectedState.competicao.length > 0 ? new Set(selectedState.competicao) : null;
+      const setMando = excludeDimension !== 'mando' && selectedState.mando.length > 0 ? new Set(selectedState.mando) : null;
+      const setEst = excludeDimension !== 'estadio' && selectedState.estadio.length > 0 ? new Set(selectedState.estadio) : null;
+      const setDia = excludeDimension !== 'dia' && selectedState.dia.length > 0 ? new Set(selectedState.dia) : null;
+      const setHor = excludeDimension !== 'horario' && selectedState.horario.length > 0 ? new Set(selectedState.horario) : null;
+      const setAdv = excludeDimension !== 'adversario' && selectedState.adversario.length > 0 ? new Set(selectedState.adversario) : null;
+      const setPres = excludeDimension !== 'presente' && selectedState.presente.length > 0 ? new Set(selectedState.presente) : null;
+
       return MATCHES_DATA.filter(m => {
-        if (excludeDimension !== 'temporada' && selectedState.temporada.length > 0 && !selectedState.temporada.includes(String(m.ano))) return false;
-        if (excludeDimension !== 'competicao' && selectedState.competicao.length > 0 && !selectedState.competicao.includes(m.torneio)) return false;
-        if (excludeDimension !== 'mando' && selectedState.mando.length > 0 && !selectedState.mando.includes(m.mando)) return false;
-        if (excludeDimension !== 'estadio' && selectedState.estadio.length > 0 && !selectedState.estadio.includes(m.estadio)) return false;
-        if (excludeDimension !== 'dia' && selectedState.dia.length > 0 && !selectedState.dia.includes(m.dia)) return false;
-        if (excludeDimension !== 'horario' && selectedState.horario.length > 0 && !selectedState.horario.includes(m.hora)) return false;
-        if (excludeDimension !== 'adversario' && selectedState.adversario.length > 0 && !selectedState.adversario.includes(m.adv)) return false;
-        if (excludeDimension !== 'presente' && selectedState.presente.length > 0 && !selectedState.presente.includes(m.presente)) return false;
-        if (search && !m.adv.toLowerCase().includes(search)) return false;
+        if (setTemp && !setTemp.has(String(m.ano))) return false;
+        if (setComp && !setComp.has(m.torneio)) return false;
+        if (setMando && !setMando.has(m.mando)) return false;
+        if (setEst && !setEst.has(m.estadio)) return false;
+        if (setDia && !setDia.has(m.dia)) return false;
+        if (setHor && !setHor.has(m.hora)) return false;
+        if (setAdv && !setAdv.has(m.adv)) return false;
+        if (setPres && !setPres.has(m.presente)) return false;
+        if (search && !m.advLower.includes(search)) return false;
         return true;
       });
     }
@@ -1185,9 +1323,10 @@
         counts[val] = (counts[val] || 0) + 1;
       });
 
+      const checkedSet = new Set(selectedState[type]);
       const html = items.map(item => {
         const count = counts[item.value] || 0;
-        const isChecked = selectedState[type].includes(item.value);
+        const isChecked = checkedSet.has(item.value);
         return `
           <label class="flex items-center justify-between p-1.5 hover:bg-white/5 rounded-lg cursor-pointer text-xs text-white/90 transition select-none" data-label="${item.label.toLowerCase()}">
             <div class="flex items-center gap-2 truncate pr-1">
@@ -1342,16 +1481,25 @@
       updateAllDropdowns();
       updateFilterLabels();
 
+      const setTemp = selectedState.temporada.length > 0 ? new Set(selectedState.temporada) : null;
+      const setComp = selectedState.competicao.length > 0 ? new Set(selectedState.competicao) : null;
+      const setMando = selectedState.mando.length > 0 ? new Set(selectedState.mando) : null;
+      const setEst = selectedState.estadio.length > 0 ? new Set(selectedState.estadio) : null;
+      const setDia = selectedState.dia.length > 0 ? new Set(selectedState.dia) : null;
+      const setHor = selectedState.horario.length > 0 ? new Set(selectedState.horario) : null;
+      const setAdv = selectedState.adversario.length > 0 ? new Set(selectedState.adversario) : null;
+      const setPres = selectedState.presente.length > 0 ? new Set(selectedState.presente) : null;
+
       filteredMatches = MATCHES_DATA.filter(m => {
-        if (selectedState.temporada.length > 0 && !selectedState.temporada.includes(String(m.ano))) return false;
-        if (selectedState.competicao.length > 0 && !selectedState.competicao.includes(m.torneio)) return false;
-        if (selectedState.mando.length > 0 && !selectedState.mando.includes(m.mando)) return false;
-        if (selectedState.estadio.length > 0 && !selectedState.estadio.includes(m.estadio)) return false;
-        if (selectedState.dia.length > 0 && !selectedState.dia.includes(m.dia)) return false;
-        if (selectedState.horario.length > 0 && !selectedState.horario.includes(m.hora)) return false;
-        if (selectedState.adversario.length > 0 && !selectedState.adversario.includes(m.adv)) return false;
-        if (selectedState.presente.length > 0 && !selectedState.presente.includes(m.presente)) return false;
-        if (search && !m.adv.toLowerCase().includes(search)) return false;
+        if (setTemp && !setTemp.has(String(m.ano))) return false;
+        if (setComp && !setComp.has(m.torneio)) return false;
+        if (setMando && !setMando.has(m.mando)) return false;
+        if (setEst && !setEst.has(m.estadio)) return false;
+        if (setDia && !setDia.has(m.dia)) return false;
+        if (setHor && !setHor.has(m.hora)) return false;
+        if (setAdv && !setAdv.has(m.adv)) return false;
+        if (setPres && !setPres.has(m.presente)) return false;
+        if (search && !m.advLower.includes(search)) return false;
         return true;
       });
 
@@ -1361,11 +1509,6 @@
       renderTable();
     }
 
-    function fmt(n) {
-      if (n === null || n === undefined || isNaN(n) || n === 0) return "-";
-      return Math.round(n).toLocaleString('pt-BR');
-    }
-
     function updateKpis() {
       const validFiltered = filteredMatches;
 
@@ -1373,34 +1516,76 @@
       document.getElementById("kpi-jogos").textContent = validFiltered.length;
       document.getElementById("summary-total-games").textContent = `${MATCHES_DATA.length} Jogos`;
 
-      const withPub = validFiltered.filter(m => m.pub !== null && m.pub > 0);
-      const avgGeral = withPub.length ? withPub.reduce((acc, x) => acc + x.pub, 0) / withPub.length : 0;
+      let sumPub = 0, countPub = 0;
+      let sumHome = 0, countHome = 0;
+      let sumVis = 0, countVis = 0;
+      let sumSul = 0, countSul = 0;
+      let missingSulCount = 0;
+
+      let vitorias = 0, empates = 0, derrotas = 0, gpTotal = 0, gcTotal = 0;
+      const advStatsEstadio = {}; 
+
+      validFiltered.forEach(m => {
+        if (m.pub !== null && m.pub > 0) {
+          sumPub += m.pub;
+          countPub++;
+          if (m.mando === "Mandante") {
+            sumHome += m.pub;
+            countHome++;
+          }
+        }
+        if (m.pubVis !== null && m.pubVis > 0) {
+          sumVis += m.pubVis;
+          countVis++;
+        }
+        if (m.estadio === "Maracanã") {
+          if (m.sul !== null && m.sul > 0) {
+            sumSul += m.sul;
+            countSul++;
+          } else {
+            missingSulCount++;
+          }
+        }
+
+        if (m.gf !== null && m.ga !== null) {
+          const fluGols = m.gf, advGols = m.ga;
+          gpTotal += fluGols;
+          gcTotal += advGols;
+          
+          let res = 'E';
+          if (fluGols > advGols) { vitorias++; res = 'V'; }
+          else if (fluGols < advGols) { derrotas++; res = 'D'; }
+          else { empates++; res = 'E'; }
+
+          if (!advStatsEstadio[m.adv]) advStatsEstadio[m.adv] = { jog: 0, v: 0, e: 0, d: 0, gp: 0, gc: 0 };
+          const st = advStatsEstadio[m.adv];
+          st.jog++; st.gp += fluGols; st.gc += advGols;
+          if (res === 'V') st.v++; else if (res === 'E') st.e++; else st.d++;
+        }
+      });
+
+      const avgGeral = countPub ? sumPub / countPub : 0;
       document.getElementById("kpi-media-geral").textContent = avgGeral > 0 ? fmt(avgGeral) : "-";
-      document.getElementById("kpi-sub-geral").textContent = withPub.length > 0 ? `${withPub.length} jogos com público registrado` : "Nenhum público registrado";
+      document.getElementById("kpi-sub-geral").textContent = countPub > 0 ? `${countPub} jogos com público registrado` : "Nenhum público registrado";
 
-      const homeGames = validFiltered.filter(m => m.mando === "Mandante" && m.pub !== null && m.pub > 0);
-      const avgHome = homeGames.length ? homeGames.reduce((acc, x) => acc + x.pub, 0) / homeGames.length : 0;
-      document.getElementById("kpi-media-mandante").textContent = homeGames.length > 0 ? fmt(avgHome) : "-";
-      document.getElementById("kpi-sub-mandante").textContent = homeGames.length > 0 ? `${homeGames.length} jogos com mando do Fluminense` : "Nenhum jogo mandante";
+      const avgHome = countHome ? sumHome / countHome : 0;
+      document.getElementById("kpi-media-mandante").textContent = countHome > 0 ? fmt(avgHome) : "-";
+      document.getElementById("kpi-sub-mandante").textContent = countHome > 0 ? `${countHome} jogos com mando do Fluminense` : "Nenhum jogo mandante";
 
-      const visitGames = validFiltered.filter(m => m.pubVis !== null && m.pubVis > 0);
-      const avgVisit = visitGames.length ? visitGames.reduce((acc, x) => acc + x.pubVis, 0) / visitGames.length : 0;
-      document.getElementById("kpi-media-visitante").textContent = visitGames.length > 0 ? fmt(avgVisit) : "-";
-      document.getElementById("kpi-sub-visitante").textContent = visitGames.length > 0 ? `${visitGames.length} jogos com Tricolores visitantes` : "Sem público visitante";
+      const avgVisit = countVis ? sumVis / countVis : 0;
+      document.getElementById("kpi-media-visitante").textContent = countVis > 0 ? fmt(avgVisit) : "-";
+      document.getElementById("kpi-sub-visitante").textContent = countVis > 0 ? `${countVis} jogos com Tricolores visitantes` : "Sem público visitante";
 
-      const sulGames = validFiltered.filter(m => m.estadio === "Maracanã" && m.sul !== null && m.sul > 0);
-      const avgSul = sulGames.length ? sulGames.reduce((acc, x) => acc + x.sul, 0) / sulGames.length : 0;
-      document.getElementById("kpi-media-sul").textContent = sulGames.length > 0 ? fmt(avgSul) : "-";
-      document.getElementById("kpi-sub-sul").textContent = sulGames.length > 0 ? `${sulGames.length} jogos com Tricolores no Setor Sul` : "Sem dados do Setor Sul";
+      const avgSul = countSul ? sumSul / countSul : 0;
+      document.getElementById("kpi-media-sul").textContent = countSul > 0 ? fmt(avgSul) : "-";
+      document.getElementById("kpi-sub-sul").textContent = countSul > 0 ? `${countSul} jogos com Tricolores no Setor Sul` : "Sem dados do Setor Sul";
 
       const taxaSul = avgSul > 0 ? (avgSul / 20000) * 100 : 0;
       document.getElementById("kpi-taxa-sul").textContent = taxaSul > 0 ? `${taxaSul.toFixed(1)}%` : "-";
-      document.getElementById("sul-recorded-count").textContent = `${sulGames.length} jogos`;
+      document.getElementById("sul-recorded-count").textContent = `${countSul} jogos`;
 
-      const missingSulCount = validFiltered.filter(m => m.estadio === "Maracanã" && (m.sul === null || m.sul <= 0)).length;
       const alertEl = document.getElementById("sul-alert-missing");
       const countEl = document.getElementById("sul-missing-count");
-      
       if (alertEl && countEl) {
         if (missingSulCount > 0) {
           countEl.textContent = missingSulCount;
@@ -1410,24 +1595,6 @@
         }
       }
 
-      let vitorias = 0, empates = 0, derrotas = 0, gpTotal = 0, gcTotal = 0;
-      const advStatsEstadio = {}; 
-
-      validFiltered.forEach(m => {
-        const parts = m.placar.split('x').map(p => parseInt(p.trim(), 10));
-        if (parts.length !== 2 || isNaN(parts[0]) || isNaN(parts[1])) return;
-        const fluGols = parts[0], advGols = parts[1];
-        gpTotal += fluGols; gcTotal += advGols;
-        
-        let res = 'E';
-        if (fluGols > advGols) { vitorias++; res = 'V'; }
-        else if (fluGols < advGols) { derrotas++; res = 'D'; }
-        else { empates++; res = 'E'; }
-
-        if (!advStatsEstadio[m.adv]) advStatsEstadio[m.adv] = { jog: 0, v: 0, e: 0, d: 0, gp: 0, gc: 0 };
-        advStatsEstadio[m.adv].jog++; advStatsEstadio[m.adv].gp += fluGols; advStatsEstadio[m.adv].gc += advGols;
-        if (res === 'V') advStatsEstadio[m.adv].v++; else if (res === 'E') advStatsEstadio[m.adv].e++; else if (res === 'D') advStatsEstadio[m.adv].d++;
-      });
       const totalJogosPerf = validFiltered.length;
       const ptsPossiveis = totalJogosPerf * 3;
       const ptsGanhos = (vitorias * 3) + empates;
@@ -1449,12 +1616,91 @@
         document.getElementById('estadio-sub-aproveitamento').textContent = `${ptsGanhos} de ${ptsPossiveis} pts`;
       }
       
-      renderEstadioAdvTable(advStatsEstadio);
+      renderAdvTable('estadio-adv-table-body', advStatsEstadio);
     }
 
     function getChartCanvas(id) {
       if (activeCharts[id]) activeCharts[id].destroy();
       return document.getElementById(id).getContext('2d');
+    }
+
+    function renderSulBarChart(canvasId, sulMatchesList) {
+      if (activeCharts[canvasId]) activeCharts[canvasId].destroy();
+      const canvasEl = document.getElementById(canvasId);
+      if (!canvasEl) return;
+
+      const ctxSul = canvasEl.getContext('2d');
+      if (sulMatchesList.length === 0 && canvasId === "chartClassicosSetorSul") {
+        ctxSul.clearRect(0, 0, canvasEl.width, canvasEl.height);
+        return;
+      }
+
+      const degradeTricolor = ctxSul.createLinearGradient(0, 0, 0, 280);
+      degradeTricolor.addColorStop(0, '#0E4735');     
+      degradeTricolor.addColorStop(0.35, '#0E4735');  
+      degradeTricolor.addColorStop(0.60, '#8A1538');  
+      degradeTricolor.addColorStop(1, '#8A1538'); 
+
+      const canvasLegenda = document.createElement('canvas');
+      canvasLegenda.width = 60; 
+      canvasLegenda.height = 14; 
+      const ctxLeg = canvasLegenda.getContext('2d');
+      const gradLeg = ctxLeg.createLinearGradient(0, 0, 60, 0);
+      gradLeg.addColorStop(0, '#8A1538');     
+      gradLeg.addColorStop(0.35, '#8A1538');  
+      gradLeg.addColorStop(0.60, '#0E4735');  
+      gradLeg.addColorStop(1, '#0E4735');     
+      ctxLeg.fillStyle = gradLeg;
+      ctxLeg.fillRect(0, 0, 60, 14);
+
+      const padraoLegenda = ctxSul.createPattern(canvasLegenda, 'repeat');
+
+      activeCharts[canvasId] = new Chart(ctxSul, {
+        type: 'bar',
+        data: {
+          labels: sulMatchesList.map(m => {
+            if (!m.data || m.data === "-") return [`${m.adv}`, `(-)`];
+            const p = m.data.split(/[-/]/);
+            const dia = p[0].length === 4 ? p[2] : p[0];
+            const mes = p[1];
+            const ano = p[0].length === 4 ? p[0].slice(2, 4) : p[2].slice(2, 4);
+            return [`${m.adv}`, `(${dia}-${mes}-${ano})`];
+          }),
+          datasets: [
+            { label: 'Sul Pagantes', data: sulMatchesList.map(m => m.sul), backgroundColor: degradeTricolor, borderRadius: 6, order: 2 },
+            { label: 'Capacidade Máxima Pagantes (20K)', data: sulMatchesList.map(() => 20000), type: 'line', borderColor: '#f59e0b', borderDash: [5, 5], borderWidth: 3, pointRadius: 0, pointHoverRadius: 0, fill: false, order: 1 }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { 
+            legend: { 
+              position: 'top', 
+              labels: { 
+                color: 'rgba(255,255,255,0.7)',
+                generateLabels: function(chart) {
+                  const originais = Chart.defaults.plugins.legend.labels.generateLabels(chart);
+                  originais.forEach(label => {
+                    if (label.text === 'Sul Pagantes') label.fillStyle = padraoLegenda;
+                  });
+                  return originais;
+                }
+              } 
+            }, 
+            tooltip: { 
+              callbacks: { 
+                afterTitle: function(context) {
+                  const index = context[0].dataIndex;
+                  return sulMatchesList[index].torneio;
+                },
+                label: ctx => ctx.dataset.type === 'line' ? `Capacidade Máxima Pagantes (20K)` : ` Sul Pagantes: ${ctx.parsed.y.toLocaleString('pt-BR')} (${((ctx.parsed.y / 20000) * 100).toFixed(1)}% do setor)` 
+              } 
+            }
+          }, 
+          scales: { y: { beginAtZero: true, max: 22000, ticks: { callback: v => v.toLocaleString('pt-BR') } } } 
+        }
+      });
     }
 
     function updateCharts() {
@@ -1472,12 +1718,12 @@
       let titleSuffix = '(Mandante e Visitante)';
 
       if (mCount > 0) {
-          if (hasM && !hasV && !hasN) { chartMode = 'mandante'; titleSuffix = '(Mandante)'; }
-          else if (!hasM && hasV && !hasN) { chartMode = 'visitante'; titleSuffix = '(Visitante)'; }
-          else if (!hasM && !hasV && hasN) { chartMode = 'neutro'; titleSuffix = '(Campo Neutro)'; }
-          else if (hasM && hasN && !hasV) { chartMode = 'mandante'; titleSuffix = '(Mandante)'; }
-          else if (!hasM && hasV && hasN) { chartMode = 'visitante'; titleSuffix = '(Visitante)'; }
-          else { chartMode = 'duplo'; titleSuffix = '(Mandante e Visitante)'; }
+        if (hasM && !hasV && !hasN) { chartMode = 'mandante'; titleSuffix = '(Mandante)'; }
+        else if (!hasM && hasV && !hasN) { chartMode = 'visitante'; titleSuffix = '(Visitante)'; }
+        else if (!hasM && !hasV && hasN) { chartMode = 'neutro'; titleSuffix = '(Campo Neutro)'; }
+        else if (hasM && hasN && !hasV) { chartMode = 'mandante'; titleSuffix = '(Mandante)'; }
+        else if (!hasM && hasV && hasN) { chartMode = 'visitante'; titleSuffix = '(Visitante)'; }
+        else { chartMode = 'duplo'; titleSuffix = '(Mandante e Visitante)'; }
       }
 
       const titleTemporada = document.getElementById('title-temporada');
@@ -1491,21 +1737,98 @@
 
       const showLegend = chartMode === 'duplo';
 
+      // Varredura única O(N) para agregar todas as dimensões dos gráficos
+      const byYear = {};
+      const byComp = {};
+      const byDay = {};
+      const daysOrder = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'];
+      daysOrder.forEach(d => { byDay[d] = { sM: 0, cM: 0, sV: 0, cV: 0, sN: 0, cN: 0 }; });
+
+      const hourRanges = [
+        { label: "Manhã (<13h)", min: 0, max: 12, sM: 0, cM: 0, sV: 0, cV: 0, sN: 0, cN: 0 },
+        { label: "Tarde (13h-17h59)", min: 13, max: 17, sM: 0, cM: 0, sV: 0, cV: 0, sN: 0, cN: 0 },
+        { label: "Noite (18h-20h59)", min: 18, max: 20, sM: 0, cM: 0, sV: 0, cV: 0, sN: 0, cN: 0 },
+        { label: "Noite Tardia (≥21h)", min: 21, max: 24, sM: 0, cM: 0, sV: 0, cV: 0, sN: 0, cN: 0 }
+      ];
+
+      const visitEstadioMap = {};
+      const sulCandidates = [];
+
+      validFiltered.forEach(m => {
+        // Inicializa Ano
+        if (!byYear[m.ano]) byYear[m.ano] = { sM: 0, cM: 0, sV: 0, cV: 0, sN: 0, cN: 0, v: 0, e: 0, d: 0 };
+        const yrObj = byYear[m.ano];
+
+        // Desempenho por temporada
+        if (m.gf !== null && m.ga !== null) {
+          if (m.gf > m.ga) yrObj.v++;
+          else if (m.gf < m.ga) yrObj.d++;
+          else yrObj.e++;
+        }
+
+        // Inicializa Competição
+        let compObj = null;
+        if (m.torneio && m.torneio !== "-") {
+          if (!byComp[m.torneio]) byComp[m.torneio] = { sM: 0, cM: 0, sV: 0, cV: 0, sN: 0, cN: 0 };
+          compObj = byComp[m.torneio];
+        }
+
+        // Dia da Semana
+        const dayObj = byDay[m.dia] || null;
+
+        // Faixa de Horário
+        let hrObj = null;
+        if (m.hNum !== null) {
+          for (let i = 0; i < hourRanges.length; i++) {
+            if (m.hNum >= hourRanges[i].min && m.hNum <= hourRanges[i].max) {
+              hrObj = hourRanges[i];
+              break;
+            }
+          }
+        }
+
+        // Acumula públicos conforme Mando
+        if (m.mando === 'Mandante' && m.pub > 0) {
+          yrObj.sM += m.pub; yrObj.cM++;
+          if (compObj) { compObj.sM += m.pub; compObj.cM++; }
+          if (dayObj) { dayObj.sM += m.pub; dayObj.cM++; }
+          if (hrObj) { hrObj.sM += m.pub; hrObj.cM++; }
+        } else if (m.mando === 'Visitante' && m.pubVis > 0) {
+          yrObj.sV += m.pubVis; yrObj.cV++;
+          if (compObj) { compObj.sV += m.pubVis; compObj.cV++; }
+          if (dayObj) { dayObj.sV += m.pubVis; dayObj.cV++; }
+          if (hrObj) { hrObj.sV += m.pubVis; hrObj.cV++; }
+        } else if (m.mando === 'Neutro' && m.pub > 0) {
+          yrObj.sN += m.pub; yrObj.cN++;
+          if (compObj) { compObj.sN += m.pub; compObj.cN++; }
+          if (dayObj) { dayObj.sN += m.pub; dayObj.cN++; }
+          if (hrObj) { hrObj.sN += m.pub; hrObj.cN++; }
+        }
+
+        // Top 10 Visitante (todos os jogos com pubVis > 0)
+        if (m.pubVis !== null && m.pubVis > 0) {
+          if (!visitEstadioMap[m.estadio]) visitEstadioMap[m.estadio] = { sum: 0, count: 0 };
+          visitEstadioMap[m.estadio].sum += m.pubVis;
+          visitEstadioMap[m.estadio].count += 1;
+        }
+
+        // Setor Sul Maracanã
+        if (m.estadio === "Maracanã" && m.sul !== null && m.sul > 0) {
+          sulCandidates.push(m);
+        }
+      });
+
       // 1. TEMPORADA
-      const seasons = [...new Set(validFiltered.map(m => m.ano))].sort((a,b)=>a-b);
+      const seasons = Object.keys(byYear).map(Number).sort((a,b) => a - b);
       const dsMand = [], countMand = [], dsVis = [], countVis = [], dsNeu = [], countNeu = [];
+      const vTemporada = [], eTemporada = [], dTemporada = [];
+
       seasons.forEach(yr => {
-          const mMatches = validFiltered.filter(m => m.ano === yr && m.mando === 'Mandante' && m.pub > 0);
-          dsMand.push(mMatches.length ? Math.round(mMatches.reduce((a,b)=>a+b.pub,0)/mMatches.length) : 0);
-          countMand.push(mMatches.length);
-
-          const vMatches = validFiltered.filter(m => m.ano === yr && m.mando === 'Visitante' && m.pubVis > 0);
-          dsVis.push(vMatches.length ? Math.round(vMatches.reduce((a,b)=>a+b.pubVis,0)/vMatches.length) : 0);
-          countVis.push(vMatches.length);
-
-          const nMatches = validFiltered.filter(m => m.ano === yr && m.mando === 'Neutro' && m.pub > 0);
-          dsNeu.push(nMatches.length ? Math.round(nMatches.reduce((a,b)=>a+b.pub,0)/nMatches.length) : 0);
-          countNeu.push(nMatches.length);
+        const y = byYear[yr];
+        dsMand.push(y.cM ? Math.round(y.sM / y.cM) : 0); countMand.push(y.cM);
+        dsVis.push(y.cV ? Math.round(y.sV / y.cV) : 0); countVis.push(y.cV);
+        dsNeu.push(y.cN ? Math.round(y.sN / y.cN) : 0); countNeu.push(y.cN);
+        vTemporada.push(y.v); eTemporada.push(y.e); dTemporada.push(y.d);
       });
 
       let datasetsTemp = [];
@@ -1513,29 +1836,25 @@
       else if (chartMode === 'visitante') datasetsTemp = [{ label: 'Média Visitante', data: dsVis, backgroundColor: '#870A28', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: countVis }];
       else if (chartMode === 'neutro') datasetsTemp = [{ label: 'Média Neutro', data: dsNeu, backgroundColor: '#0f766e', borderColor: '#06b6d4', borderWidth: 1.5, borderRadius: 6, customCount: countNeu }];
       else {
-          datasetsTemp = [
-              { label: 'Média Mandante', data: dsMand, backgroundColor: '#0E4735', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: countMand },
-              { label: 'Média Visitante', data: dsVis, backgroundColor: '#870A28', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: countVis }
-          ];
+        datasetsTemp = [
+          { label: 'Média Mandante', data: dsMand, backgroundColor: '#0E4735', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: countMand },
+          { label: 'Média Visitante', data: dsVis, backgroundColor: '#870A28', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: countVis }
+        ];
       }
-      if (activeCharts["chartTemporada"]) activeCharts["chartTemporada"].destroy();
       activeCharts["chartTemporada"] = new Chart(getChartCanvas("chartTemporada"), {
         type: 'bar', data: { labels: seasons.map(String), datasets: datasetsTemp },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: showLegend, position: 'top', labels: {color: 'rgba(255,255,255,0.7)'} }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } } }
       });
 
       // 2. COMPETICAO
-      const compNames = [...new Set(validFiltered.map(m => m.torneio))].filter(c => c && c !== "-");
-      const compStats = compNames.map(c => {
-          const mMatches = validFiltered.filter(m => m.torneio === c && m.mando === 'Mandante' && m.pub > 0);
-          const vMatches = validFiltered.filter(m => m.torneio === c && m.mando === 'Visitante' && m.pubVis > 0);
-          const nMatches = validFiltered.filter(m => m.torneio === c && m.mando === 'Neutro' && m.pub > 0);
-          return {
-              comp: c,
-              mM: mMatches.length ? Math.round(mMatches.reduce((a,b)=>a+b.pub,0)/mMatches.length) : 0, cM: mMatches.length,
-              mV: vMatches.length ? Math.round(vMatches.reduce((a,b)=>a+b.pubVis,0)/vMatches.length) : 0, cV: vMatches.length,
-              mN: nMatches.length ? Math.round(nMatches.reduce((a,b)=>a+b.pub,0)/nMatches.length) : 0, cN: nMatches.length
-          };
+      const compStats = Object.keys(byComp).map(c => {
+        const o = byComp[c];
+        return {
+          comp: c,
+          mM: o.cM ? Math.round(o.sM / o.cM) : 0, cM: o.cM,
+          mV: o.cV ? Math.round(o.sV / o.cV) : 0, cV: o.cV,
+          mN: o.cN ? Math.round(o.sN / o.cN) : 0, cN: o.cN
+        };
       });
       let filteredCompStats = [];
       if (chartMode === 'mandante') filteredCompStats = compStats.filter(s => s.cM > 0).sort((a,b) => b.mM - a.mM);
@@ -1548,32 +1867,23 @@
       else if (chartMode === 'visitante') datasetsComp = [{ label: 'Média Visitante', data: filteredCompStats.map(s=>s.mV), backgroundColor: '#870A28', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: filteredCompStats.map(s=>s.cV) }];
       else if (chartMode === 'neutro') datasetsComp = [{ label: 'Média Neutro', data: filteredCompStats.map(s=>s.mN), backgroundColor: '#0f766e', borderColor: '#06b6d4', borderWidth: 1.5, borderRadius: 6, customCount: filteredCompStats.map(s=>s.cN) }];
       else {
-          datasetsComp = [
-              { label: 'Média Mandante', data: filteredCompStats.map(s=>s.mM), backgroundColor: '#0E4735', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: filteredCompStats.map(s=>s.cM) },
-              { label: 'Média Visitante', data: filteredCompStats.map(s=>s.mV), backgroundColor: '#870A28', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: filteredCompStats.map(s=>s.cV) }
-          ];
+        datasetsComp = [
+          { label: 'Média Mandante', data: filteredCompStats.map(s=>s.mM), backgroundColor: '#0E4735', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: filteredCompStats.map(s=>s.cM) },
+          { label: 'Média Visitante', data: filteredCompStats.map(s=>s.mV), backgroundColor: '#870A28', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: filteredCompStats.map(s=>s.cV) }
+        ];
       }
-      if (activeCharts["chartCompeticao"]) activeCharts["chartCompeticao"].destroy();
       activeCharts["chartCompeticao"] = new Chart(getChartCanvas("chartCompeticao"), {
         type: 'bar', data: { labels: filteredCompStats.map(s => s.comp), datasets: datasetsComp },
         options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: showLegend, position: 'top', labels: {color: 'rgba(255,255,255,0.7)'} }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.x.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { x: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } } }
       });
 
       // 3. DIA DA SEMANA
-      const daysOrder = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'];
       const dsMandDia = [], countMandDia = [], dsVisDia = [], countVisDia = [], dsNeuDia = [], countNeuDia = [];
       daysOrder.forEach(d => {
-          const mMatches = validFiltered.filter(m => m.dia === d && m.mando === 'Mandante' && m.pub > 0);
-          dsMandDia.push(mMatches.length ? Math.round(mMatches.reduce((a,b)=>a+b.pub,0)/mMatches.length) : 0);
-          countMandDia.push(mMatches.length);
-
-          const vMatches = validFiltered.filter(m => m.dia === d && m.mando === 'Visitante' && m.pubVis > 0);
-          dsVisDia.push(vMatches.length ? Math.round(vMatches.reduce((a,b)=>a+b.pubVis,0)/vMatches.length) : 0);
-          countVisDia.push(vMatches.length);
-
-          const nMatches = validFiltered.filter(m => m.dia === d && m.mando === 'Neutro' && m.pub > 0);
-          dsNeuDia.push(nMatches.length ? Math.round(nMatches.reduce((a,b)=>a+b.pub,0)/nMatches.length) : 0);
-          countNeuDia.push(nMatches.length);
+        const o = byDay[d];
+        dsMandDia.push(o.cM ? Math.round(o.sM / o.cM) : 0); countMandDia.push(o.cM);
+        dsVisDia.push(o.cV ? Math.round(o.sV / o.cV) : 0); countVisDia.push(o.cV);
+        dsNeuDia.push(o.cN ? Math.round(o.sN / o.cN) : 0); countNeuDia.push(o.cN);
       });
       const bgMandante = daysOrder.map(d => ['Sábado', 'Domingo'].includes(d) ? '#C5A059' : '#0E4735');
       const bgVisitante = daysOrder.map(d => ['Sábado', 'Domingo'].includes(d) ? '#e11d48' : '#8A1538');
@@ -1583,45 +1893,34 @@
       else if (chartMode === 'visitante') datasetsDia = [{ label: 'Média Visitante', data: dsVisDia, backgroundColor: bgVisitante, borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 8, customCount: countVisDia }];
       else if (chartMode === 'neutro') datasetsDia = [{ label: 'Média Neutro', data: dsNeuDia, backgroundColor: bgNeutro, borderColor: '#06b6d4', borderWidth: 1.5, borderRadius: 8, customCount: countNeuDia }];
       else {
-          const bwDuplo = daysOrder.map(d => ['Sábado', 'Domingo'].includes(d) ? 2.5 : 1.5);
-          datasetsDia = [
-              { label: 'Média Mandante', data: dsMandDia, backgroundColor: '#0E4735', borderColor: '#C5A059', borderWidth: bwDuplo, borderRadius: 6, customCount: countMandDia },
-              { label: 'Média Visitante', data: dsVisDia, backgroundColor: '#870A28', borderColor: '#C5A059', borderWidth: bwDuplo, borderRadius: 6, customCount: countVisDia }
-          ];
+        const bwDuplo = daysOrder.map(d => ['Sábado', 'Domingo'].includes(d) ? 2.5 : 1.5);
+        datasetsDia = [
+          { label: 'Média Mandante', data: dsMandDia, backgroundColor: '#0E4735', borderColor: '#C5A059', borderWidth: bwDuplo, borderRadius: 6, customCount: countMandDia },
+          { label: 'Média Visitante', data: dsVisDia, backgroundColor: '#870A28', borderColor: '#C5A059', borderWidth: bwDuplo, borderRadius: 6, customCount: countVisDia }
+        ];
       }
-      if (activeCharts["chartDiaSemana"]) activeCharts["chartDiaSemana"].destroy();
       activeCharts["chartDiaSemana"] = new Chart(getChartCanvas("chartDiaSemana"), {
         type: 'bar', data: { labels: daysOrder.map(d => d.replace('-feira', '')), datasets: datasetsDia },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: showLegend, position: 'top', labels: {color: 'rgba(255,255,255,0.7)'} }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } } }
       });
 
       // 4. HORARIO
-      const hourRanges = [{ label: "Manhã (<13h)", min: 0, max: 12 }, { label: "Tarde (13h-17h59)", min: 13, max: 17 }, { label: "Noite (18h-20h59)", min: 18, max: 20 }, { label: "Noite Tardia (≥21h)", min: 21, max: 24 }];
       const dsMandHor = [], countMandHor = [], dsVisHor = [], countVisHor = [], dsNeuHor = [], countNeuHor = [];
       hourRanges.forEach(hr => {
-          const mMatches = validFiltered.filter(m => m.hNum !== null && m.hNum >= hr.min && m.hNum <= hr.max && m.mando === 'Mandante' && m.pub > 0);
-          dsMandHor.push(mMatches.length ? Math.round(mMatches.reduce((a,b)=>a+b.pub,0)/mMatches.length) : 0);
-          countMandHor.push(mMatches.length);
-
-          const vMatches = validFiltered.filter(m => m.hNum !== null && m.hNum >= hr.min && m.hNum <= hr.max && m.mando === 'Visitante' && m.pubVis > 0);
-          dsVisHor.push(vMatches.length ? Math.round(vMatches.reduce((a,b)=>a+b.pubVis,0)/vMatches.length) : 0);
-          countVisHor.push(vMatches.length);
-
-          const nMatches = validFiltered.filter(m => m.hNum !== null && m.hNum >= hr.min && m.hNum <= hr.max && m.mando === 'Neutro' && m.pub > 0);
-          dsNeuHor.push(nMatches.length ? Math.round(nMatches.reduce((a,b)=>a+b.pub,0)/nMatches.length) : 0);
-          countNeuHor.push(nMatches.length);
+        dsMandHor.push(hr.cM ? Math.round(hr.sM / hr.cM) : 0); countMandHor.push(hr.cM);
+        dsVisHor.push(hr.cV ? Math.round(hr.sV / hr.cV) : 0); countVisHor.push(hr.cV);
+        dsNeuHor.push(hr.cN ? Math.round(hr.sN / hr.cN) : 0); countNeuHor.push(hr.cN);
       });
       let datasetsHor = [];
       if (chartMode === 'mandante') datasetsHor = [{ label: 'Média Mandante', data: dsMandHor, borderColor: '#C5A059', backgroundColor: 'rgba(14, 71, 53, 0.25)', borderWidth: 2.5, fill: true, tension: 0.35, pointBackgroundColor: '#8A1538', pointBorderColor: '#FFF', pointRadius: 6, customCount: countMandHor }];
       else if (chartMode === 'visitante') datasetsHor = [{ label: 'Média Visitante', data: dsVisHor, borderColor: '#e11d48', backgroundColor: 'rgba(138, 21, 56, 0.25)', borderWidth: 2.5, fill: true, tension: 0.35, pointBackgroundColor: '#C5A059', pointBorderColor: '#FFF', pointRadius: 6, customCount: countVisHor }];
       else if (chartMode === 'neutro') datasetsHor = [{ label: 'Média Neutro', data: dsNeuHor, borderColor: '#06b6d4', backgroundColor: 'rgba(15, 118, 110, 0.25)', borderWidth: 2.5, fill: true, tension: 0.35, pointBackgroundColor: '#0f766e', pointBorderColor: '#FFF', pointRadius: 6, customCount: countNeuHor }];
       else {
-          datasetsHor = [
-              { label: 'Média Mandante', data: dsMandHor, borderColor: '#0E4735', backgroundColor: 'rgba(14, 71, 53, 0.15)', borderWidth: 2.5, fill: true, tension: 0.35, pointBackgroundColor: '#C5A059', pointRadius: 5, customCount: countMandHor },
-              { label: 'Média Visitante', data: dsVisHor, borderColor: '#870A28', backgroundColor: 'rgba(138, 21, 56, 0.15)', borderWidth: 2.5, fill: true, tension: 0.35, pointBackgroundColor: '#C5A059', pointRadius: 5, customCount: countVisHor }
-          ];
+        datasetsHor = [
+          { label: 'Média Mandante', data: dsMandHor, borderColor: '#0E4735', backgroundColor: 'rgba(14, 71, 53, 0.15)', borderWidth: 2.5, fill: true, tension: 0.35, pointBackgroundColor: '#C5A059', pointRadius: 5, customCount: countMandHor },
+          { label: 'Média Visitante', data: dsVisHor, borderColor: '#870A28', backgroundColor: 'rgba(138, 21, 56, 0.15)', borderWidth: 2.5, fill: true, tension: 0.35, pointBackgroundColor: '#C5A059', pointRadius: 5, customCount: countVisHor }
+        ];
       }
-      if (activeCharts["chartHorario"]) activeCharts["chartHorario"].destroy();
       activeCharts["chartHorario"] = new Chart(getChartCanvas("chartHorario"), {
         type: 'line', data: { labels: hourRanges.map(h => h.label), datasets: datasetsHor },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: showLegend, position: 'top', labels: {color: 'rgba(255,255,255,0.7)'} }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } } }
@@ -1632,14 +1931,10 @@
       if (topVisitanteSection) {
         if (hasV) {
           topVisitanteSection.classList.remove("hidden");
-          const visitMatches = validFiltered.filter(m => m.pubVis !== null && m.pubVis > 0);
-          const estadioMap = {};
-          visitMatches.forEach(m => {
-            if (!estadioMap[m.estadio]) estadioMap[m.estadio] = { sum: 0, count: 0 };
-            estadioMap[m.estadio].sum += m.pubVis;
-            estadioMap[m.estadio].count += 1;
-          });
-          const topEstadios = Object.keys(estadioMap).map(est => ({ est, avg: Math.round(estadioMap[est].sum / estadioMap[est].count), count: estadioMap[est].count })).sort((a, b) => b.avg - a.avg).slice(0, 10);
+          const topEstadios = Object.keys(visitEstadioMap)
+            .map(est => ({ est, avg: Math.round(visitEstadioMap[est].sum / visitEstadioMap[est].count), count: visitEstadioMap[est].count }))
+            .sort((a, b) => b.avg - a.avg)
+            .slice(0, 10);
           if (activeCharts["chartTopVisitante"]) activeCharts["chartTopVisitante"].destroy();
           if (topEstadios.length > 0) {
             activeCharts["chartTopVisitante"] = new Chart(getChartCanvas("chartTopVisitante"), {
@@ -1647,32 +1942,14 @@
               options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` Média: ${ctx.parsed.x.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { x: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } } }
             });
           } else {
-             const ctx = getChartCanvas("chartTopVisitante"); ctx.font = "12px 'Plus Jakarta Sans', sans-serif"; ctx.fillStyle = "rgba(255,255,255,0.4)"; ctx.textAlign = "center"; ctx.fillText("Nenhum dado de público visitante para os filtros atuais.", ctx.canvas.width / 2, 50);
+            const ctx = getChartCanvas("chartTopVisitante"); ctx.font = "12px 'Plus Jakarta Sans', sans-serif"; ctx.fillStyle = "rgba(255,255,255,0.4)"; ctx.textAlign = "center"; ctx.fillText("Nenhum dado de público visitante para os filtros atuais.", ctx.canvas.width / 2, 50);
           }
         } else {
           topVisitanteSection.classList.add("hidden");
         }
       }
 
-      // 6. DESEMPENHO POR TEMPORADA (NOVO GRÁFICO)
-      const vTemporada = [], eTemporada = [], dTemporada = [];
-      seasons.forEach(yr => {
-          const matchesYr = validFiltered.filter(m => m.ano === yr);
-          let v = 0, e = 0, d = 0;
-          matchesYr.forEach(m => {
-              const parts = m.placar.split('x').map(p => parseInt(p.trim(), 10));
-              if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-                  if (parts[0] > parts[1]) v++;
-                  else if (parts[0] < parts[1]) d++;
-                  else e++;
-              }
-          });
-          vTemporada.push(v);
-          eTemporada.push(e);
-          dTemporada.push(d);
-      });
-
-      if (activeCharts["chartDesempenhoTemporada"]) activeCharts["chartDesempenhoTemporada"].destroy();
+      // 6. DESEMPENHO POR TEMPORADA
       activeCharts["chartDesempenhoTemporada"] = new Chart(getChartCanvas("chartDesempenhoTemporada"), {
         type: 'bar',
         data: {
@@ -1697,103 +1974,14 @@
       });
 
       // 7. SETOR SUL
-      const sulMatches = validFiltered.filter(m => m.estadio === "Maracanã" && m.sul !== null && m.sul > 0).sort((a, b) => b.sul - a.sul).slice(0, 10);
-      
-      const ctxSul = getChartCanvas("chartSetorSul");
-      
-      const degradeTricolor = ctxSul.createLinearGradient(0, 0, 0, 280);
-      degradeTricolor.addColorStop(0, '#0E4735');     
-      degradeTricolor.addColorStop(0.35, '#0E4735');  
-      degradeTricolor.addColorStop(0.60, '#8A1538');  
-      degradeTricolor.addColorStop(1, '#8A1538'); 
-
-      const canvasLegenda = document.createElement('canvas');
-      canvasLegenda.width = 60; 
-      canvasLegenda.height = 14; 
-      const ctxLeg = canvasLegenda.getContext('2d');
-      const gradLeg = ctxLeg.createLinearGradient(0, 0, 60, 0);
-      gradLeg.addColorStop(0, '#8A1538');     
-      gradLeg.addColorStop(0.35, '#8A1538');  
-      gradLeg.addColorStop(0.60, '#0E4735');  
-      gradLeg.addColorStop(1, '#0E4735');     
-      ctxLeg.fillStyle = gradLeg;
-      ctxLeg.fillRect(0, 0, 60, 14);
-
-      const padraoLegenda = ctxSul.createPattern(canvasLegenda, 'repeat');
-
-      if (activeCharts["chartSetorSul"]) activeCharts["chartSetorSul"].destroy();
-      activeCharts["chartSetorSul"] = new Chart(ctxSul, {
-        type: 'bar',
-        data: {
-          labels: sulMatches.map(m => {
-            if (!m.data || m.data === "-") return [`${m.adv}`, `(-)`];
-            const p = m.data.split(/[-/]/);
-            const dia = p[0].length === 4 ? p[2] : p[0];
-            const mes = p[1];
-            const ano = p[0].length === 4 ? p[0].slice(2, 4) : p[2].slice(2, 4);
-            return [`${m.adv}`, `(${dia}-${mes}-${ano})`];
-          }),
-          datasets: [
-            { 
-              label: 'Sul Pagantes', 
-              data: sulMatches.map(m => m.sul), 
-              backgroundColor: degradeTricolor, 
-              borderRadius: 6, 
-              order: 2 
-            }, 
-            { 
-              label: 'Capacidade Máxima Pagantes (20K)', 
-              data: sulMatches.map(() => 20000), 
-              type: 'line', 
-              borderColor: '#f59e0b', 
-              borderDash: [5, 5], 
-              borderWidth: 3, 
-              pointRadius: 0, 
-              pointHoverRadius: 0, 
-              fill: false, 
-              order: 1 
-            }
-          ]
-        },
-        options: {
-          responsive: true, 
-          maintainAspectRatio: false,
-          plugins: { 
-            legend: { 
-              position: 'top', 
-              labels: { 
-                color: 'rgba(255,255,255,0.7)',
-                generateLabels: function(chart) {
-                  const originais = Chart.defaults.plugins.legend.labels.generateLabels(chart);
-                  originais.forEach(label => {
-                    if (label.text === 'Sul Pagantes') {
-                      label.fillStyle = padraoLegenda;
-                    }
-                  });
-                  return originais;
-                }
-              } 
-            }, 
-            tooltip: { 
-              callbacks: { 
-                afterTitle: function(context) {
-                  const index = context[0].dataIndex;
-                  return sulMatches[index].torneio;
-                },
-                label: ctx => ctx.dataset.type === 'line' ? `Capacidade Máxima Pagantes (20K)` : ` Sul Pagantes: ${ctx.parsed.y.toLocaleString('pt-BR')} (${((ctx.parsed.y / 20000) * 100).toFixed(1)}% do setor)` 
-              } 
-            }
-          }, 
-          scales: { y: { beginAtZero: true, max: 22000, ticks: { callback: v => v.toLocaleString('pt-BR') } } } 
-        }
-      }); 
+      const sulMatches = sulCandidates.sort((a, b) => b.sul - a.sul).slice(0, 10);
+      renderSulBarChart("chartSetorSul", sulMatches);
     }
 
     function renderTable() {
       const validFiltered = filteredMatches;
       const tbody = document.getElementById("table-body");
       if (!tbody) return;
-      tbody.innerHTML = "";
       const start = (tableCurrentPage - 1) * tablePageSize;
       const end = start + tablePageSize;
       const pageItems = validFiltered.slice(start, end);
@@ -1804,16 +1992,14 @@
         return;
       }
 
-      pageItems.forEach(m => {
-        const tr = document.createElement("tr");
-        tr.className = "hover:bg-white/[0.04] transition border-b border-white/5";
+      tbody.innerHTML = pageItems.map(m => {
         const isHome = m.mando === "Mandante";
         const isAway = m.mando === "Visitante";
         const mandoBadge = isHome ? `<span class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 font-sans text-[10px] font-bold border border-emerald-500/40">Mandante</span>` : isAway ? `<span class="px-2 py-0.5 rounded bg-rose-950 text-rose-300 font-sans text-[10px] font-bold border border-rose-500/40">Visitante</span>` : `<span class="px-2 py-0.5 rounded bg-amber-950 text-amber-300 font-sans text-[10px] font-bold border border-amber-500/40">Neutro</span>`;
         const sulRate = m.sul ? `${((m.sul / 20000) * 100).toFixed(1)}%` : "-";
         const presBadge = m.presente === "Sim" ? `<span class="px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 font-sans text-[10px] font-bold border border-cyan-500/40">Sim</span>` : `<span class="text-white/30">Não</span>`;
 
-        tr.innerHTML = `
+        return `<tr class="hover:bg-white/[0.04] transition border-b border-white/5">
           <td class="p-3 text-[#C5A059] font-mono text-[11px] whitespace-nowrap">${m.id}</td>
           <td class="p-3 text-white/90 whitespace-nowrap">${m.data || "-"}</td>
           <td class="p-3 text-white/50">${m.hora || "-"}</td>
@@ -1827,9 +2013,8 @@
           <td class="p-3 text-right text-cyan-300 font-semibold">${fmt(m.sul)}</td>
           <td class="p-3 text-right text-amber-300 font-bold">${sulRate}</td>
           <td class="p-3 text-center">${presBadge}</td>
-        `;
-        tbody.appendChild(tr);
-      });
+        </tr>`;
+      }).join('');
 
       const totalPages = Math.ceil(validFiltered.length / tablePageSize) || 1;
       const pag = document.getElementById("table-pagination");
@@ -1843,10 +2028,9 @@
       `;
     }
 
-    function renderEstadioAdvTable(advStats) {
-      const tbody = document.getElementById('estadio-adv-table-body');
+    function renderAdvTable(tbodyId, advStats) {
+      const tbody = document.getElementById(tbodyId);
       if (!tbody) return;
-      tbody.innerHTML = '';
 
       const sortedAdversarios = Object.keys(advStats).sort((a, b) => {
         const sA = advStats[a], sB = advStats[b];
@@ -1861,16 +2045,14 @@
         return;
       }
 
-      sortedAdversarios.forEach(adv => {
+      tbody.innerHTML = sortedAdversarios.map(adv => {
         const s = advStats[adv];
         const sg = s.gp - s.gc;
         const pts = (s.v * 3) + s.e;
         const ap = ((pts / (s.jog * 3)) * 100).toFixed(1) + '%';
         const sgColor = sg > 0 ? 'text-emerald-400' : sg < 0 ? 'text-rose-400' : 'text-white/70';
 
-        const tr = document.createElement('tr');
-        tr.className = 'hover:bg-white/[0.04] transition border-b border-white/5';
-        tr.innerHTML = `
+        return `<tr class="hover:bg-white/[0.04] transition border-b border-white/5">
           <td class="p-3 font-sans font-bold text-white">${adv}</td>
           <td class="p-3 text-center text-white/90 font-bold">${s.jog}</td>
           <td class="p-3 text-center text-emerald-400 font-bold">${s.v}</td>
@@ -1880,9 +2062,8 @@
           <td class="p-3 text-center text-purple-300">${s.gc.toLocaleString('pt-BR')}</td>
           <td class="p-3 text-center font-bold ${sgColor}">${sg > 0 ? '+' + sg.toLocaleString('pt-BR') : sg.toLocaleString('pt-BR')}</td>
           <td class="p-3 text-right text-[#C5A059] font-bold">${ap}</td>
-        `;
-        tbody.appendChild(tr);
-      });
+        </tr>`;
+      }).join('');
     }
 
     function navigatePage(direction) {
@@ -1963,10 +2144,14 @@
     }
 
     function getClassicosExcluding(excludeDimension) {
+      const setComp = excludeDimension !== 'competicao' && classicosState.competicao.length > 0 ? new Set(classicosState.competicao) : null;
+      const setAdv = excludeDimension !== 'adversario' && classicosState.adversario.length > 0 ? new Set(classicosState.adversario) : null;
+      const setPres = excludeDimension !== 'presente' && classicosState.presente.length > 0 ? new Set(classicosState.presente) : null;
+
       return CLASSICOS_DATA.filter(m => {
-        if (excludeDimension !== 'competicao' && classicosState.competicao.length > 0 && !classicosState.competicao.includes(m.torneio)) return false;
-        if (excludeDimension !== 'adversario' && classicosState.adversario.length > 0 && !classicosState.adversario.includes(m.adv)) return false;
-        if (excludeDimension !== 'presente' && classicosState.presente.length > 0 && !classicosState.presente.includes(m.presente)) return false;
+        if (setComp && !setComp.has(m.torneio)) return false;
+        if (setAdv && !setAdv.has(m.adv)) return false;
+        if (setPres && !setPres.has(m.presente)) return false;
         if (classicosState.minAno && m.ano < classicosState.minAno) return false;
         if (classicosState.maxAno && m.ano > classicosState.maxAno) return false;
         return true;
@@ -1990,9 +2175,10 @@
         counts[val] = (counts[val] || 0) + 1;
       });
 
+      const checkedSet = new Set(classicosState[type]);
       const html = items.map(item => {
         const count = counts[item.value] || 0;
-        const isChecked = classicosState[type].includes(item.value);
+        const isChecked = checkedSet.has(item.value);
         return `
           <label class="flex items-center justify-between p-1.5 hover:bg-white/5 rounded-lg cursor-pointer text-xs text-white/90 transition select-none">
             <div class="flex items-center gap-2 truncate pr-1">
@@ -2079,14 +2265,16 @@
       updateClassicosDropdowns();
       updateClassicosLabels();
 
+      const setComp = classicosState.competicao.length > 0 ? new Set(classicosState.competicao) : null;
+      const setAdv = classicosState.adversario.length > 0 ? new Set(classicosState.adversario) : null;
+      const setPres = classicosState.presente.length > 0 ? new Set(classicosState.presente) : null;
+
       const filteredClassicos = CLASSICOS_DATA.filter(m => {
-        if (classicosState.competicao.length > 0 && !classicosState.competicao.includes(m.torneio)) return false;
-        if (classicosState.adversario.length > 0 && !classicosState.adversario.includes(m.adv)) return false;
-        if (classicosState.presente.length > 0 && !classicosState.presente.includes(m.presente)) return false;
-        
+        if (setComp && !setComp.has(m.torneio)) return false;
+        if (setAdv && !setAdv.has(m.adv)) return false;
+        if (setPres && !setPres.has(m.presente)) return false;
         if (classicosState.minAno && m.ano < classicosState.minAno) return false;
         if (classicosState.maxAno && m.ano > classicosState.maxAno) return false;
-
         return true;
       });
 
@@ -2094,16 +2282,31 @@
       if (tag) tag.textContent = `${filteredClassicos.length} partidas`;
 
       let v = 0, e = 0, d = 0, gp = 0, gc = 0;
+      const advStatsClassicos = {};
+      const classicosIndexByYearAdv = {};
+
       filteredClassicos.forEach(m => {
-        const placarLimpo = m.placar.toLowerCase().replace(/\s+/g, '').replace('-', 'x');
-        const parts = placarLimpo.split('x').map(p => parseInt(p, 10));
-        
-        if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-           gp += parts[0];
-           gc += parts[1];
-           if (parts[0] > parts[1]) v++;
-           else if (parts[0] < parts[1]) d++;
-           else e++;
+        // Indexa por ano + rival normalizado para cruzamento O(1) com Setor Sul
+        const key = `${m.ano}_${m.advNorm}`;
+        if (!classicosIndexByYearAdv[key]) classicosIndexByYearAdv[key] = [];
+        classicosIndexByYearAdv[key].push(m.timestamp);
+
+        if (m.gf !== null && m.ga !== null) {
+           const fluGols = m.gf, advGols = m.ga;
+           gp += fluGols;
+           gc += advGols;
+           
+           let res = 'E';
+           if (fluGols > advGols) { v++; res = 'V'; }
+           else if (fluGols < advGols) { d++; res = 'D'; }
+           else { e++; res = 'E'; }
+
+           if (!advStatsClassicos[m.adv]) {
+               advStatsClassicos[m.adv] = { jog: 0, v: 0, e: 0, d: 0, gp: 0, gc: 0 };
+           }
+           const st = advStatsClassicos[m.adv];
+           st.jog++; st.gp += fluGols; st.gc += advGols;
+           if (res === 'V') st.v++; else if (res === 'E') st.e++; else st.d++;
         }
       });
 
@@ -2129,44 +2332,27 @@
 
       updateClassicosChart(filteredClassicos);
 
-      const getTimestamp = (d) => {
-          if (!d || d === "-") return 0;
-          const parts = d.split(/[-/.]/);
-          if (parts.length === 3) {
-              const y = parts[0].length === 4 ? parseInt(parts[0]) : (parts[2].length === 2 ? 2000 + parseInt(parts[2]) : parseInt(parts[2]));
-              const m = parseInt(parts[1]) - 1;
-              const day = parts[0].length === 4 ? parseInt(parts[2]) : parseInt(parts[0]);
-              return new Date(y, m, day).getTime();
-          }
-          return 0;
-      };
-
-      const normalizeAdv = (a) => {
-          if (!a) return "";
-          let s = a.toLowerCase().trim();
-          if (s.includes('vasco')) return 'vasco';
-          if (s.includes('flamengo')) return 'flamengo';
-          if (s.includes('botafogo')) return 'botafogo';
-          return s;
-      };
-
+      // Cruzamento ultra-rápido por chave indexada (Ano + Rival + Tolerância de 4 dias)
       const isMatchInFilteredClassicos = (m) => {
-          const mAdv = normalizeAdv(m.adv);
-          const mTime = getTimestamp(m.data);
-          
-          return filteredClassicos.some(c => {
-              if (normalizeAdv(c.adv) !== mAdv) return false;
-              if (c.ano !== m.ano) return false;
-              const cTime = getTimestamp(c.data);
-              if (Math.abs(mTime - cTime) <= 4 * 86400000) return true;
-              return false;
-          });
+        const timestamps = classicosIndexByYearAdv[`${m.ano}_${m.advNorm}`];
+        if (!timestamps) return false;
+        for (let i = 0; i < timestamps.length; i++) {
+          if (Math.abs(m.timestamp - timestamps[i]) <= 345600000) return true;
+        }
+        return false;
       };
 
-      const sulMatchesClassicos = MATCHES_DATA.filter(m => {
-          if (!m.estadio || m.estadio.trim().toLowerCase().replace('ã', 'a').replace('á', 'a') !== "maracana") return false;
-          if (m.sul === null || m.sul <= 0) return false;
-          return isMatchInFilteredClassicos(m);
+      const sulMatchesClassicos = [];
+      let missingSulCountClassicos = 0;
+
+      MATCHES_DATA.forEach(m => {
+        if (!m.isMaracanaNorm) return;
+        if (!isMatchInFilteredClassicos(m)) return;
+        if (m.sul !== null && m.sul > 0) {
+          sulMatchesClassicos.push(m);
+        } else {
+          missingSulCountClassicos++;
+        }
       });
 
       const avgSulClassicos = sulMatchesClassicos.length ? sulMatchesClassicos.reduce((acc, x) => acc + x.sul, 0) / sulMatchesClassicos.length : 0;
@@ -2202,15 +2388,8 @@
           }
       }
 
-      const missingSulCountClassicos = MATCHES_DATA.filter(m => {
-          if (!m.estadio || m.estadio.trim().toLowerCase().replace('ã', 'a').replace('á', 'a') !== "maracana") return false;
-          if (!isMatchInFilteredClassicos(m)) return false;
-          return m.sul === null || m.sul <= 0;
-      }).length;
-
       const classicosAlertEl = document.getElementById("classicos-sul-alert-missing");
       const classicosCountEl = document.getElementById("classicos-sul-missing-count");
-      
       if (classicosAlertEl && classicosCountEl) {
         if (missingSulCountClassicos > 0) {
           classicosCountEl.textContent = missingSulCountClassicos;
@@ -2224,118 +2403,30 @@
         .sort((a, b) => b.sul - a.sul)
         .slice(0, 10);
 
-      if (activeCharts["chartClassicosSetorSul"]) activeCharts["chartClassicosSetorSul"].destroy();
-      
-      const canvasClassicosSul = document.getElementById("chartClassicosSetorSul");
-      if (canvasClassicosSul) {
-          if (topSulMatchesClassicos.length > 0) {
-              
-              const degradeClassico = canvasClassicosSul.getContext('2d').createLinearGradient(0, 0, 0, 280);
-              degradeClassico.addColorStop(0, '#0E4735');     
-              degradeClassico.addColorStop(0.35, '#0E4735');  
-              degradeClassico.addColorStop(0.60, '#8A1538');  
-              degradeClassico.addColorStop(1, '#8A1538'); 
-              
-              const cvLegClassico = document.createElement('canvas');
-              cvLegClassico.width = 60; cvLegClassico.height = 14; 
-              const ctxLegClassico = cvLegClassico.getContext('2d');
-              const gradLegClassico = ctxLegClassico.createLinearGradient(0, 0, 60, 0);
-              gradLegClassico.addColorStop(0, '#8A1538');     
-              gradLegClassico.addColorStop(0.35, '#8A1538');  
-              gradLegClassico.addColorStop(0.60, '#0E4735');  
-              gradLegClassico.addColorStop(1, '#0E4735');     
-              ctxLegClassico.fillStyle = gradLegClassico;
-              ctxLegClassico.fillRect(0, 0, 60, 14);
-              const padraoLegendaClassico = canvasClassicosSul.getContext('2d').createPattern(cvLegClassico, 'repeat');
-
-              activeCharts["chartClassicosSetorSul"] = new Chart(canvasClassicosSul.getContext('2d'), {
-                type: 'bar',
-                data: {
-                  labels: topSulMatchesClassicos.map(m => {
-                    if (!m.data || m.data === "-") return [`${m.adv}`, `(-)`];
-                    const p = m.data.split(/[-/]/);
-                    const dia = p[0].length === 4 ? p[2] : p[0];
-                    const mes = p[1];
-                    const ano = p[0].length === 4 ? p[0].slice(2, 4) : p[2].slice(2, 4);
-                    return [`${m.adv}`, `(${dia}-${mes}-${ano})`];
-                  }),
-                  datasets: [
-                    { label: 'Sul Pagantes', data: topSulMatchesClassicos.map(m => m.sul), backgroundColor: degradeClassico, borderRadius: 6, order: 2 },
-                    { label: 'Capacidade Máxima Pagantes (20K)', data: topSulMatchesClassicos.map(() => 20000), type: 'line', borderColor: '#f59e0b', borderDash: [5, 5], borderWidth: 3, pointRadius: 0, pointHoverRadius: 0, fill: false, order: 1 }
-                  ]
-                },
-                options: {
-                  responsive: true, maintainAspectRatio: false,
-                  plugins: { 
-                    legend: { 
-                      position: 'top',
-                      labels: { 
-                        color: 'rgba(255,255,255,0.7)',
-                        generateLabels: function(chart) {
-                          const originais = Chart.defaults.plugins.legend.labels.generateLabels(chart);
-                          originais.forEach(label => {
-                            if (label.text === 'Sul Pagantes') {
-                              label.fillStyle = padraoLegendaClassico;
-                            }
-                          });
-                          return originais;
-                        }
-                      } 
-                    }, 
-                    tooltip: { 
-                      callbacks: { 
-                        afterTitle: function(context) {
-                          const index = context[0].dataIndex;
-                          return topSulMatchesClassicos[index].torneio;
-                        },
-                        label: ctx => ctx.dataset.type === 'line' ? `Capacidade Máxima Pagantes (20K)` : ` Sul Pagantes: ${ctx.parsed.y.toLocaleString('pt-BR')} (${((ctx.parsed.y / 20000) * 100).toFixed(1)}% do setor)` 
-                      } 
-                    } 
-                  },
-                  scales: { y: { beginAtZero: true, max: 22000, ticks: { callback: v => v.toLocaleString('pt-BR') } } }
-                }
-              });
-          } else {
-              const ctx = canvasClassicosSul.getContext('2d');
-              ctx.clearRect(0, 0, canvasClassicosSul.width, canvasClassicosSul.height);
-          }
-      }
-
+      renderSulBarChart("chartClassicosSetorSul", topSulMatchesClassicos);
       renderClassicosTable(filteredClassicos);
-    }
-
-    function parseDateCustom(str) {
-      if (!str || str === "-") return new Date(2026, 0, 1).getTime();
-      const p = str.split(/[-/]/);
-      if (p.length === 3) {
-        if (p[0].length === 4) return new Date(p[0], p[1]-1, p[2]).getTime();
-        return new Date(p[2], p[1]-1, p[0]).getTime();
-      }
-      return new Date(2026, 0, 1).getTime();
+      renderAdvTable('classicos-adv-table-body', advStatsClassicos);
     }
 
     function updateClassicosChart(data) {
-      const sortedData = [...data].sort((a, b) => parseDateCustom(a.data) - parseDateCustom(b.data));
+      const sortedData = [...data].sort((a, b) => a.sortTime - b.sortTime);
 
       let vFla = 0, vVas = 0, vBot = 0, vTot = 0;
       const labels = [], dFla = [], dVas = [], dBot = [], dTot = [];
 
       sortedData.forEach(c => {
-         const placarLimpo = c.placar.toLowerCase().replace(/\s+/g, '').replace('-', 'x');
-         const parts = placarLimpo.split('x').map(p => parseInt(p, 10));
-         
-         if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-             let diff = parts[0] - parts[1];
+         if (c.gf !== null && c.ga !== null) {
+             const diff = c.gf - c.ga;
              if (diff > 0) {
                  vTot++;
-                 if (c.adv.toLowerCase().includes('flamengo')) vFla++;
-                 if (c.adv.toLowerCase().includes('vasco')) vVas++;
-                 if (c.adv.toLowerCase().includes('botafogo')) vBot++;
+                 if (c.advNorm === 'flamengo') vFla++;
+                 else if (c.advNorm === 'vasco') vVas++;
+                 else if (c.advNorm === 'botafogo') vBot++;
              } else if (diff < 0) {
                  vTot--;
-                 if (c.adv.toLowerCase().includes('flamengo')) vFla--;
-                 if (c.adv.toLowerCase().includes('vasco')) vVas--;
-                 if (c.adv.toLowerCase().includes('botafogo')) vBot--;
+                 if (c.advNorm === 'flamengo') vFla--;
+                 else if (c.advNorm === 'vasco') vVas--;
+                 else if (c.advNorm === 'botafogo') vBot--;
              }
          }
          
@@ -2346,18 +2437,74 @@
          dTot.push(vTot);
       });
 
+      const selAdv = classicosState.adversario.map(a => a.toLowerCase());
+      const showAll = selAdv.length === 0;
+      const showBot = showAll || selAdv.some(a => a.includes('botafogo'));
+      const showVas = showAll || selAdv.some(a => a.includes('vasco'));
+      const showFla = showAll || selAdv.some(a => a.includes('flamengo'));
+
+      const activeRivalsCount = [showBot, showVas, showFla].filter(Boolean).length;
+      const isSingleRival = activeRivalsCount === 1;
+
+      const datasets = [];
+
+      if (!isSingleRival) {
+          datasets.push({ 
+              label: 'Saldo Total', 
+              data: dTot, 
+              borderColor: '#22c55e', 
+              backgroundColor: '#22c55e', 
+              borderWidth: 2.5, 
+              tension: 0, 
+              pointRadius: 0, 
+              pointHoverRadius: 5 
+          });
+      }
+
+      if (showBot) {
+          datasets.push({ 
+              label: 'Botafogo', 
+              data: dBot, 
+              borderColor: '#ffffff', 
+              backgroundColor: '#ffffff', 
+              borderWidth: isSingleRival ? 2.5 : 1.5, 
+              tension: 0, 
+              pointRadius: 0, 
+              pointHoverRadius: 4 
+          });
+      }
+      if (showVas) {
+          datasets.push({ 
+              label: 'Vasco', 
+              data: dVas, 
+              borderColor: '#9ca3af', 
+              backgroundColor: '#9ca3af', 
+              borderWidth: isSingleRival ? 2.5 : 1.5, 
+              tension: 0, 
+              pointRadius: 0, 
+              pointHoverRadius: 4 
+          });
+      }
+      if (showFla) {
+          datasets.push({ 
+              label: 'Flamengo', 
+              data: dFla, 
+              borderColor: '#ef4444', 
+              backgroundColor: '#ef4444', 
+              borderWidth: isSingleRival ? 2.5 : 1.5, 
+              tension: 0, 
+              pointRadius: 0, 
+              pointHoverRadius: 4 
+          });
+      }
+
       if (activeCharts["chartEvolucaoClassicos"]) activeCharts["chartEvolucaoClassicos"].destroy();
       
       activeCharts["chartEvolucaoClassicos"] = new Chart(document.getElementById("chartEvolucaoClassicos").getContext('2d'), {
          type: 'line',
          data: {
              labels: labels,
-             datasets: [
-                 { label: 'Saldo Total', data: dTot, borderColor: '#22c55e', backgroundColor: '#22c55e', borderWidth: 2.5, tension: 0, pointRadius: 0, pointHoverRadius: 5 },
-                 { label: 'Botafogo', data: dBot, borderColor: '#ffffff', backgroundColor: '#ffffff', borderWidth: 1.5, tension: 0, pointRadius: 0, pointHoverRadius: 4 },
-                 { label: 'Vasco', data: dVas, borderColor: '#9ca3af', backgroundColor: '#9ca3af', borderWidth: 1.5, tension: 0, pointRadius: 0, pointHoverRadius: 4 },
-                 { label: 'Flamengo', data: dFla, borderColor: '#ef4444', backgroundColor: '#ef4444', borderWidth: 1.5, tension: 0, pointRadius: 0, pointHoverRadius: 4 }
-             ]
+             datasets: datasets
          },
          options: {
              responsive: true, maintainAspectRatio: false,
@@ -2383,22 +2530,16 @@
     function renderClassicosTable(data) {
       const tbody = document.getElementById('classicos-table-body');
       if (!tbody) return;
-      tbody.innerHTML = '';
       if (data.length === 0) {
         tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-white/40 italic">Nenhum clássico encontrado para os filtros selecionados.</td></tr>`;
         return;
       }
-      data.forEach(c => {
-        const tr = document.createElement('tr');
-        tr.className = 'hover:bg-white/[0.04] transition border-b border-white/5';
-        tr.innerHTML = `
+      tbody.innerHTML = data.map(c => `<tr class="hover:bg-white/[0.04] transition border-b border-white/5">
           <td class="p-3 text-white/90">${c.data}</td>
           <td class="p-3 font-sans font-bold text-white">${c.adv}</td>
           <td class="p-3 text-center font-bold text-white">${c.placar}</td>
           <td class="p-3 font-sans text-[11px] text-white/80 max-w-[170px] truncate" title="${c.torneio}">${c.torneio}</td>
-        `;
-        tbody.appendChild(tr);
-      });
+        </tr>`).join('');
     }
 
     window.onload = function() {

@@ -4,109 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Fluminense FC | Dashboard Analítico</title>
+  <!-- Dashboard V3.0: arquitetura separada, eventos desacoplados e manutenção simplificada -->
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script src="https://unpkg.com/lucide@1.60.0/dist/umd/lucide.js"></script>
 
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
-
-    :root {
-      --flu-green: #0E4735;
-      --flu-maroon: #8A1538;
-      --flu-gold: #C5A059;
-      --flu-dark: #0A120F;
-      --flu-card-bg: rgba(14, 26, 21, 0.85);
-    }
-
-    body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      background-color: var(--flu-dark);
-      color: #F1F5F3;
-      background-image: 
-        radial-gradient(circle at 10% 20%, rgba(14, 71, 53, 0.3) 0%, transparent 40%),
-        radial-gradient(circle at 90% 80%, rgba(138, 21, 56, 0.25) 0%, transparent 40%),
-        radial-gradient(circle at 50% 50%, rgba(197, 160, 89, 0.05) 0%, transparent 60%);
-      background-attachment: fixed;
-    }
-
-    .glass-panel {
-      background: var(--flu-card-bg);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      border: 1px solid rgba(197, 160, 89, 0.22);
-      transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .glass-panel:hover {
-      border-color: rgba(197, 160, 89, 0.45);
-      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6);
-    }
-
-    .ms-dropdown-menu {
-      background-color: #0b1713;
-      border: 1px solid rgba(197, 160, 89, 0.38);
-      box-shadow: 0 16px 40px -6px rgba(0, 0, 0, 0.9);
-      max-height: 310px;
-      z-index: 70;
-    }
-
-    .ms-checkbox {
-      accent-color: #C5A059;
-      width: 15px;
-      height: 15px;
-      cursor: pointer;
-    }
-
-    .ms-pill {
-      background: rgba(197, 160, 89, 0.15);
-      border: 1px solid rgba(197, 160, 89, 0.35);
-      color: #F3DEAB;
-    }
-
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #080D0B;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #183327;
-      border-radius: 4px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: var(--flu-gold);
-    }
-
-    .dual-slider-container {
-      position: relative;
-    }
-    .dual-slider-container input[type=range] {
-      -webkit-appearance: none;
-      appearance: none;
-      background: transparent;
-      pointer-events: none;
-    }
-    .dual-slider-container input[type=range]:focus {
-      outline: none;
-    }
-    .dual-slider-container input[type=range]::-webkit-slider-thumb {
-      pointer-events: auto;
-      -webkit-appearance: none;
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      background: #C5A059;
-      cursor: pointer;
-      position: relative;
-      z-index: 10;
-      box-shadow: 0 0 6px rgba(0,0,0,0.7);
-      border: 1px solid #F3DEAB;
-    }
-  </style>
+  <link rel="stylesheet" href="./styles.css">
 </head>
 <body class="min-h-screen flex flex-col antialiased selection:bg-[#8A1538] selection:text-white">
 
@@ -126,12 +31,12 @@
           </h1>
           
           <div class="flex items-center gap-3">
-            <button type="button" onclick="fetchLiveGoogleSheet()" class="text-[10px] font-bold text-cyan-200 hover:text-white transition flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-950 border border-cyan-400/50 hover:bg-cyan-900 shadow-sm active:scale-95 group shrink-0">
+            <button id="update-data-button" type="button" data-action="refresh-data" class="text-[10px] font-bold text-cyan-200 hover:text-white transition flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-950 border border-cyan-400/50 hover:bg-cyan-900 shadow-sm active:scale-95 group shrink-0">
               <div class="relative flex items-center justify-center">
                 <span class="absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75 animate-ping"></span>
                 <i data-lucide="cloud-download" class="w-3.5 h-3.5 text-cyan-300 relative z-10 group-hover:scale-110 transition-transform"></i>
               </div>
-              <span>Atualizar</span>
+              <span id="update-data-label">Atualizar</span>
             </button>
             <div class="flex flex-col text-[10px] leading-tight">
               <span class="text-cyan-300 font-semibold">Clique aqui para atualizar base de dados</span>
@@ -143,13 +48,13 @@
 
       <div class="flex items-center gap-2 flex-wrap mt-2 md:mt-0">
         <div class="inline-flex p-1 rounded-lg bg-[#0B1512] border border-[#C5A059]/30">
-          <button onclick="switchTab('capa')" id="tab-btn-capa" class="px-3 py-1.5 rounded-md text-xs font-bold transition bg-[#C5A059] text-[#0A120F]">
+          <button data-action="switch-tab" data-tab="capa" id="tab-btn-capa" class="px-3 py-1.5 rounded-md text-xs font-bold transition bg-[#C5A059] text-[#0A120F]">
             Início
           </button>
-          <button onclick="switchTab('estadio')" id="tab-btn-estadio" class="px-3 py-1.5 rounded-md text-xs font-bold transition text-white/70 hover:text-white">
+          <button data-action="switch-tab" data-tab="estadio" id="tab-btn-estadio" class="px-3 py-1.5 rounded-md text-xs font-bold transition text-white/70 hover:text-white">
             Público e Desempenho
           </button>
-          <button onclick="switchTab('classicos')" id="tab-btn-classicos" class="px-3 py-1.5 rounded-md text-xs font-bold transition text-white/70 hover:text-white">
+          <button data-action="switch-tab" data-tab="classicos" id="tab-btn-classicos" class="px-3 py-1.5 rounded-md text-xs font-bold transition text-white/70 hover:text-white">
             Clássicos
           </button>
         </div>
@@ -179,11 +84,11 @@
           </p>
 
           <div class="pt-4 flex flex-wrap items-center gap-4">
-            <button onclick="switchTab('estadio')" class="px-6 py-3.5 rounded-xl bg-gradient-to-r from-[#8A1538] to-[#0E4735] hover:opacity-90 text-white font-bold text-sm shadow-xl shadow-black/50 transition flex items-center gap-2.5 active:scale-95 border border-[#C5A059]/40">
+            <button data-action="switch-tab" data-tab="estadio" class="px-6 py-3.5 rounded-xl bg-gradient-to-r from-[#8A1538] to-[#0E4735] hover:opacity-90 text-white font-bold text-sm shadow-xl shadow-black/50 transition flex items-center gap-2.5 active:scale-95 border border-[#C5A059]/40">
               <i data-lucide="bar-chart-3" class="w-4 h-4 text-[#C5A059]"></i>
               <span>Público e Desempenho</span>
             </button>
-            <button onclick="switchTab('classicos')" class="px-6 py-3.5 rounded-xl bg-gradient-to-r from-[#0E4735] to-[#8A1538] hover:opacity-90 text-white font-bold text-sm shadow-xl shadow-black/50 transition flex items-center gap-2.5 active:scale-95 border border-[#C5A059]/40">
+            <button data-action="switch-tab" data-tab="classicos" class="px-6 py-3.5 rounded-xl bg-gradient-to-r from-[#0E4735] to-[#8A1538] hover:opacity-90 text-white font-bold text-sm shadow-xl shadow-black/50 transition flex items-center gap-2.5 active:scale-95 border border-[#C5A059]/40">
               <i data-lucide="swords" class="w-4 h-4 text-[#C5A059]"></i>
               <span>Clássicos</span>
             </button>
@@ -253,7 +158,7 @@
             </div>
           </div>
           <div class="flex items-center gap-3">
-            <button onclick="resetFilters()" class="text-xs font-semibold text-[#C5A059] hover:text-white transition flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 hover:border-[#C5A059]/60 shadow-sm active:scale-95">
+            <button data-action="reset-filters" class="text-xs font-semibold text-[#C5A059] hover:text-white transition flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 hover:border-[#C5A059]/60 shadow-sm active:scale-95">
               <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
               <span>Restaurar Padrão</span>
             </button>
@@ -270,14 +175,14 @@
             <label class="block text-xs font-semibold text-emerald-200/80 mb-1.5 flex items-center gap-1.5">
               <i data-lucide="shield" class="w-3.5 h-3.5 text-[#C5A059]"></i> Mando
             </label>
-            <button type="button" onclick="toggleDropdown('mando')" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition">
+            <button type="button" data-action="toggle-dropdown" data-filter="mando" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition">
               <span class="truncate pr-1 text-[#C5A059] font-semibold" id="label-mando">Mandante</span>
               <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i>
             </button>
             <div id="panel-mando" class="ms-dropdown-menu hidden absolute top-full left-0 right-0 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50">
               <div class="flex items-center justify-between text-[11px] pb-1.5 border-b border-white/10">
-                <button onclick="selectAllFilter('mando', true)" class="text-[#C5A059] hover:underline font-medium">Todos</button>
-                <button onclick="selectAllFilter('mando', false)" class="text-white/50 hover:underline">Limpar</button>
+                <button data-action="select-all-filter" data-filter="mando" data-select="true" class="text-[#C5A059] hover:underline font-medium">Todos</button>
+                <button data-action="select-all-filter" data-filter="mando" data-select="false" class="text-white/50 hover:underline">Limpar</button>
               </div>
               <div class="overflow-y-auto space-y-1 pr-1 max-h-48" id="list-mando"></div>
             </div>
@@ -285,44 +190,44 @@
 
           <div class="relative" id="dropdown-container-temporada">
             <label class="block text-xs font-semibold text-emerald-200/80 mb-1.5 flex items-center gap-1.5"><i data-lucide="calendar" class="w-3.5 h-3.5 text-[#C5A059]"></i> Temporada</label>
-            <button type="button" onclick="toggleDropdown('temporada')" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="label-temporada">Todas</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
-            <div id="panel-temporada" class="ms-dropdown-menu hidden absolute top-full left-0 right-0 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><div class="flex items-center justify-between text-[11px] pb-1.5 border-b border-white/10"><button onclick="selectAllFilter('temporada', true)" class="text-[#C5A059] hover:underline font-medium">Todos</button><button onclick="selectAllFilter('temporada', false)" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-48" id="list-temporada"></div></div>
+            <button type="button" data-action="toggle-dropdown" data-filter="temporada" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="label-temporada">Todas</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
+            <div id="panel-temporada" class="ms-dropdown-menu hidden absolute top-full left-0 right-0 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><div class="flex items-center justify-between text-[11px] pb-1.5 border-b border-white/10"><button data-action="select-all-filter" data-filter="temporada" data-select="true" class="text-[#C5A059] hover:underline font-medium">Todos</button><button data-action="select-all-filter" data-filter="temporada" data-select="false" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-48" id="list-temporada"></div></div>
           </div>
 
           <div class="relative" id="dropdown-container-competicao">
             <label class="block text-xs font-semibold text-emerald-200/80 mb-1.5 flex items-center gap-1.5"><i data-lucide="trophy" class="w-3.5 h-3.5 text-[#C5A059]"></i> Competição</label>
-            <button type="button" onclick="toggleDropdown('competicao')" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="label-competicao">Todas</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
-            <div id="panel-competicao" class="ms-dropdown-menu hidden absolute top-full left-0 w-64 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><div class="flex items-center justify-between text-[11px] pb-1.5 border-b border-white/10"><button onclick="selectAllFilter('competicao', true)" class="text-[#C5A059] hover:underline font-medium">Todos</button><button onclick="selectAllFilter('competicao', false)" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-48" id="list-competicao"></div></div>
+            <button type="button" data-action="toggle-dropdown" data-filter="competicao" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="label-competicao">Todas</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
+            <div id="panel-competicao" class="ms-dropdown-menu hidden absolute top-full left-0 w-64 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><div class="flex items-center justify-between text-[11px] pb-1.5 border-b border-white/10"><button data-action="select-all-filter" data-filter="competicao" data-select="true" class="text-[#C5A059] hover:underline font-medium">Todos</button><button data-action="select-all-filter" data-filter="competicao" data-select="false" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-48" id="list-competicao"></div></div>
           </div>
 
           <div class="relative" id="dropdown-container-adversario">
             <label class="block text-xs font-semibold text-emerald-200/80 mb-1.5 flex items-center gap-1.5"><i data-lucide="users-2" class="w-3.5 h-3.5 text-[#C5A059]"></i> Adversário</label>
-            <button type="button" onclick="toggleDropdown('adversario')" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="label-adversario">Todos</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
-            <div id="panel-adversario" class="ms-dropdown-menu hidden absolute top-full left-0 w-72 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><input type="text" placeholder="Buscar adversário..." oninput="filterDropdownOptions('adversario', this.value)" class="w-full text-[11px] rounded-lg px-2.5 py-1.5 bg-black/50 border border-white/15 text-white"><div class="flex items-center justify-between text-[11px] pb-1 border-b border-white/10"><button onclick="selectAllFilter('adversario', true)" class="text-[#C5A059] hover:underline font-medium">Todos</button><button onclick="selectAllFilter('adversario', false)" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-52" id="list-adversario"></div></div>
+            <button type="button" data-action="toggle-dropdown" data-filter="adversario" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="label-adversario">Todos</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
+            <div id="panel-adversario" class="ms-dropdown-menu hidden absolute top-full left-0 w-72 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><input type="text" placeholder="Buscar adversário..." data-input-action="filter-dropdown-options" data-filter="adversario" class="w-full text-[11px] rounded-lg px-2.5 py-1.5 bg-black/50 border border-white/15 text-white"><div class="flex items-center justify-between text-[11px] pb-1 border-b border-white/10"><button data-action="select-all-filter" data-filter="adversario" data-select="true" class="text-[#C5A059] hover:underline font-medium">Todos</button><button data-action="select-all-filter" data-filter="adversario" data-select="false" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-52" id="list-adversario"></div></div>
           </div>
 
           <div class="relative" id="dropdown-container-estadio">
             <label class="block text-xs font-semibold text-emerald-200/80 mb-1.5 flex items-center gap-1.5"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-[#C5A059]"></i> Estádio</label>
-            <button type="button" onclick="toggleDropdown('estadio')" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="label-estadio">Todos</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
-            <div id="panel-estadio" class="ms-dropdown-menu hidden absolute top-full left-0 w-64 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><input type="text" placeholder="Buscar estádio..." oninput="filterDropdownOptions('estadio', this.value)" class="w-full text-[11px] rounded-lg px-2.5 py-1.5 bg-black/50 border border-white/15 text-white"><div class="flex items-center justify-between text-[11px] pb-1 border-b border-white/10"><button onclick="selectAllFilter('estadio', true)" class="text-[#C5A059] hover:underline font-medium">Todos</button><button onclick="selectAllFilter('estadio', false)" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-44" id="list-estadio"></div></div>
+            <button type="button" data-action="toggle-dropdown" data-filter="estadio" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="label-estadio">Todos</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
+            <div id="panel-estadio" class="ms-dropdown-menu hidden absolute top-full left-0 w-64 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><input type="text" placeholder="Buscar estádio..." data-input-action="filter-dropdown-options" data-filter="estadio" class="w-full text-[11px] rounded-lg px-2.5 py-1.5 bg-black/50 border border-white/15 text-white"><div class="flex items-center justify-between text-[11px] pb-1 border-b border-white/10"><button data-action="select-all-filter" data-filter="estadio" data-select="true" class="text-[#C5A059] hover:underline font-medium">Todos</button><button data-action="select-all-filter" data-filter="estadio" data-select="false" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-44" id="list-estadio"></div></div>
           </div>
 
           <div class="relative" id="dropdown-container-dia">
             <label class="block text-xs font-semibold text-emerald-200/80 mb-1.5 flex items-center gap-1.5"><i data-lucide="calendar-days" class="w-3.5 h-3.5 text-[#C5A059]"></i> Dia Semana</label>
-            <button type="button" onclick="toggleDropdown('dia')" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="label-dia">Todos</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
-            <div id="panel-dia" class="ms-dropdown-menu hidden absolute top-full left-0 w-56 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><div class="flex items-center justify-between text-[11px] pb-1.5 border-b border-white/10"><button onclick="selectAllFilter('dia', true)" class="text-[#C5A059] hover:underline font-medium">Todos</button><button onclick="selectAllFilter('dia', false)" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-48" id="list-dia"></div></div>
+            <button type="button" data-action="toggle-dropdown" data-filter="dia" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="label-dia">Todos</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
+            <div id="panel-dia" class="ms-dropdown-menu hidden absolute top-full left-0 w-56 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><div class="flex items-center justify-between text-[11px] pb-1.5 border-b border-white/10"><button data-action="select-all-filter" data-filter="dia" data-select="true" class="text-[#C5A059] hover:underline font-medium">Todos</button><button data-action="select-all-filter" data-filter="dia" data-select="false" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-48" id="list-dia"></div></div>
           </div>
 
           <div class="relative" id="dropdown-container-horario">
             <label class="block text-xs font-semibold text-emerald-200/80 mb-1.5 flex items-center gap-1.5"><i data-lucide="clock" class="w-3.5 h-3.5 text-[#C5A059]"></i> Horário</label>
-            <button type="button" onclick="toggleDropdown('horario')" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="label-horario">Todos</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
-            <div id="panel-horario" class="ms-dropdown-menu hidden absolute top-full right-0 w-60 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><input type="text" placeholder="Filtrar horário..." oninput="filterDropdownOptions('horario', this.value)" class="w-full text-[11px] rounded-lg px-2.5 py-1.5 bg-black/50 border border-white/15 text-white"><div class="flex items-center justify-between text-[11px] pb-1 border-b border-white/10"><button onclick="selectAllFilter('horario', true)" class="text-[#C5A059] hover:underline font-medium">Todos</button><button onclick="selectAllFilter('horario', false)" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-48" id="list-horario"></div></div>
+            <button type="button" data-action="toggle-dropdown" data-filter="horario" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="label-horario">Todos</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
+            <div id="panel-horario" class="ms-dropdown-menu hidden absolute top-full right-0 w-60 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><input type="text" placeholder="Filtrar horário..." data-input-action="filter-dropdown-options" data-filter="horario" class="w-full text-[11px] rounded-lg px-2.5 py-1.5 bg-black/50 border border-white/15 text-white"><div class="flex items-center justify-between text-[11px] pb-1 border-b border-white/10"><button data-action="select-all-filter" data-filter="horario" data-select="true" class="text-[#C5A059] hover:underline font-medium">Todos</button><button data-action="select-all-filter" data-filter="horario" data-select="false" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-48" id="list-horario"></div></div>
           </div>
 
           <div class="relative" id="dropdown-container-presente">
             <label class="block text-xs font-semibold text-emerald-200/80 mb-1.5 flex items-center gap-1.5"><i data-lucide="user-check" class="w-3.5 h-3.5 text-[#C5A059]"></i> Matador no estádio</label>
-            <button type="button" onclick="toggleDropdown('presente')" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="label-presente">Todos</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
-            <div id="panel-presente" class="ms-dropdown-menu hidden absolute top-full right-0 w-56 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><div class="flex items-center justify-between text-[11px] pb-1.5 border-b border-white/10"><button onclick="selectAllFilter('presente', true)" class="text-[#C5A059] hover:underline font-medium">Todos</button><button onclick="selectAllFilter('presente', false)" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-48" id="list-presente"></div></div>
+            <button type="button" data-action="toggle-dropdown" data-filter="presente" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="label-presente">Todos</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
+            <div id="panel-presente" class="ms-dropdown-menu hidden absolute top-full right-0 w-56 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><div class="flex items-center justify-between text-[11px] pb-1.5 border-b border-white/10"><button data-action="select-all-filter" data-filter="presente" data-select="true" class="text-[#C5A059] hover:underline font-medium">Todos</button><button data-action="select-all-filter" data-filter="presente" data-select="false" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-48" id="list-presente"></div></div>
           </div>
 
         </div>
@@ -599,16 +504,26 @@
       <section class="glass-panel rounded-2xl p-6 shadow-2xl space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
           <div class="flex items-center gap-2 bg-[#0B1512] p-1 rounded-lg border border-[#C5A059]/30 overflow-x-auto">
-            <button onclick="switchTableTab('catalogo')" id="tab-inner-catalogo" class="px-4 py-2 text-xs font-bold rounded-md bg-[#C5A059] text-[#0A120F] transition whitespace-nowrap">
+            <button data-action="switch-table-tab" data-tab="catalogo" id="tab-inner-catalogo" class="px-4 py-2 text-xs font-bold rounded-md bg-[#C5A059] text-[#0A120F] transition whitespace-nowrap">
               Catálogo de Partidas
             </button>
-            <button onclick="switchTableTab('estatisticas')" id="tab-inner-estatisticas" class="px-4 py-2 text-xs font-bold text-white/70 hover:text-white rounded-md transition whitespace-nowrap hover:bg-white/5">
+            <button data-action="switch-table-tab" data-tab="estatisticas" id="tab-inner-estatisticas" class="px-4 py-2 text-xs font-bold text-white/70 hover:text-white rounded-md transition whitespace-nowrap hover:bg-white/5">
               Estatísticas por Adversário
             </button>
           </div>
-          <div id="search-container-catalogo" class="relative w-full sm:w-72">
-            <input type="text" id="search-adversario" oninput="debouncedApplyFilters()" placeholder="Buscar por adversário..." class="w-full text-xs rounded-xl pl-9 pr-3.5 py-2.5 bg-black/50 border border-white/20 text-white placeholder-white/40">
-            <i data-lucide="search" class="w-4 h-4 text-white/40 absolute left-3 top-3"></i>
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+            <div id="search-container-catalogo" class="relative w-full sm:w-72">
+              <input type="text" id="search-adversario" data-input-action="debounced-apply-filters" placeholder="Buscar por adversário..." class="w-full text-xs rounded-xl pl-9 pr-3.5 py-2.5 bg-black/50 border border-white/20 text-white placeholder-white/40">
+              <i data-lucide="search" class="w-4 h-4 text-white/40 absolute left-3 top-3"></i>
+            </div>
+            <div class="flex items-center gap-2">
+              <button type="button" data-action="copy-filtered-url" title="Copiar link com os filtros atuais" class="px-3 py-2.5 text-[11px] font-bold rounded-xl bg-white/5 border border-white/15 text-white/75 hover:text-white hover:bg-white/10 transition flex items-center gap-1.5 whitespace-nowrap">
+                <i data-lucide="link" class="w-3.5 h-3.5"></i><span id="copy-filter-link-label">Copiar filtros</span>
+              </button>
+              <button type="button" data-action="export-filtered-csv" title="Exportar as partidas filtradas em CSV" class="px-3 py-2.5 text-[11px] font-bold rounded-xl bg-emerald-950 border border-emerald-500/40 text-emerald-200 hover:text-white hover:bg-emerald-900 transition flex items-center gap-1.5 whitespace-nowrap">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i>Exportar CSV
+              </button>
+            </div>
           </div>
         </div>
 
@@ -692,7 +607,7 @@
             </div>
           </div>
           <div class="flex items-center gap-3">
-            <button onclick="resetClassicosFilters()" class="text-xs font-semibold text-[#C5A059] hover:text-white transition flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 hover:border-[#C5A059]/60 shadow-sm active:scale-95">
+            <button data-action="reset-classicos-filters" class="text-xs font-semibold text-[#C5A059] hover:text-white transition flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 hover:border-[#C5A059]/60 shadow-sm active:scale-95">
               <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
               <span>Restaurar Padrão</span>
             </button>
@@ -706,18 +621,18 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           <div class="relative" id="classicos-dropdown-container-adversario">
             <label class="block text-xs font-semibold text-emerald-200/80 mb-1.5 flex items-center gap-1.5"><i data-lucide="users-2" class="w-3.5 h-3.5 text-[#C5A059]"></i> Adversário</label>
-            <button type="button" onclick="toggleClassicosDropdown('adversario')" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="classicos-label-adversario">Todos</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
-            <div id="classicos-panel-adversario" class="ms-dropdown-menu hidden absolute top-full left-0 right-0 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><div class="flex items-center justify-between text-[11px] pb-1.5 border-b border-white/10"><button onclick="selectClassicosAll('adversario', true)" class="text-[#C5A059] hover:underline font-medium">Todos</button><button onclick="selectClassicosAll('adversario', false)" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-48" id="classicos-list-adversario"></div></div>
+            <button type="button" data-action="toggle-classicos-dropdown" data-filter="adversario" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="classicos-label-adversario">Todos</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
+            <div id="classicos-panel-adversario" class="ms-dropdown-menu hidden absolute top-full left-0 right-0 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><div class="flex items-center justify-between text-[11px] pb-1.5 border-b border-white/10"><button data-action="select-classicos-all" data-filter="adversario" data-select="true" class="text-[#C5A059] hover:underline font-medium">Todos</button><button data-action="select-classicos-all" data-filter="adversario" data-select="false" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-48" id="classicos-list-adversario"></div></div>
           </div>
           <div class="relative" id="classicos-dropdown-container-competicao">
             <label class="block text-xs font-semibold text-emerald-200/80 mb-1.5 flex items-center gap-1.5"><i data-lucide="trophy" class="w-3.5 h-3.5 text-[#C5A059]"></i> Competição</label>
-            <button type="button" onclick="toggleClassicosDropdown('competicao')" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="classicos-label-competicao">Todas</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
-            <div id="classicos-panel-competicao" class="ms-dropdown-menu hidden absolute top-full left-0 right-0 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><div class="flex items-center justify-between text-[11px] pb-1.5 border-b border-white/10"><button onclick="selectClassicosAll('competicao', true)" class="text-[#C5A059] hover:underline font-medium">Todos</button><button onclick="selectClassicosAll('competicao', false)" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-48" id="classicos-list-competicao"></div></div>
+            <button type="button" data-action="toggle-classicos-dropdown" data-filter="competicao" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="classicos-label-competicao">Todas</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
+            <div id="classicos-panel-competicao" class="ms-dropdown-menu hidden absolute top-full left-0 right-0 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><div class="flex items-center justify-between text-[11px] pb-1.5 border-b border-white/10"><button data-action="select-classicos-all" data-filter="competicao" data-select="true" class="text-[#C5A059] hover:underline font-medium">Todos</button><button data-action="select-classicos-all" data-filter="competicao" data-select="false" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-48" id="classicos-list-competicao"></div></div>
           </div>
           <div class="relative" id="classicos-dropdown-container-presente">
             <label class="block text-xs font-semibold text-emerald-200/80 mb-1.5 flex items-center gap-1.5"><i data-lucide="user-check" class="w-3.5 h-3.5 text-[#C5A059]"></i> Matador no estádio</label>
-            <button type="button" onclick="toggleClassicosDropdown('presente')" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="classicos-label-presente">Todos</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
-            <div id="classicos-panel-presente" class="ms-dropdown-menu hidden absolute top-full right-0 w-56 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><div class="flex items-center justify-between text-[11px] pb-1.5 border-b border-white/10"><button onclick="selectClassicosAll('presente', true)" class="text-[#C5A059] hover:underline font-medium">Todos</button><button onclick="selectClassicosAll('presente', false)" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-48" id="classicos-list-presente"></div></div>
+            <button type="button" data-action="toggle-classicos-dropdown" data-filter="presente" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="classicos-label-presente">Todos</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
+            <div id="classicos-panel-presente" class="ms-dropdown-menu hidden absolute top-full right-0 w-56 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><div class="flex items-center justify-between text-[11px] pb-1.5 border-b border-white/10"><button data-action="select-classicos-all" data-filter="presente" data-select="true" class="text-[#C5A059] hover:underline font-medium">Todos</button><button data-action="select-classicos-all" data-filter="presente" data-select="false" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-48" id="classicos-list-presente"></div></div>
           </div>
           <div class="col-span-1 rounded-xl p-2 bg-[#12201A] border border-[#C5A059]/30 flex flex-col justify-center relative">
             <label class="text-xs font-semibold text-emerald-200/80 flex items-center justify-between w-full mb-2 px-1">
@@ -726,8 +641,8 @@
             </label>
             <div class="relative w-full h-1 bg-black/60 rounded-full mx-1 dual-slider-container" style="width: calc(100% - 8px);">
               <div id="classicos-slider-track" class="absolute h-full bg-[#C5A059]/80 rounded-full z-0 pointer-events-none"></div>
-              <input type="range" id="classicos-ano-min" min="1900" max="2026" value="1900" step="1" oninput="updateClassicosSliderUI()" onchange="applyClassicosFilters()" class="absolute w-full top-1/2 -translate-y-1/2 m-0 h-1">
-              <input type="range" id="classicos-ano-max" min="1900" max="2026" value="2026" step="1" oninput="updateClassicosSliderUI()" onchange="applyClassicosFilters()" class="absolute w-full top-1/2 -translate-y-1/2 m-0 h-1">
+              <input type="range" id="classicos-ano-min" min="1900" max="2026" value="1900" step="1" data-input-action="classicos-slider-ui" data-change-action="apply-classicos-filters" class="absolute w-full top-1/2 -translate-y-1/2 m-0 h-1">
+              <input type="range" id="classicos-ano-max" min="1900" max="2026" value="2026" step="1" data-input-action="classicos-slider-ui" data-change-action="apply-classicos-filters" class="absolute w-full top-1/2 -translate-y-1/2 m-0 h-1">
             </div>
           </div>
         </div>
@@ -852,13 +767,16 @@
       <section class="glass-panel rounded-2xl p-6 shadow-2xl space-y-4 relative z-30">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
           <div class="flex items-center gap-2 bg-[#0B1512] p-1 rounded-lg border border-[#C5A059]/30 overflow-x-auto">
-            <button onclick="switchClassicosTableTab('catalogo')" id="tab-classicos-catalogo" class="px-4 py-2 text-xs font-bold rounded-md bg-[#C5A059] text-[#0A120F] transition whitespace-nowrap">
+            <button data-action="switch-classicos-table-tab" data-tab="catalogo" id="tab-classicos-catalogo" class="px-4 py-2 text-xs font-bold rounded-md bg-[#C5A059] text-[#0A120F] transition whitespace-nowrap">
               Catálogo de Partidas
             </button>
-            <button onclick="switchClassicosTableTab('estatisticas')" id="tab-classicos-estatisticas" class="px-4 py-2 text-xs font-bold text-white/70 hover:text-white rounded-md transition whitespace-nowrap hover:bg-white/5">
+            <button data-action="switch-classicos-table-tab" data-tab="estatisticas" id="tab-classicos-estatisticas" class="px-4 py-2 text-xs font-bold text-white/70 hover:text-white rounded-md transition whitespace-nowrap hover:bg-white/5">
               Estatísticas por Adversário
             </button>
           </div>
+          <button type="button" data-action="export-classicos-csv" title="Exportar os clássicos filtrados em CSV" class="px-3 py-2.5 text-[11px] font-bold rounded-xl bg-emerald-950 border border-emerald-500/40 text-emerald-200 hover:text-white hover:bg-emerald-900 transition flex items-center gap-1.5 whitespace-nowrap">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i>Exportar CSV
+          </button>
         </div>
 
         <!-- CONTEÚDO 1: Catálogo de Partidas CLÁSSICOS -->
@@ -912,1640 +830,6 @@
     </div>
   </footer>
 
-  <script>
-    const GOOGLE_SHEETS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVyyhMTbQRPjb1lXdljnsi6kjWt7mU5xKEeZRB24-Ic5hZKzkZCG9gIYvlN81CXVpd0SGc6e0XW18b/pub?gid=1810912358&single=true&output=csv";
-    const CLASSICOS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTW1huagd5Q9phZyCJE3fit-z1Is8ny15NpTMB1KiHB_wNAopeF9-mecdx0cH4BidxqFS9vTLB6UOvc/pub?gid=1492939094&single=true&output=csv";
-    
-    let MATCHES_DATA = [];
-    let CLASSICOS_DATA = [];
-
-    let selectedState = {
-      temporada: [], competicao: [], adversario: [], estadio: [], dia: [], horario: [],
-      mando: [], 
-      presente: []
-    };
-
-    const classicosState = { competicao: [], adversario: [], presente: [], minAno: null, maxAno: null };
-
-    let activeCharts = {};
-    let filteredMatches = [];
-    let tableCurrentPage = 1;
-    const tablePageSize = 40;
-    let searchDebounceTimer = null;
-
-    // --- FUNÇÕES UTILITÁRIAS E DE PRÉ-PROCESSAMENTO ---
-    function debouncedApplyFilters() {
-      if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
-      searchDebounceTimer = setTimeout(() => {
-        applyFilters();
-      }, 180);
-    }
-
-    function normalizeAdv(a) {
-      if (!a) return "";
-      const s = a.toLowerCase().trim();
-      if (s.includes('vasco')) return 'vasco';
-      if (s.includes('flamengo')) return 'flamengo';
-      if (s.includes('botafogo')) return 'botafogo';
-      return s;
-    }
-
-    function computeTimestamp(d) {
-      if (!d || d === "-") return 0;
-      const parts = d.split(/[-/.]/);
-      if (parts.length === 3) {
-        const y = parts[0].length === 4 ? parseInt(parts[0], 10) : (parts[2].length === 2 ? 2000 + parseInt(parts[2], 10) : parseInt(parts[2], 10));
-        const m = parseInt(parts[1], 10) - 1;
-        const day = parts[0].length === 4 ? parseInt(parts[2], 10) : parseInt(parts[0], 10);
-        return new Date(y, m, day).getTime();
-      }
-      return 0;
-    }
-
-    function computeSortDate(str) {
-      if (!str || str === "-") return new Date(2026, 0, 1).getTime();
-      const p = str.split(/[-/]/);
-      if (p.length === 3) {
-        if (p[0].length === 4) return new Date(p[0], p[1] - 1, p[2]).getTime();
-        return new Date(p[2], p[1] - 1, p[0]).getTime();
-      }
-      return new Date(2026, 0, 1).getTime();
-    }
-
-    function parseScore(placarStr, normalizeHyphen = false) {
-      if (!placarStr) return { gf: null, ga: null };
-      let clean = String(placarStr);
-      if (normalizeHyphen) {
-        clean = clean.toLowerCase().replace(/\s+/g, '').replace('-', 'x');
-      }
-      const parts = clean.split('x').map(p => parseInt(p.trim(), 10));
-      if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-        return { gf: parts[0], ga: parts[1] };
-      }
-      return { gf: null, ga: null };
-    }
-
-    function parseNumber(val) {
-      if (val === null || val === undefined || val === "" || val === "-") return null;
-      if (typeof val === 'number') return val;
-      const cleanStr = String(val).replace(/\./g, '').replace(/,/g, '.').trim();
-      const num = Number(cleanStr);
-      return isNaN(num) ? null : num;
-    }
-
-    function isValidMatch(placar) {
-      if (!placar) return false;
-      const str = String(placar).trim().toLowerCase();
-      if (str === "-" || str === "" || str.includes("a realizar") || str.includes("adiado")) return false;
-      return true;
-    }
-
-    function fmt(n) {
-      if (n === null || n === undefined || isNaN(n) || n === 0) return "-";
-      return Math.round(n).toLocaleString('pt-BR');
-    }
-
-    document.addEventListener('click', (e) => {
-      const isInside = e.target.closest('[id^="dropdown-container-"], [id^="classicos-dropdown-container-"]');
-      if (!isInside) document.querySelectorAll('.ms-dropdown-menu').forEach(p => p.classList.add('hidden'));
-    });
-
-    function switchTableTab(tab) {
-      const contentCatalogo = document.getElementById('content-catalogo');
-      const contentEstatisticas = document.getElementById('content-estatisticas');
-      const btnCatalogo = document.getElementById('tab-inner-catalogo');
-      const btnEstatisticas = document.getElementById('tab-inner-estatisticas');
-      const searchContainer = document.getElementById('search-container-catalogo');
-
-      if (tab === 'catalogo') {
-        contentCatalogo.classList.remove('hidden');
-        contentEstatisticas.classList.add('hidden');
-        btnCatalogo.className = "px-4 py-2 text-xs font-bold rounded-md bg-[#C5A059] text-[#0A120F] transition whitespace-nowrap";
-        btnEstatisticas.className = "px-4 py-2 text-xs font-bold text-white/70 hover:text-white rounded-md transition whitespace-nowrap hover:bg-white/5";
-        if (searchContainer) searchContainer.style.display = 'block';
-      } else {
-        contentCatalogo.classList.add('hidden');
-        contentEstatisticas.classList.remove('hidden');
-        btnEstatisticas.className = "px-4 py-2 text-xs font-bold rounded-md bg-[#C5A059] text-[#0A120F] transition whitespace-nowrap";
-        btnCatalogo.className = "px-4 py-2 text-xs font-bold text-white/70 hover:text-white rounded-md transition whitespace-nowrap hover:bg-white/5";
-        if (searchContainer) searchContainer.style.display = 'none';
-      }
-    }
-
-    function switchClassicosTableTab(tab) {
-      const contentCatalogo = document.getElementById('content-classicos-catalogo');
-      const contentEstatisticas = document.getElementById('content-classicos-estatisticas');
-      const btnCatalogo = document.getElementById('tab-classicos-catalogo');
-      const btnEstatisticas = document.getElementById('tab-classicos-estatisticas');
-
-      if (tab === 'catalogo') {
-        contentCatalogo.classList.remove('hidden');
-        contentEstatisticas.classList.add('hidden');
-        btnCatalogo.className = "px-4 py-2 text-xs font-bold rounded-md bg-[#C5A059] text-[#0A120F] transition whitespace-nowrap";
-        btnEstatisticas.className = "px-4 py-2 text-xs font-bold text-white/70 hover:text-white rounded-md transition whitespace-nowrap hover:bg-white/5";
-      } else {
-        contentCatalogo.classList.add('hidden');
-        contentEstatisticas.classList.remove('hidden');
-        btnEstatisticas.className = "px-4 py-2 text-xs font-bold rounded-md bg-[#C5A059] text-[#0A120F] transition whitespace-nowrap";
-        btnCatalogo.className = "px-4 py-2 text-xs font-bold text-white/70 hover:text-white rounded-md transition whitespace-nowrap hover:bg-white/5";
-      }
-    }
-
-    function switchTab(tabName) {
-      const viewCapa = document.getElementById('view-capa');
-      const viewEstadio = document.getElementById('view-estadio');
-      const viewClassicos = document.getElementById('view-classicos');
-
-      const btnCapa = document.getElementById('tab-btn-capa');
-      const btnEstadio = document.getElementById('tab-btn-estadio');
-      const btnClassicos = document.getElementById('tab-btn-classicos');
-
-      viewCapa.classList.add('hidden');
-      viewEstadio.classList.add('hidden');
-      if (viewClassicos) viewClassicos.classList.add('hidden');
-
-      btnCapa.className = "px-3 py-1.5 rounded-md text-xs font-bold transition text-white/70 hover:text-white";
-      btnEstadio.className = "px-3 py-1.5 rounded-md text-xs font-bold transition text-white/70 hover:text-white";
-      if (btnClassicos) btnClassicos.className = "px-3 py-1.5 rounded-md text-xs font-bold transition text-white/70 hover:text-white";
-
-      if (tabName === 'capa') {
-        viewCapa.classList.remove('hidden');
-        btnCapa.className = "px-3 py-1.5 rounded-md text-xs font-bold transition bg-[#C5A059] text-[#0A120F]";
-      } else if (tabName === 'estadio') {
-        viewEstadio.classList.remove('hidden');
-        btnEstadio.className = "px-3 py-1.5 rounded-md text-xs font-bold transition bg-[#C5A059] text-[#0A120F]";
-        setTimeout(() => { applyFilters(); }, 50);
-      } else if (tabName === 'classicos') {
-        if (viewClassicos) viewClassicos.classList.remove('hidden');
-        if (btnClassicos) btnClassicos.className = "px-3 py-1.5 rounded-md text-xs font-bold transition bg-[#C5A059] text-[#0A120F]";
-        setTimeout(() => { applyClassicosFilters(); }, 50);
-      }
-      if (window.lucide) lucide.createIcons();
-    }
-
-    async function fetchLiveGoogleSheet() {
-      const btnText = document.getElementById("last-update-time");
-      if (btnText) btnText.innerHTML = `Sincronizando com nuvem...`;
-
-      try {
-        const cacheBuster = new Date().getTime();
-        const urlMain = `${GOOGLE_SHEETS_CSV_URL}&_=${cacheBuster}`;
-        const urlClassicos = `${CLASSICOS_CSV_URL}&_=${cacheBuster}`;
-        
-        const [responseMain, responseClassicos] = await Promise.all([
-          fetch(urlMain),
-          fetch(urlClassicos)
-        ]);
-
-        if (!responseMain.ok || !responseClassicos.ok) throw new Error("Erro na comunicação com as bases");
-        
-        const csvTextMain = await responseMain.text();
-        const csvTextClassicos = await responseClassicos.text();
-        
-        Papa.parse(csvTextMain, {
-          header: true,
-          skipEmptyLines: true,
-          complete: function(results) {
-            const rows = results.data;
-            if (!rows || rows.length === 0) return;
-
-            const parsedMatches = [];
-            rows.forEach((row, idx) => {
-              const placar = row['Placar'] || "-";
-              const resultado = row['Resultado'] || "";
-              
-              if (resultado.trim().toLowerCase().includes("a realizar")) return;
-              if (!isValidMatch(placar)) return;
-
-              const season = row['Temporada'] || row['Ano'];
-              if (season == "2008") return; 
-
-              const dataVal = row['Data'];
-              let dtStr = dataVal ? String(dataVal).trim().slice(0, 10) : "";
-              let diaSem = row['Dia da Semana'] || "-";
-              let hrStr = row['Horário'] || row['Hora'] || "-";
-              let hrInt = null;
-              if (hrStr && hrStr !== "-") {
-                try { hrInt = parseInt(String(hrStr).split(':')[0], 10); } catch(e) {}
-              }
-
-              let mando = row['Mando'] || row['Casa/Fora/Neutro'] || "-";
-              if (mando === 'C') mando = 'Mandante';
-              else if (mando === 'F') mando = 'Visitante';
-              else if (mando === 'N') mando = 'Neutro';
-
-              const comp = row['Competição'] || row['Torneio'] || "-";
-              if (comp.trim().toLowerCase().includes("amistoso")) return; 
-
-              let adv = row['Adversário'] || "A Definir";
-              const estadio = row['Estádio'] || "A Definir";
-              const presVal = row['Presente?'] || row['Presente'] || "Não";
-
-              if (dtStr || comp !== "-" || adv !== "A Definir") {
-                const placarStr = String(placar);
-                const score = parseScore(placarStr, false);
-                const isMaracanaNorm = estadio.trim().toLowerCase().replace('ã', 'a').replace('á', 'a') === "maracana";
-
-                parsedMatches.push({
-                  id: row['ID Jogo'] || `FLU-${String(idx + 1).padStart(3, '0')}`,
-                  ano: Number(season) || (dtStr ? parseInt(dtStr.slice(0, 4), 10) : 2026),
-                  data: dtStr,
-                  timestamp: computeTimestamp(dtStr),
-                  hora: hrStr,
-                  hNum: hrInt,
-                  dia: diaSem,
-                  torneio: comp,
-                  mando: mando,
-                  adv: adv,
-                  advLower: adv.toLowerCase(),
-                  advNorm: normalizeAdv(adv),
-                  estadio: estadio,
-                  isMaracanaNorm: isMaracanaNorm,
-                  placar: placarStr,
-                  gf: score.gf,
-                  ga: score.ga,
-                  pub: parseNumber(row['Público Total']),
-                  pubVis: parseNumber(row['Público Visitante (Flu)'] || row['Público Visitante']), 
-                  sul: parseNumber(row['Sul Pagantes']),
-                  presente: presVal === "Sim" ? "Sim" : "Não"
-                });
-              }
-            });
-
-            if (parsedMatches.length > 0) {
-              MATCHES_DATA = parsedMatches;
-              updateDynamicYearRange();
-              applyFilters();
-            }
-          }
-        });
-
-        Papa.parse(csvTextClassicos, {
-          header: true,
-          skipEmptyLines: true,
-          complete: function(results) {
-            const rows = results.data;
-            if (!rows || rows.length === 0) return;
-            
-            const parsedClassicos = [];
-            rows.forEach((row, idx) => {
-              let dataStr = row['Data'] || "-";
-              let anoClassico = 2026;
-              if (dataStr !== "-") {
-                const parts = dataStr.split(/[-/]/);
-                if (parts.length >= 3) {
-                   anoClassico = parts[0].length === 4 ? parseInt(parts[0], 10) : parseInt(parts[2], 10);
-                } else {
-                   anoClassico = parseInt(dataStr.slice(-4), 10) || 2026;
-                }
-              }
-
-              let fGols = null, aGols = null;
-              for (let key in row) {
-                const k = key.trim().toLowerCase();
-                if (k === 'fluminense gols') fGols = row[key];
-                if (k === 'adversário gols' || k === 'adversario gols') aGols = row[key];
-              }
-
-              let placar = "-";
-              if (fGols !== null && fGols !== "" && fGols !== "-" && aGols !== null && aGols !== "" && aGols !== "-") {
-                placar = `${fGols}x${aGols}`;
-              } else {
-                placar = row['Placar'] || row['Resultado'] || row['Placar Jogo'] || "-";
-              }
-              
-              const status = row['Status'] || row['Resultado'] || "";
-              
-              if (status.trim().toLowerCase().includes("a realizar") || status.trim().toLowerCase().includes("adiado")) return;
-              if (!isValidMatch(placar)) return;
-              
-              let presVal = row['Rodolfo presente?'] || row['Presente?'] || row['Presente'] || row['Estádio?'] || "Não";
-              presVal = String(presVal).trim();
-
-              const advName = row['Adversário'] || row['Adversario'] || row['Clube'] || "-";
-              const placarStr = String(placar);
-              const score = parseScore(placarStr, true);
-
-              parsedClassicos.push({
-                id: idx,
-                adv: advName,
-                advNorm: normalizeAdv(advName),
-                data: dataStr,
-                timestamp: computeTimestamp(dataStr),
-                sortTime: computeSortDate(dataStr),
-                ano: anoClassico,
-                torneio: row['Competição'] || row['Torneio'] || row['Competicao'] || "-",
-                estadio: row['Estádio'] || row['Estadio'] || row['Local'] || "-",
-                placar: placarStr,
-                gf: score.gf,
-                ga: score.ga,
-                presente: presVal,
-                sul: parseNumber(row['Sul Pagantes'])
-              });
-            });
-            CLASSICOS_DATA = parsedClassicos;
-            initClassicosSlider();
-            applyClassicosFilters();
-          }
-        });
-
-        const now = new Date();
-        const timeStr = now.toLocaleDateString('pt-BR') + ' às ' + now.toLocaleTimeString('pt-BR');
-        if (btnText) btnText.innerHTML = `Última atualização: <strong class="text-white/80">${timeStr}</strong>`;
-
-      } catch (err) {
-        console.warn("Erro ao buscar a base:", err);
-        const now = new Date();
-        const timeStr = now.toLocaleTimeString('pt-BR');
-        if (btnText) btnText.innerHTML = `<span class="text-amber-400">Falha às ${timeStr}. Acesse por link HTTPS.</span>`;
-      }
-    }
-
-    function updateDynamicYearRange() {
-      if (!MATCHES_DATA || MATCHES_DATA.length === 0) return;
-      const years = MATCHES_DATA.map(m => m.ano);
-      const minYear = Math.min(...years);
-      const maxYear = Math.max(...years);
-      document.querySelectorAll('.dynamic-year-range').forEach(el => { el.textContent = `${minYear}-${maxYear}`; });
-    }
-
-    function toggleDropdown(type) {
-      const targetPanel = document.getElementById(`panel-${type}`);
-      const isClosed = targetPanel.classList.contains('hidden');
-      document.querySelectorAll('.ms-dropdown-menu').forEach(p => p.classList.add('hidden'));
-      if (isClosed) targetPanel.classList.remove('hidden');
-    }
-
-    function getMatchesExcluding(excludeDimension) {
-      const searchBox = document.getElementById("search-adversario");
-      const search = searchBox ? searchBox.value.toLowerCase().trim() : "";
-
-      const setTemp = excludeDimension !== 'temporada' && selectedState.temporada.length > 0 ? new Set(selectedState.temporada) : null;
-      const setComp = excludeDimension !== 'competicao' && selectedState.competicao.length > 0 ? new Set(selectedState.competicao) : null;
-      const setMando = excludeDimension !== 'mando' && selectedState.mando.length > 0 ? new Set(selectedState.mando) : null;
-      const setEst = excludeDimension !== 'estadio' && selectedState.estadio.length > 0 ? new Set(selectedState.estadio) : null;
-      const setDia = excludeDimension !== 'dia' && selectedState.dia.length > 0 ? new Set(selectedState.dia) : null;
-      const setHor = excludeDimension !== 'horario' && selectedState.horario.length > 0 ? new Set(selectedState.horario) : null;
-      const setAdv = excludeDimension !== 'adversario' && selectedState.adversario.length > 0 ? new Set(selectedState.adversario) : null;
-      const setPres = excludeDimension !== 'presente' && selectedState.presente.length > 0 ? new Set(selectedState.presente) : null;
-
-      return MATCHES_DATA.filter(m => {
-        if (setTemp && !setTemp.has(String(m.ano))) return false;
-        if (setComp && !setComp.has(m.torneio)) return false;
-        if (setMando && !setMando.has(m.mando)) return false;
-        if (setEst && !setEst.has(m.estadio)) return false;
-        if (setDia && !setDia.has(m.dia)) return false;
-        if (setHor && !setHor.has(m.hora)) return false;
-        if (setAdv && !setAdv.has(m.adv)) return false;
-        if (setPres && !setPres.has(m.presente)) return false;
-        if (search && !m.advLower.includes(search)) return false;
-        return true;
-      });
-    }
-
-    function renderChecklist(type, items, matchingSubset) {
-      const container = document.getElementById(`list-${type}`);
-      if (!container) return;
-      
-      if (items.length === 0) {
-        container.innerHTML = '<div class="text-[11px] text-white/40 p-2 text-center italic">Nenhuma opção disponível</div>';
-        return;
-      }
-
-      const counts = {};
-      matchingSubset.forEach(m => {
-        let val;
-        if (type === 'temporada') val = String(m.ano);
-        else if (type === 'competicao') val = m.torneio;
-        else if (type === 'adversario') val = m.adv;
-        else if (type === 'horario') val = m.hora;
-        else val = m[type];
-        counts[val] = (counts[val] || 0) + 1;
-      });
-
-      const checkedSet = new Set(selectedState[type]);
-      const html = items.map(item => {
-        const count = counts[item.value] || 0;
-        const isChecked = checkedSet.has(item.value);
-        return `
-          <label class="flex items-center justify-between p-1.5 hover:bg-white/5 rounded-lg cursor-pointer text-xs text-white/90 transition select-none" data-label="${item.label.toLowerCase()}">
-            <div class="flex items-center gap-2 truncate pr-1">
-              <input type="checkbox" class="ms-checkbox rounded" value="${item.value}" ${isChecked ? 'checked' : ''} onchange="onCheckboxChange('${type}', this.value, this.checked)">
-              <span class="truncate">${item.label}</span>
-            </div>
-            <span class="text-[10px] text-white/40 font-mono shrink-0">${count}</span>
-          </label>
-        `;
-      }).join('');
-      
-      container.innerHTML = html;
-    }
-
-    function updateAllDropdowns() {
-      const mandos = ['Mandante', 'Visitante', 'Neutro'].map(m => ({ value: m, label: m === 'Mandante' ? 'Mandante (Casa)' : m === 'Visitante' ? 'Visitante (Fora)' : 'Campo Neutro' }));
-      renderChecklist('mando', mandos, getMatchesExcluding('mando'));
-
-      const years = [...new Set(MATCHES_DATA.map(m => m.ano))].sort((a, b) => b - a);
-      renderChecklist('temporada', years.map(y => ({ value: String(y), label: String(y) })), getMatchesExcluding('temporada'));
-
-      const comps = [...new Set(MATCHES_DATA.map(m => m.torneio))].filter(c => c && c !== "-").sort();
-      renderChecklist('competicao', comps.map(c => ({ value: c, label: c })), getMatchesExcluding('competicao'));
-
-      const opponents = [...new Set(MATCHES_DATA.map(m => m.adv))].filter(a => a && a !== "-" && a !== "A Definir").sort((a, b) => a.localeCompare(b, 'pt-BR'));
-      renderChecklist('adversario', opponents.map(adv => ({ value: adv, label: adv })), getMatchesExcluding('adversario'));
-
-      const validEstadioMatches = getMatchesExcluding('estadio');
-      const venues = [...new Set(validEstadioMatches.map(m => m.estadio))].filter(v => v && v !== "-" && v !== "A Definir").sort();
-      renderChecklist('estadio', venues.map(v => ({ value: v, label: v })), validEstadioMatches);
-
-      const validDiaMatches = getMatchesExcluding('dia');
-      const diasEncontrados = [...new Set(validDiaMatches.map(m => m.dia))].filter(d => d && d !== "-");
-      const daysOrder = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'];
-      diasEncontrados.sort((a, b) => daysOrder.indexOf(a) - daysOrder.indexOf(b)); 
-      renderChecklist('dia', diasEncontrados.map(d => ({ value: d, label: d })), validDiaMatches);
-
-      const validHorarioMatches = getMatchesExcluding('horario');
-      const times = [...new Set(validHorarioMatches.map(m => m.hora))].filter(h => h && h !== "-").sort();
-      renderChecklist('horario', times.map(h => ({ value: h, label: `${h}h` })), validHorarioMatches);
-
-      const presentes = [...new Set(MATCHES_DATA.map(m => m.presente))].filter(p => p).sort();
-      renderChecklist('presente', presentes.map(p => ({ value: p, label: p })), getMatchesExcluding('presente'));
-    }
-
-    function filterDropdownOptions(type, query) {
-      const container = document.getElementById(`list-${type}`);
-      if (!container) return;
-      const q = query.toLowerCase().trim();
-      container.querySelectorAll('label').forEach(r => {
-        const text = r.getAttribute('data-label') || "";
-        r.classList.toggle('hidden', q && !text.includes(q));
-      });
-    }
-
-    function onCheckboxChange(type, value, isChecked) {
-      if (isChecked) {
-        if (!selectedState[type].includes(value)) selectedState[type].push(value);
-      } else {
-        selectedState[type] = selectedState[type].filter(v => v !== value);
-      }
-      applyFilters();
-    }
-
-    function selectAllFilter(type, selectAll) {
-      const container = document.getElementById(`list-${type}`);
-      if (!container) return;
-      selectedState[type] = [];
-      container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-        cb.checked = selectAll;
-        if (selectAll) selectedState[type].push(cb.value);
-      });
-      applyFilters();
-    }
-
-    function updateFilterLabels() {
-      const types = ['mando', 'temporada', 'competicao', 'adversario', 'estadio', 'dia', 'horario', 'presente'];
-      types.forEach(t => {
-        const count = selectedState[t].length;
-        const labelEl = document.getElementById(`label-${t}`);
-        if (!labelEl) return;
-        const totalItems = document.querySelectorAll(`#list-${t} input[type="checkbox"]`).length;
-        if (count === 0) {
-          labelEl.textContent = (t === 'mando' || t === 'estadio' || t === 'dia' || t === 'horario' || t === 'adversario' || t === 'presente') ? 'Todos' : 'Todas';
-          labelEl.className = 'truncate pr-1 text-white/80';
-        } else if (count === totalItems && totalItems > 1) {
-          labelEl.textContent = 'Todas Selecionadas';
-          labelEl.className = 'truncate pr-1 text-emerald-300 font-semibold';
-        } else if (count === 1) {
-          labelEl.textContent = selectedState[t][0];
-          labelEl.className = 'truncate pr-1 text-[#C5A059] font-semibold';
-        } else {
-          labelEl.textContent = `${count} selecionados`;
-          labelEl.className = 'truncate pr-1 text-[#C5A059] font-semibold';
-        }
-      });
-      renderActiveBadges();
-    }
-
-    function renderActiveBadges() {
-      const badgesContainer = document.getElementById('active-badges-list');
-      if (!badgesContainer) return;
-      badgesContainer.innerHTML = '';
-      let hasFilters = false;
-      const typeLabels = { mando: 'Mando', temporada: 'Ano', competicao: 'Torneio', adversario: 'Adversário', estadio: 'Estádio', dia: 'Dia', horario: 'Horário', presente: 'Matador' };
-
-      Object.keys(selectedState).forEach(type => {
-        if (selectedState[type].length > 0) {
-          hasFilters = true;
-          selectedState[type].forEach(val => {
-            const pill = document.createElement('span');
-            pill.className = 'ms-pill text-[11px] px-2.5 py-0.5 rounded-full inline-flex items-center gap-1.5';
-            pill.innerHTML = `
-              <span class="text-white/50">${typeLabels[type]}:</span>
-              <strong class="font-medium">${val}</strong>
-              <button onclick="removeFilterItem('${type}', '${val}')" class="hover:text-white transition ml-0.5 text-xs font-bold">&times;</button>
-            `;
-            badgesContainer.appendChild(pill);
-          });
-        }
-      });
-
-      if (hasFilters) {
-        const clearBtn = document.createElement('button');
-        clearBtn.className = 'text-[11px] font-semibold text-rose-300 hover:text-white transition ml-2 underline';
-        clearBtn.textContent = 'Restaurar Padrão';
-        clearBtn.onclick = resetFilters;
-        badgesContainer.appendChild(clearBtn);
-      } else {
-        badgesContainer.innerHTML = '<span class="text-white/50 italic text-[11px]">Nenhum filtro restritivo aplicado.</span>';
-      }
-    }
-
-    function removeFilterItem(type, val) {
-      selectedState[type] = selectedState[type].filter(v => v !== val);
-      applyFilters();
-    }
-
-    function resetFilters() {
-      Object.keys(selectedState).forEach(k => { selectedState[k] = []; });
-      selectedState.mando = [];
-      document.querySelectorAll('#view-estadio input[type="text"]').forEach(input => input.value = '');
-      const searchBox = document.getElementById("search-adversario");
-      if (searchBox) searchBox.value = "";
-      applyFilters();
-    }
-
-    function applyFilters() {
-      const searchBox = document.getElementById("search-adversario");
-      const search = searchBox ? searchBox.value.toLowerCase().trim() : "";
-      
-      updateAllDropdowns();
-      updateFilterLabels();
-
-      const setTemp = selectedState.temporada.length > 0 ? new Set(selectedState.temporada) : null;
-      const setComp = selectedState.competicao.length > 0 ? new Set(selectedState.competicao) : null;
-      const setMando = selectedState.mando.length > 0 ? new Set(selectedState.mando) : null;
-      const setEst = selectedState.estadio.length > 0 ? new Set(selectedState.estadio) : null;
-      const setDia = selectedState.dia.length > 0 ? new Set(selectedState.dia) : null;
-      const setHor = selectedState.horario.length > 0 ? new Set(selectedState.horario) : null;
-      const setAdv = selectedState.adversario.length > 0 ? new Set(selectedState.adversario) : null;
-      const setPres = selectedState.presente.length > 0 ? new Set(selectedState.presente) : null;
-
-      filteredMatches = MATCHES_DATA.filter(m => {
-        if (setTemp && !setTemp.has(String(m.ano))) return false;
-        if (setComp && !setComp.has(m.torneio)) return false;
-        if (setMando && !setMando.has(m.mando)) return false;
-        if (setEst && !setEst.has(m.estadio)) return false;
-        if (setDia && !setDia.has(m.dia)) return false;
-        if (setHor && !setHor.has(m.hora)) return false;
-        if (setAdv && !setAdv.has(m.adv)) return false;
-        if (setPres && !setPres.has(m.presente)) return false;
-        if (search && !m.advLower.includes(search)) return false;
-        return true;
-      });
-
-      tableCurrentPage = 1;
-      updateKpis();
-      updateCharts();
-      renderTable();
-    }
-
-    function updateKpis() {
-      const validFiltered = filteredMatches;
-
-      document.getElementById("filtered-matches-tag").textContent = `${validFiltered.length} de ${MATCHES_DATA.length} partidas`;
-      document.getElementById("kpi-jogos").textContent = validFiltered.length;
-      document.getElementById("summary-total-games").textContent = `${MATCHES_DATA.length} Jogos`;
-
-      let sumPub = 0, countPub = 0;
-      let sumHome = 0, countHome = 0;
-      let sumVis = 0, countVis = 0;
-      let sumSul = 0, countSul = 0;
-      let missingSulCount = 0;
-
-      let vitorias = 0, empates = 0, derrotas = 0, gpTotal = 0, gcTotal = 0;
-      const advStatsEstadio = {}; 
-
-      validFiltered.forEach(m => {
-        if (m.pub !== null && m.pub > 0) {
-          sumPub += m.pub;
-          countPub++;
-          if (m.mando === "Mandante") {
-            sumHome += m.pub;
-            countHome++;
-          }
-        }
-        if (m.pubVis !== null && m.pubVis > 0) {
-          sumVis += m.pubVis;
-          countVis++;
-        }
-        if (m.estadio === "Maracanã") {
-          if (m.sul !== null && m.sul > 0) {
-            sumSul += m.sul;
-            countSul++;
-          } else {
-            missingSulCount++;
-          }
-        }
-
-        if (m.gf !== null && m.ga !== null) {
-          const fluGols = m.gf, advGols = m.ga;
-          gpTotal += fluGols;
-          gcTotal += advGols;
-          
-          let res = 'E';
-          if (fluGols > advGols) { vitorias++; res = 'V'; }
-          else if (fluGols < advGols) { derrotas++; res = 'D'; }
-          else { empates++; res = 'E'; }
-
-          if (!advStatsEstadio[m.adv]) advStatsEstadio[m.adv] = { jog: 0, v: 0, e: 0, d: 0, gp: 0, gc: 0 };
-          const st = advStatsEstadio[m.adv];
-          st.jog++; st.gp += fluGols; st.gc += advGols;
-          if (res === 'V') st.v++; else if (res === 'E') st.e++; else st.d++;
-        }
-      });
-
-      const avgGeral = countPub ? sumPub / countPub : 0;
-      document.getElementById("kpi-media-geral").textContent = avgGeral > 0 ? fmt(avgGeral) : "-";
-      document.getElementById("kpi-sub-geral").textContent = countPub > 0 ? `${countPub} jogos com público registrado` : "Nenhum público registrado";
-
-      const avgHome = countHome ? sumHome / countHome : 0;
-      document.getElementById("kpi-media-mandante").textContent = countHome > 0 ? fmt(avgHome) : "-";
-      document.getElementById("kpi-sub-mandante").textContent = countHome > 0 ? `${countHome} jogos com mando do Fluminense` : "Nenhum jogo mandante";
-
-      const avgVisit = countVis ? sumVis / countVis : 0;
-      document.getElementById("kpi-media-visitante").textContent = countVis > 0 ? fmt(avgVisit) : "-";
-      document.getElementById("kpi-sub-visitante").textContent = countVis > 0 ? `${countVis} jogos com Tricolores visitantes` : "Sem público visitante";
-
-      const avgSul = countSul ? sumSul / countSul : 0;
-      document.getElementById("kpi-media-sul").textContent = countSul > 0 ? fmt(avgSul) : "-";
-      document.getElementById("kpi-sub-sul").textContent = countSul > 0 ? `${countSul} jogos com Tricolores no Setor Sul` : "Sem dados do Setor Sul";
-
-      const taxaSul = avgSul > 0 ? (avgSul / 20000) * 100 : 0;
-      document.getElementById("kpi-taxa-sul").textContent = taxaSul > 0 ? `${taxaSul.toFixed(1)}%` : "-";
-      document.getElementById("sul-recorded-count").textContent = `${countSul} jogos`;
-
-      const alertEl = document.getElementById("sul-alert-missing");
-      const countEl = document.getElementById("sul-missing-count");
-      if (alertEl && countEl) {
-        if (missingSulCount > 0) {
-          countEl.textContent = missingSulCount;
-          alertEl.classList.remove("hidden");
-        } else {
-          alertEl.classList.add("hidden");
-        }
-      }
-
-      const totalJogosPerf = validFiltered.length;
-      const ptsPossiveis = totalJogosPerf * 3;
-      const ptsGanhos = (vitorias * 3) + empates;
-      const aproveitamento = ptsPossiveis > 0 ? ((ptsGanhos / ptsPossiveis) * 100).toFixed(1) + '%' : '0%';
-
-      const elEstadioVitorias = document.getElementById('estadio-kpi-vitorias');
-      if (elEstadioVitorias) {
-        elEstadioVitorias.textContent = vitorias;
-        document.getElementById('estadio-sub-vitorias').textContent = totalJogosPerf > 0 ? `${((vitorias/totalJogosPerf)*100).toFixed(1)}% dos jogos` : '0%';
-        document.getElementById('estadio-kpi-empates').textContent = empates;
-        document.getElementById('estadio-sub-empates').textContent = totalJogosPerf > 0 ? `${((empates/totalJogosPerf)*100).toFixed(1)}% dos jogos` : '0%';
-        document.getElementById('estadio-kpi-derrotas').textContent = derrotas;
-        document.getElementById('estadio-sub-derrotas').textContent = totalJogosPerf > 0 ? `${((derrotas/totalJogosPerf)*100).toFixed(1)}% dos jogos` : '0%';
-        document.getElementById('estadio-kpi-gp').textContent = gpTotal.toLocaleString('pt-BR');
-        document.getElementById('estadio-sub-gp').textContent = totalJogosPerf > 0 ? `Média ${(gpTotal/totalJogosPerf).toFixed(2)} por jogo` : '0';
-        document.getElementById('estadio-kpi-gc').textContent = gcTotal.toLocaleString('pt-BR');
-        document.getElementById('estadio-sub-gc').textContent = totalJogosPerf > 0 ? `Média ${(gcTotal/totalJogosPerf).toFixed(2)} por jogo` : '0';
-        document.getElementById('estadio-kpi-aproveitamento').textContent = aproveitamento;
-        document.getElementById('estadio-sub-aproveitamento').textContent = `${ptsGanhos} de ${ptsPossiveis} pts`;
-      }
-      
-      renderAdvTable('estadio-adv-table-body', advStatsEstadio);
-    }
-
-    function getChartCanvas(id) {
-      if (activeCharts[id]) activeCharts[id].destroy();
-      return document.getElementById(id).getContext('2d');
-    }
-
-    function renderSulBarChart(canvasId, sulMatchesList) {
-      if (activeCharts[canvasId]) activeCharts[canvasId].destroy();
-      const canvasEl = document.getElementById(canvasId);
-      if (!canvasEl) return;
-
-      const ctxSul = canvasEl.getContext('2d');
-      if (sulMatchesList.length === 0 && canvasId === "chartClassicosSetorSul") {
-        ctxSul.clearRect(0, 0, canvasEl.width, canvasEl.height);
-        return;
-      }
-
-      const degradeTricolor = ctxSul.createLinearGradient(0, 0, 0, 280);
-      degradeTricolor.addColorStop(0, '#0E4735');     
-      degradeTricolor.addColorStop(0.35, '#0E4735');  
-      degradeTricolor.addColorStop(0.60, '#8A1538');  
-      degradeTricolor.addColorStop(1, '#8A1538'); 
-
-      const canvasLegenda = document.createElement('canvas');
-      canvasLegenda.width = 60; 
-      canvasLegenda.height = 14; 
-      const ctxLeg = canvasLegenda.getContext('2d');
-      const gradLeg = ctxLeg.createLinearGradient(0, 0, 60, 0);
-      gradLeg.addColorStop(0, '#8A1538');     
-      gradLeg.addColorStop(0.35, '#8A1538');  
-      gradLeg.addColorStop(0.60, '#0E4735');  
-      gradLeg.addColorStop(1, '#0E4735');     
-      ctxLeg.fillStyle = gradLeg;
-      ctxLeg.fillRect(0, 0, 60, 14);
-
-      const padraoLegenda = ctxSul.createPattern(canvasLegenda, 'repeat');
-
-      activeCharts[canvasId] = new Chart(ctxSul, {
-        type: 'bar',
-        data: {
-          labels: sulMatchesList.map(m => {
-            if (!m.data || m.data === "-") return [`${m.adv}`, `(-)`];
-            const p = m.data.split(/[-/]/);
-            const dia = p[0].length === 4 ? p[2] : p[0];
-            const mes = p[1];
-            const ano = p[0].length === 4 ? p[0].slice(2, 4) : p[2].slice(2, 4);
-            return [`${m.adv}`, `(${dia}-${mes}-${ano})`];
-          }),
-          datasets: [
-            { label: 'Sul Pagantes', data: sulMatchesList.map(m => m.sul), backgroundColor: degradeTricolor, borderRadius: 6, order: 2 },
-            { label: 'Capacidade Máxima Pagantes (20K)', data: sulMatchesList.map(() => 20000), type: 'line', borderColor: '#f59e0b', borderDash: [5, 5], borderWidth: 3, pointRadius: 0, pointHoverRadius: 0, fill: false, order: 1 }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { 
-            legend: { 
-              position: 'top', 
-              labels: { 
-                color: 'rgba(255,255,255,0.7)',
-                generateLabels: function(chart) {
-                  const originais = Chart.defaults.plugins.legend.labels.generateLabels(chart);
-                  originais.forEach(label => {
-                    if (label.text === 'Sul Pagantes') label.fillStyle = padraoLegenda;
-                  });
-                  return originais;
-                }
-              } 
-            }, 
-            tooltip: { 
-              callbacks: { 
-                afterTitle: function(context) {
-                  const index = context[0].dataIndex;
-                  return sulMatchesList[index].torneio;
-                },
-                label: ctx => ctx.dataset.type === 'line' ? `Capacidade Máxima Pagantes (20K)` : ` Sul Pagantes: ${ctx.parsed.y.toLocaleString('pt-BR')} (${((ctx.parsed.y / 20000) * 100).toFixed(1)}% do setor)` 
-              } 
-            }
-          }, 
-          scales: { y: { beginAtZero: true, max: 22000, ticks: { callback: v => v.toLocaleString('pt-BR') } } } 
-        }
-      });
-    }
-
-    function updateCharts() {
-      const validFiltered = filteredMatches;
-      Chart.defaults.color = '#A3B8B0';
-      Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.07)';
-      Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
-
-      const mCount = selectedState.mando.length;
-      const hasM = mCount === 0 || selectedState.mando.includes('Mandante');
-      const hasV = mCount === 0 || selectedState.mando.includes('Visitante');
-      const hasN = mCount === 0 || selectedState.mando.includes('Neutro');
-
-      let chartMode = 'duplo';
-      let titleSuffix = '(Mandante e Visitante)';
-
-      if (mCount > 0) {
-        if (hasM && !hasV && !hasN) { chartMode = 'mandante'; titleSuffix = '(Mandante)'; }
-        else if (!hasM && hasV && !hasN) { chartMode = 'visitante'; titleSuffix = '(Visitante)'; }
-        else if (!hasM && !hasV && hasN) { chartMode = 'neutro'; titleSuffix = '(Campo Neutro)'; }
-        else if (hasM && hasN && !hasV) { chartMode = 'mandante'; titleSuffix = '(Mandante)'; }
-        else if (!hasM && hasV && hasN) { chartMode = 'visitante'; titleSuffix = '(Visitante)'; }
-        else { chartMode = 'duplo'; titleSuffix = '(Mandante e Visitante)'; }
-      }
-
-      const titleTemporada = document.getElementById('title-temporada');
-      if(titleTemporada) titleTemporada.textContent = `Público Médio por Temporada ${titleSuffix}`;
-      const titleCompeticao = document.getElementById('title-competicao');
-      if(titleCompeticao) titleCompeticao.textContent = `Público Médio por Competição ${titleSuffix}`;
-      const titleDia = document.getElementById('title-dia');
-      if(titleDia) titleDia.textContent = `Média de Público por Dia da Semana ${titleSuffix}`;
-      const titleHorario = document.getElementById('title-horario');
-      if(titleHorario) titleHorario.textContent = `Média de Público por Faixa de Horário ${titleSuffix}`;
-
-      const showLegend = chartMode === 'duplo';
-
-      // Varredura única O(N) para agregar todas as dimensões dos gráficos
-      const byYear = {};
-      const byComp = {};
-      const byDay = {};
-      const daysOrder = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'];
-      daysOrder.forEach(d => { byDay[d] = { sM: 0, cM: 0, sV: 0, cV: 0, sN: 0, cN: 0 }; });
-
-      const hourRanges = [
-        { label: "Manhã (<13h)", min: 0, max: 12, sM: 0, cM: 0, sV: 0, cV: 0, sN: 0, cN: 0 },
-        { label: "Tarde (13h-17h59)", min: 13, max: 17, sM: 0, cM: 0, sV: 0, cV: 0, sN: 0, cN: 0 },
-        { label: "Noite (18h-20h59)", min: 18, max: 20, sM: 0, cM: 0, sV: 0, cV: 0, sN: 0, cN: 0 },
-        { label: "Noite Tardia (≥21h)", min: 21, max: 24, sM: 0, cM: 0, sV: 0, cV: 0, sN: 0, cN: 0 }
-      ];
-
-      const visitEstadioMap = {};
-      const sulCandidates = [];
-
-      validFiltered.forEach(m => {
-        // Inicializa Ano
-        if (!byYear[m.ano]) byYear[m.ano] = { sM: 0, cM: 0, sV: 0, cV: 0, sN: 0, cN: 0, v: 0, e: 0, d: 0 };
-        const yrObj = byYear[m.ano];
-
-        // Desempenho por temporada
-        if (m.gf !== null && m.ga !== null) {
-          if (m.gf > m.ga) yrObj.v++;
-          else if (m.gf < m.ga) yrObj.d++;
-          else yrObj.e++;
-        }
-
-        // Inicializa Competição
-        let compObj = null;
-        if (m.torneio && m.torneio !== "-") {
-          if (!byComp[m.torneio]) byComp[m.torneio] = { sM: 0, cM: 0, sV: 0, cV: 0, sN: 0, cN: 0 };
-          compObj = byComp[m.torneio];
-        }
-
-        // Dia da Semana
-        const dayObj = byDay[m.dia] || null;
-
-        // Faixa de Horário
-        let hrObj = null;
-        if (m.hNum !== null) {
-          for (let i = 0; i < hourRanges.length; i++) {
-            if (m.hNum >= hourRanges[i].min && m.hNum <= hourRanges[i].max) {
-              hrObj = hourRanges[i];
-              break;
-            }
-          }
-        }
-
-        // Acumula públicos conforme Mando
-        if (m.mando === 'Mandante' && m.pub > 0) {
-          yrObj.sM += m.pub; yrObj.cM++;
-          if (compObj) { compObj.sM += m.pub; compObj.cM++; }
-          if (dayObj) { dayObj.sM += m.pub; dayObj.cM++; }
-          if (hrObj) { hrObj.sM += m.pub; hrObj.cM++; }
-        } else if (m.mando === 'Visitante' && m.pubVis > 0) {
-          yrObj.sV += m.pubVis; yrObj.cV++;
-          if (compObj) { compObj.sV += m.pubVis; compObj.cV++; }
-          if (dayObj) { dayObj.sV += m.pubVis; dayObj.cV++; }
-          if (hrObj) { hrObj.sV += m.pubVis; hrObj.cV++; }
-        } else if (m.mando === 'Neutro' && m.pub > 0) {
-          yrObj.sN += m.pub; yrObj.cN++;
-          if (compObj) { compObj.sN += m.pub; compObj.cN++; }
-          if (dayObj) { dayObj.sN += m.pub; dayObj.cN++; }
-          if (hrObj) { hrObj.sN += m.pub; hrObj.cN++; }
-        }
-
-        // Top 10 Visitante (todos os jogos com pubVis > 0)
-        if (m.pubVis !== null && m.pubVis > 0) {
-          if (!visitEstadioMap[m.estadio]) visitEstadioMap[m.estadio] = { sum: 0, count: 0 };
-          visitEstadioMap[m.estadio].sum += m.pubVis;
-          visitEstadioMap[m.estadio].count += 1;
-        }
-
-        // Setor Sul Maracanã
-        if (m.estadio === "Maracanã" && m.sul !== null && m.sul > 0) {
-          sulCandidates.push(m);
-        }
-      });
-
-      // 1. TEMPORADA
-      const seasons = Object.keys(byYear).map(Number).sort((a,b) => a - b);
-      const dsMand = [], countMand = [], dsVis = [], countVis = [], dsNeu = [], countNeu = [];
-      const vTemporada = [], eTemporada = [], dTemporada = [];
-
-      seasons.forEach(yr => {
-        const y = byYear[yr];
-        dsMand.push(y.cM ? Math.round(y.sM / y.cM) : 0); countMand.push(y.cM);
-        dsVis.push(y.cV ? Math.round(y.sV / y.cV) : 0); countVis.push(y.cV);
-        dsNeu.push(y.cN ? Math.round(y.sN / y.cN) : 0); countNeu.push(y.cN);
-        vTemporada.push(y.v); eTemporada.push(y.e); dTemporada.push(y.d);
-      });
-
-      let datasetsTemp = [];
-      if (chartMode === 'mandante') datasetsTemp = [{ label: 'Média Mandante', data: dsMand, backgroundColor: '#0E4735', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: countMand }];
-      else if (chartMode === 'visitante') datasetsTemp = [{ label: 'Média Visitante', data: dsVis, backgroundColor: '#870A28', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: countVis }];
-      else if (chartMode === 'neutro') datasetsTemp = [{ label: 'Média Neutro', data: dsNeu, backgroundColor: '#0f766e', borderColor: '#06b6d4', borderWidth: 1.5, borderRadius: 6, customCount: countNeu }];
-      else {
-        datasetsTemp = [
-          { label: 'Média Mandante', data: dsMand, backgroundColor: '#0E4735', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: countMand },
-          { label: 'Média Visitante', data: dsVis, backgroundColor: '#870A28', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: countVis }
-        ];
-      }
-      activeCharts["chartTemporada"] = new Chart(getChartCanvas("chartTemporada"), {
-        type: 'bar', data: { labels: seasons.map(String), datasets: datasetsTemp },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: showLegend, position: 'top', labels: {color: 'rgba(255,255,255,0.7)'} }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } } }
-      });
-
-      // 2. COMPETICAO
-      const compStats = Object.keys(byComp).map(c => {
-        const o = byComp[c];
-        return {
-          comp: c,
-          mM: o.cM ? Math.round(o.sM / o.cM) : 0, cM: o.cM,
-          mV: o.cV ? Math.round(o.sV / o.cV) : 0, cV: o.cV,
-          mN: o.cN ? Math.round(o.sN / o.cN) : 0, cN: o.cN
-        };
-      });
-      let filteredCompStats = [];
-      if (chartMode === 'mandante') filteredCompStats = compStats.filter(s => s.cM > 0).sort((a,b) => b.mM - a.mM);
-      else if (chartMode === 'visitante') filteredCompStats = compStats.filter(s => s.cV > 0).sort((a,b) => b.mV - a.mV);
-      else if (chartMode === 'neutro') filteredCompStats = compStats.filter(s => s.cN > 0).sort((a,b) => b.mN - a.mN);
-      else filteredCompStats = compStats.filter(s => s.cM > 0 || s.cV > 0).sort((a,b) => Math.max(b.mM, b.mV) - Math.max(a.mM, a.mV));
-
-      let datasetsComp = [];
-      if (chartMode === 'mandante') datasetsComp = [{ label: 'Média Mandante', data: filteredCompStats.map(s=>s.mM), backgroundColor: '#0E4735', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: filteredCompStats.map(s=>s.cM) }];
-      else if (chartMode === 'visitante') datasetsComp = [{ label: 'Média Visitante', data: filteredCompStats.map(s=>s.mV), backgroundColor: '#870A28', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: filteredCompStats.map(s=>s.cV) }];
-      else if (chartMode === 'neutro') datasetsComp = [{ label: 'Média Neutro', data: filteredCompStats.map(s=>s.mN), backgroundColor: '#0f766e', borderColor: '#06b6d4', borderWidth: 1.5, borderRadius: 6, customCount: filteredCompStats.map(s=>s.cN) }];
-      else {
-        datasetsComp = [
-          { label: 'Média Mandante', data: filteredCompStats.map(s=>s.mM), backgroundColor: '#0E4735', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: filteredCompStats.map(s=>s.cM) },
-          { label: 'Média Visitante', data: filteredCompStats.map(s=>s.mV), backgroundColor: '#870A28', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: filteredCompStats.map(s=>s.cV) }
-        ];
-      }
-      activeCharts["chartCompeticao"] = new Chart(getChartCanvas("chartCompeticao"), {
-        type: 'bar', data: { labels: filteredCompStats.map(s => s.comp), datasets: datasetsComp },
-        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: showLegend, position: 'top', labels: {color: 'rgba(255,255,255,0.7)'} }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.x.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { x: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } } }
-      });
-
-      // 3. DIA DA SEMANA
-      const dsMandDia = [], countMandDia = [], dsVisDia = [], countVisDia = [], dsNeuDia = [], countNeuDia = [];
-      daysOrder.forEach(d => {
-        const o = byDay[d];
-        dsMandDia.push(o.cM ? Math.round(o.sM / o.cM) : 0); countMandDia.push(o.cM);
-        dsVisDia.push(o.cV ? Math.round(o.sV / o.cV) : 0); countVisDia.push(o.cV);
-        dsNeuDia.push(o.cN ? Math.round(o.sN / o.cN) : 0); countNeuDia.push(o.cN);
-      });
-      const bgMandante = daysOrder.map(d => ['Sábado', 'Domingo'].includes(d) ? '#C5A059' : '#0E4735');
-      const bgVisitante = daysOrder.map(d => ['Sábado', 'Domingo'].includes(d) ? '#e11d48' : '#8A1538');
-      const bgNeutro = daysOrder.map(d => ['Sábado', 'Domingo'].includes(d) ? '#06b6d4' : '#0f766e');
-      let datasetsDia = [];
-      if (chartMode === 'mandante') datasetsDia = [{ label: 'Média Mandante', data: dsMandDia, backgroundColor: bgMandante, borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 8, customCount: countMandDia }];
-      else if (chartMode === 'visitante') datasetsDia = [{ label: 'Média Visitante', data: dsVisDia, backgroundColor: bgVisitante, borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 8, customCount: countVisDia }];
-      else if (chartMode === 'neutro') datasetsDia = [{ label: 'Média Neutro', data: dsNeuDia, backgroundColor: bgNeutro, borderColor: '#06b6d4', borderWidth: 1.5, borderRadius: 8, customCount: countNeuDia }];
-      else {
-        const bwDuplo = daysOrder.map(d => ['Sábado', 'Domingo'].includes(d) ? 2.5 : 1.5);
-        datasetsDia = [
-          { label: 'Média Mandante', data: dsMandDia, backgroundColor: '#0E4735', borderColor: '#C5A059', borderWidth: bwDuplo, borderRadius: 6, customCount: countMandDia },
-          { label: 'Média Visitante', data: dsVisDia, backgroundColor: '#870A28', borderColor: '#C5A059', borderWidth: bwDuplo, borderRadius: 6, customCount: countVisDia }
-        ];
-      }
-      activeCharts["chartDiaSemana"] = new Chart(getChartCanvas("chartDiaSemana"), {
-        type: 'bar', data: { labels: daysOrder.map(d => d.replace('-feira', '')), datasets: datasetsDia },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: showLegend, position: 'top', labels: {color: 'rgba(255,255,255,0.7)'} }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } } }
-      });
-
-      // 4. HORARIO
-      const dsMandHor = [], countMandHor = [], dsVisHor = [], countVisHor = [], dsNeuHor = [], countNeuHor = [];
-      hourRanges.forEach(hr => {
-        dsMandHor.push(hr.cM ? Math.round(hr.sM / hr.cM) : 0); countMandHor.push(hr.cM);
-        dsVisHor.push(hr.cV ? Math.round(hr.sV / hr.cV) : 0); countVisHor.push(hr.cV);
-        dsNeuHor.push(hr.cN ? Math.round(hr.sN / hr.cN) : 0); countNeuHor.push(hr.cN);
-      });
-      let datasetsHor = [];
-      if (chartMode === 'mandante') datasetsHor = [{ label: 'Média Mandante', data: dsMandHor, borderColor: '#C5A059', backgroundColor: 'rgba(14, 71, 53, 0.25)', borderWidth: 2.5, fill: true, tension: 0.35, pointBackgroundColor: '#8A1538', pointBorderColor: '#FFF', pointRadius: 6, customCount: countMandHor }];
-      else if (chartMode === 'visitante') datasetsHor = [{ label: 'Média Visitante', data: dsVisHor, borderColor: '#e11d48', backgroundColor: 'rgba(138, 21, 56, 0.25)', borderWidth: 2.5, fill: true, tension: 0.35, pointBackgroundColor: '#C5A059', pointBorderColor: '#FFF', pointRadius: 6, customCount: countVisHor }];
-      else if (chartMode === 'neutro') datasetsHor = [{ label: 'Média Neutro', data: dsNeuHor, borderColor: '#06b6d4', backgroundColor: 'rgba(15, 118, 110, 0.25)', borderWidth: 2.5, fill: true, tension: 0.35, pointBackgroundColor: '#0f766e', pointBorderColor: '#FFF', pointRadius: 6, customCount: countNeuHor }];
-      else {
-        datasetsHor = [
-          { label: 'Média Mandante', data: dsMandHor, borderColor: '#0E4735', backgroundColor: 'rgba(14, 71, 53, 0.15)', borderWidth: 2.5, fill: true, tension: 0.35, pointBackgroundColor: '#C5A059', pointRadius: 5, customCount: countMandHor },
-          { label: 'Média Visitante', data: dsVisHor, borderColor: '#870A28', backgroundColor: 'rgba(138, 21, 56, 0.15)', borderWidth: 2.5, fill: true, tension: 0.35, pointBackgroundColor: '#C5A059', pointRadius: 5, customCount: countVisHor }
-        ];
-      }
-      activeCharts["chartHorario"] = new Chart(getChartCanvas("chartHorario"), {
-        type: 'line', data: { labels: hourRanges.map(h => h.label), datasets: datasetsHor },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: showLegend, position: 'top', labels: {color: 'rgba(255,255,255,0.7)'} }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } } }
-      });
-
-      // 5. TOP VISITANTE
-      const topVisitanteSection = document.getElementById("section-top-visitante");
-      if (topVisitanteSection) {
-        if (hasV) {
-          topVisitanteSection.classList.remove("hidden");
-          const topEstadios = Object.keys(visitEstadioMap)
-            .map(est => ({ est, avg: Math.round(visitEstadioMap[est].sum / visitEstadioMap[est].count), count: visitEstadioMap[est].count }))
-            .sort((a, b) => b.avg - a.avg)
-            .slice(0, 10);
-          if (activeCharts["chartTopVisitante"]) activeCharts["chartTopVisitante"].destroy();
-          if (topEstadios.length > 0) {
-            activeCharts["chartTopVisitante"] = new Chart(getChartCanvas("chartTopVisitante"), {
-              type: 'bar', data: { labels: topEstadios.map(e => e.est), datasets: [{ label: 'Média de Público', data: topEstadios.map(e => e.avg), backgroundColor: '#870A28', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: topEstadios.map(e => e.count) }] },
-              options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` Média: ${ctx.parsed.x.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { x: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } } }
-            });
-          } else {
-            const ctx = getChartCanvas("chartTopVisitante"); ctx.font = "12px 'Plus Jakarta Sans', sans-serif"; ctx.fillStyle = "rgba(255,255,255,0.4)"; ctx.textAlign = "center"; ctx.fillText("Nenhum dado de público visitante para os filtros atuais.", ctx.canvas.width / 2, 50);
-          }
-        } else {
-          topVisitanteSection.classList.add("hidden");
-        }
-      }
-
-      // 6. DESEMPENHO POR TEMPORADA
-      activeCharts["chartDesempenhoTemporada"] = new Chart(getChartCanvas("chartDesempenhoTemporada"), {
-        type: 'bar',
-        data: {
-          labels: seasons.map(String),
-          datasets: [
-            { label: 'Vitórias', data: vTemporada, backgroundColor: '#10b981', borderRadius: 4 },
-            { label: 'Empates', data: eTemporada, backgroundColor: '#f59e0b', borderRadius: 4 },
-            { label: 'Derrotas', data: dTemporada, backgroundColor: '#f43f5e', borderRadius: 4 }
-          ]
-        },
-        options: {
-          responsive: true, maintainAspectRatio: false,
-          plugins: { 
-            legend: { position: 'top', labels: { color: 'rgba(255,255,255,0.7)' } },
-            tooltip: { mode: 'index', intersect: false }
-          },
-          scales: {
-            x: { stacked: false, ticks: { color: 'rgba(255,255,255,0.7)' }, grid: { display: false } },
-            y: { beginAtZero: true, ticks: { color: 'rgba(255,255,255,0.7)' }, grid: { color: 'rgba(255,255,255,0.05)' } }
-          }
-        }
-      });
-
-      // 7. SETOR SUL
-      const sulMatches = sulCandidates.sort((a, b) => b.sul - a.sul).slice(0, 10);
-      renderSulBarChart("chartSetorSul", sulMatches);
-    }
-
-    function renderTable() {
-      const validFiltered = filteredMatches;
-      const tbody = document.getElementById("table-body");
-      if (!tbody) return;
-      const start = (tableCurrentPage - 1) * tablePageSize;
-      const end = start + tablePageSize;
-      const pageItems = validFiltered.slice(start, end);
-
-      if (pageItems.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="13" class="p-8 text-center text-white/40 font-sans">Nenhuma partida encontrada para os filtros selecionados.</td></tr>`;
-        document.getElementById("table-pagination").innerHTML = "";
-        return;
-      }
-
-      tbody.innerHTML = pageItems.map(m => {
-        const isHome = m.mando === "Mandante";
-        const isAway = m.mando === "Visitante";
-        const mandoBadge = isHome ? `<span class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 font-sans text-[10px] font-bold border border-emerald-500/40">Mandante</span>` : isAway ? `<span class="px-2 py-0.5 rounded bg-rose-950 text-rose-300 font-sans text-[10px] font-bold border border-rose-500/40">Visitante</span>` : `<span class="px-2 py-0.5 rounded bg-amber-950 text-amber-300 font-sans text-[10px] font-bold border border-amber-500/40">Neutro</span>`;
-        const sulRate = m.sul ? `${((m.sul / 20000) * 100).toFixed(1)}%` : "-";
-        const presBadge = m.presente === "Sim" ? `<span class="px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 font-sans text-[10px] font-bold border border-cyan-500/40">Sim</span>` : `<span class="text-white/30">Não</span>`;
-
-        return `<tr class="hover:bg-white/[0.04] transition border-b border-white/5">
-          <td class="p-3 text-[#C5A059] font-mono text-[11px] whitespace-nowrap">${m.id}</td>
-          <td class="p-3 text-white/90 whitespace-nowrap">${m.data || "-"}</td>
-          <td class="p-3 text-white/50">${m.hora || "-"}</td>
-          <td class="p-3 font-sans text-[11px] text-white/80 max-w-[170px] truncate" title="${m.torneio}">${m.torneio}</td>
-          <td class="p-3">${mandoBadge}</td>
-          <td class="p-3 font-sans font-bold text-white">${m.adv}</td>
-          <td class="p-3 font-sans text-white/70 max-w-[150px] truncate" title="${m.estadio}">${m.estadio}</td>
-          <td class="p-3 text-center font-bold text-white">${m.placar}</td>
-          <td class="p-3 text-right font-bold text-emerald-400">${fmt(m.pub)}</td>
-          <td class="p-3 text-right text-rose-300">${fmt(m.pubVis)}</td>
-          <td class="p-3 text-right text-cyan-300 font-semibold">${fmt(m.sul)}</td>
-          <td class="p-3 text-right text-amber-300 font-bold">${sulRate}</td>
-          <td class="p-3 text-center">${presBadge}</td>
-        </tr>`;
-      }).join('');
-
-      const totalPages = Math.ceil(validFiltered.length / tablePageSize) || 1;
-      const pag = document.getElementById("table-pagination");
-      pag.innerHTML = `
-        <div class="font-sans">Mostrando <strong class="text-white">${start + 1}</strong> a <strong class="text-white">${Math.min(end, validFiltered.length)}</strong> de <strong class="text-white">${validFiltered.length}</strong> partidas</div>
-        <div class="flex items-center gap-2 font-sans">
-          <button onclick="navigatePage(-1)" ${tableCurrentPage === 1 ? 'disabled class="opacity-30 cursor-not-allowed"' : 'class="hover:text-[#C5A059] active:scale-95"'} class="px-3 py-1.5 bg-white/5 rounded-lg border border-white/10 transition">Anterior</button>
-          <span class="px-2 text-white/60">Página <strong>${tableCurrentPage}</strong> de <strong>${totalPages}</strong></span>
-          <button onclick="navigatePage(1)" ${tableCurrentPage >= totalPages ? 'disabled class="opacity-30 cursor-not-allowed"' : 'class="hover:text-[#C5A059] active:scale-95"'} class="px-3 py-1.5 bg-white/5 rounded-lg border border-white/10 transition">Próxima</button>
-        </div>
-      `;
-    }
-
-    function renderAdvTable(tbodyId, advStats) {
-      const tbody = document.getElementById(tbodyId);
-      if (!tbody) return;
-
-      const sortedAdversarios = Object.keys(advStats).sort((a, b) => {
-        const sA = advStats[a], sB = advStats[b];
-        if (sB.jog !== sA.jog) return sB.jog - sA.jog;
-        const apA = ((sA.v * 3) + sA.e) / (sA.jog * 3);
-        const apB = ((sB.v * 3) + sB.e) / (sB.jog * 3);
-        return apB - apA;
-      });
-
-      if (sortedAdversarios.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-white/40 italic">Nenhum confronto encontrado para os filtros atuais.</td></tr>`;
-        return;
-      }
-
-      tbody.innerHTML = sortedAdversarios.map(adv => {
-        const s = advStats[adv];
-        const sg = s.gp - s.gc;
-        const pts = (s.v * 3) + s.e;
-        const ap = ((pts / (s.jog * 3)) * 100).toFixed(1) + '%';
-        const sgColor = sg > 0 ? 'text-emerald-400' : sg < 0 ? 'text-rose-400' : 'text-white/70';
-
-        return `<tr class="hover:bg-white/[0.04] transition border-b border-white/5">
-          <td class="p-3 font-sans font-bold text-white">${adv}</td>
-          <td class="p-3 text-center text-white/90 font-bold">${s.jog}</td>
-          <td class="p-3 text-center text-emerald-400 font-bold">${s.v}</td>
-          <td class="p-3 text-center text-amber-300">${s.e}</td>
-          <td class="p-3 text-center text-rose-400">${s.d}</td>
-          <td class="p-3 text-center text-cyan-300">${s.gp.toLocaleString('pt-BR')}</td>
-          <td class="p-3 text-center text-purple-300">${s.gc.toLocaleString('pt-BR')}</td>
-          <td class="p-3 text-center font-bold ${sgColor}">${sg > 0 ? '+' + sg.toLocaleString('pt-BR') : sg.toLocaleString('pt-BR')}</td>
-          <td class="p-3 text-right text-[#C5A059] font-bold">${ap}</td>
-        </tr>`;
-      }).join('');
-    }
-
-    function navigatePage(direction) {
-      const validFiltered = filteredMatches;
-      const totalPages = Math.ceil(validFiltered.length / tablePageSize) || 1;
-      const newPage = tableCurrentPage + direction;
-      if (newPage >= 1 && newPage <= totalPages) {
-        tableCurrentPage = newPage;
-        renderTable();
-      }
-    }
-
-    // --- TAB CLÁSSICOS ---
-    function initClassicosSlider() {
-      if (CLASSICOS_DATA.length === 0) return;
-      const years = CLASSICOS_DATA.map(c => c.ano).filter(a => !isNaN(a) && a > 1900);
-      if (years.length === 0) return;
-      
-      const minYear = Math.min(...years);
-      const maxYear = Math.max(...years);
-
-      const minInput = document.getElementById('classicos-ano-min');
-      const maxInput = document.getElementById('classicos-ano-max');
-      
-      if(minInput && maxInput) {
-        minInput.min = minYear; minInput.max = maxYear;
-        maxInput.min = minYear; maxInput.max = maxYear;
-        
-        if (!classicosState.minAno || classicosState.minAno < minYear) classicosState.minAno = minYear;
-        if (!classicosState.maxAno || classicosState.maxAno > maxYear) classicosState.maxAno = maxYear;
-        
-        minInput.value = classicosState.minAno;
-        maxInput.value = classicosState.maxAno;
-        
-        updateClassicosSliderUI();
-      }
-    }
-
-    function updateClassicosSliderUI() {
-      const minInput = document.getElementById('classicos-ano-min');
-      const maxInput = document.getElementById('classicos-ano-max');
-      const track = document.getElementById('classicos-slider-track');
-      const valuesDisplay = document.getElementById('classicos-slider-values');
-      
-      if(!minInput || !maxInput || !track) return;
-
-      let minVal = parseInt(minInput.value);
-      let maxVal = parseInt(maxInput.value);
-      
-      if (minVal > maxVal) {
-        let tmp = minVal;
-        minVal = maxVal;
-        maxVal = tmp;
-      }
-
-      minInput.value = minVal;
-      maxInput.value = maxVal;
-      
-      classicosState.minAno = minVal;
-      classicosState.maxAno = maxVal;
-
-      if(valuesDisplay) valuesDisplay.textContent = `${minVal} - ${maxVal}`;
-      
-      const range = parseInt(minInput.max) - parseInt(minInput.min);
-      if (range > 0) {
-        const leftPercent = ((minVal - parseInt(minInput.min)) / range) * 100;
-        const rightPercent = ((maxVal - parseInt(minInput.min)) / range) * 100;
-        track.style.left = leftPercent + '%';
-        track.style.width = (rightPercent - leftPercent) + '%';
-      }
-    }
-
-    function toggleClassicosDropdown(type) {
-      const targetPanel = document.getElementById(`classicos-panel-${type}`);
-      const isClosed = targetPanel.classList.contains('hidden');
-      document.querySelectorAll('.ms-dropdown-menu').forEach(p => p.classList.add('hidden'));
-      if (isClosed) targetPanel.classList.remove('hidden');
-    }
-
-    function getClassicosExcluding(excludeDimension) {
-      const setComp = excludeDimension !== 'competicao' && classicosState.competicao.length > 0 ? new Set(classicosState.competicao) : null;
-      const setAdv = excludeDimension !== 'adversario' && classicosState.adversario.length > 0 ? new Set(classicosState.adversario) : null;
-      const setPres = excludeDimension !== 'presente' && classicosState.presente.length > 0 ? new Set(classicosState.presente) : null;
-
-      return CLASSICOS_DATA.filter(m => {
-        if (setComp && !setComp.has(m.torneio)) return false;
-        if (setAdv && !setAdv.has(m.adv)) return false;
-        if (setPres && !setPres.has(m.presente)) return false;
-        if (classicosState.minAno && m.ano < classicosState.minAno) return false;
-        if (classicosState.maxAno && m.ano > classicosState.maxAno) return false;
-        return true;
-      });
-    }
-
-    function renderClassicosChecklist(type, items, matchingSubset) {
-      const container = document.getElementById(`classicos-list-${type}`);
-      if (!container) return;
-      if (items.length === 0) {
-        container.innerHTML = '<div class="text-[11px] text-white/40 p-2 text-center italic">Nenhuma opção disponível</div>';
-        return;
-      }
-
-      const counts = {};
-      matchingSubset.forEach(m => {
-        let val;
-        if (type === 'competicao') val = m.torneio;
-        else if (type === 'adversario') val = m.adv;
-        else val = m[type];
-        counts[val] = (counts[val] || 0) + 1;
-      });
-
-      const checkedSet = new Set(classicosState[type]);
-      const html = items.map(item => {
-        const count = counts[item.value] || 0;
-        const isChecked = checkedSet.has(item.value);
-        return `
-          <label class="flex items-center justify-between p-1.5 hover:bg-white/5 rounded-lg cursor-pointer text-xs text-white/90 transition select-none">
-            <div class="flex items-center gap-2 truncate pr-1">
-              <input type="checkbox" class="ms-checkbox rounded" value="${item.value}" ${isChecked ? 'checked' : ''} onchange="onClassicosCheckboxChange('${type}', this.value, this.checked)">
-              <span class="truncate">${item.label}</span>
-            </div>
-            <span class="text-[10px] text-white/40 font-mono shrink-0">${count}</span>
-          </label>
-        `;
-      }).join('');
-      container.innerHTML = html;
-    }
-
-    function updateClassicosDropdowns() {
-      const comps = [...new Set(CLASSICOS_DATA.map(m => m.torneio))].filter(c => c && c !== "-").sort();
-      renderClassicosChecklist('competicao', comps.map(c => ({ value: c, label: c })), getClassicosExcluding('competicao'));
-
-      const opponents = [...new Set(CLASSICOS_DATA.map(m => m.adv))].filter(a => a && a !== "-" && a !== "A Definir").sort((a, b) => a.localeCompare(b, 'pt-BR'));
-      renderClassicosChecklist('adversario', opponents.map(adv => ({ value: adv, label: adv })), getClassicosExcluding('adversario'));
-
-      const presentes = [...new Set(CLASSICOS_DATA.map(m => m.presente))].filter(p => p).sort();
-      renderClassicosChecklist('presente', presentes.map(p => ({ value: p, label: p })), getClassicosExcluding('presente'));
-    }
-
-    function onClassicosCheckboxChange(type, value, isChecked) {
-      if (isChecked) {
-        if (!classicosState[type].includes(value)) classicosState[type].push(value);
-      } else {
-        classicosState[type] = classicosState[type].filter(v => v !== value);
-      }
-      applyClassicosFilters();
-    }
-
-    function selectClassicosAll(type, selectAll) {
-      const container = document.getElementById(`classicos-list-${type}`);
-      if (!container) return;
-      classicosState[type] = [];
-      container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-        cb.checked = selectAll;
-        if (selectAll) classicosState[type].push(cb.value);
-      });
-      applyClassicosFilters();
-    }
-
-    function updateClassicosLabels() {
-      const types = ['competicao', 'adversario', 'presente'];
-      types.forEach(t => {
-        const count = classicosState[t].length;
-        const labelEl = document.getElementById(`classicos-label-${t}`);
-        if (!labelEl) return;
-        const totalItems = document.querySelectorAll(`#classicos-list-${t} input[type="checkbox"]`).length;
-        if (count === 0) {
-          labelEl.textContent = 'Todas';
-          labelEl.className = 'truncate pr-1 text-white/80';
-        } else if (count === totalItems && totalItems > 1) {
-          labelEl.textContent = 'Todas Selecionadas';
-          labelEl.className = 'truncate pr-1 text-emerald-300 font-semibold';
-        } else if (count === 1) {
-          labelEl.textContent = classicosState[t][0];
-          labelEl.className = 'truncate pr-1 text-[#C5A059] font-semibold';
-        } else {
-          labelEl.textContent = `${count} selecionados`;
-          labelEl.className = 'truncate pr-1 text-[#C5A059] font-semibold';
-        }
-      });
-    }
-
-    function resetClassicosFilters() {
-      classicosState.competicao = [];
-      classicosState.adversario = [];
-      classicosState.presente = [];
-      
-      if (CLASSICOS_DATA.length > 0) {
-        const years = CLASSICOS_DATA.map(c => c.ano).filter(a => !isNaN(a) && a > 1900);
-        classicosState.minAno = Math.min(...years);
-        classicosState.maxAno = Math.max(...years);
-      }
-
-      initClassicosSlider();
-      applyClassicosFilters();
-    }
-
-    function applyClassicosFilters() {
-      updateClassicosDropdowns();
-      updateClassicosLabels();
-
-      const setComp = classicosState.competicao.length > 0 ? new Set(classicosState.competicao) : null;
-      const setAdv = classicosState.adversario.length > 0 ? new Set(classicosState.adversario) : null;
-      const setPres = classicosState.presente.length > 0 ? new Set(classicosState.presente) : null;
-
-      const filteredClassicos = CLASSICOS_DATA.filter(m => {
-        if (setComp && !setComp.has(m.torneio)) return false;
-        if (setAdv && !setAdv.has(m.adv)) return false;
-        if (setPres && !setPres.has(m.presente)) return false;
-        if (classicosState.minAno && m.ano < classicosState.minAno) return false;
-        if (classicosState.maxAno && m.ano > classicosState.maxAno) return false;
-        return true;
-      });
-
-      const tag = document.getElementById('classicos-matches-tag');
-      if (tag) tag.textContent = `${filteredClassicos.length} partidas`;
-
-      let v = 0, e = 0, d = 0, gp = 0, gc = 0;
-      const advStatsClassicos = {};
-      const classicosIndexByYearAdv = {};
-
-      filteredClassicos.forEach(m => {
-        // Indexa por ano + rival normalizado para cruzamento O(1) com Setor Sul
-        const key = `${m.ano}_${m.advNorm}`;
-        if (!classicosIndexByYearAdv[key]) classicosIndexByYearAdv[key] = [];
-        classicosIndexByYearAdv[key].push(m.timestamp);
-
-        if (m.gf !== null && m.ga !== null) {
-           const fluGols = m.gf, advGols = m.ga;
-           gp += fluGols;
-           gc += advGols;
-           
-           let res = 'E';
-           if (fluGols > advGols) { v++; res = 'V'; }
-           else if (fluGols < advGols) { d++; res = 'D'; }
-           else { e++; res = 'E'; }
-
-           if (!advStatsClassicos[m.adv]) {
-               advStatsClassicos[m.adv] = { jog: 0, v: 0, e: 0, d: 0, gp: 0, gc: 0 };
-           }
-           const st = advStatsClassicos[m.adv];
-           st.jog++; st.gp += fluGols; st.gc += advGols;
-           if (res === 'V') st.v++; else if (res === 'E') st.e++; else st.d++;
-        }
-      });
-
-      const total = filteredClassicos.length;
-      const ptsPossiveis = total * 3;
-      const ptsGanhos = (v * 3) + e;
-      const aprov = ptsPossiveis > 0 ? ((ptsGanhos / ptsPossiveis) * 100).toFixed(1) + '%' : '0%';
-
-      document.getElementById('classicos-kpi-vitorias').textContent = v;
-      document.getElementById('classicos-sub-vitorias').textContent = total > 0 ? `${((v/total)*100).toFixed(1)}% dos jogos` : '0%';
-      document.getElementById('classicos-kpi-empates').textContent = e;
-      document.getElementById('classicos-sub-empates').textContent = total > 0 ? `${((e/total)*100).toFixed(1)}% dos jogos` : '0%';
-      document.getElementById('classicos-kpi-derrotas').textContent = d;
-      document.getElementById('classicos-sub-derrotas').textContent = total > 0 ? `${((d/total)*100).toFixed(1)}% dos jogos` : '0%';
-      
-      document.getElementById('classicos-kpi-gp').textContent = gp.toLocaleString('pt-BR');
-      document.getElementById('classicos-sub-gp').textContent = total > 0 ? `Média ${(gp/total).toFixed(2)} por jogo` : '0';
-      document.getElementById('classicos-kpi-gc').textContent = gc.toLocaleString('pt-BR');
-      document.getElementById('classicos-sub-gc').textContent = total > 0 ? `Média ${(gc/total).toFixed(2)} por jogo` : '0';
-      
-      document.getElementById('classicos-kpi-aproveitamento').textContent = aprov;
-      document.getElementById('classicos-sub-aproveitamento').textContent = `${ptsGanhos} de ${ptsPossiveis} pts`;
-
-      updateClassicosChart(filteredClassicos);
-
-      // Cruzamento ultra-rápido por chave indexada (Ano + Rival + Tolerância de 4 dias)
-      const isMatchInFilteredClassicos = (m) => {
-        const timestamps = classicosIndexByYearAdv[`${m.ano}_${m.advNorm}`];
-        if (!timestamps) return false;
-        for (let i = 0; i < timestamps.length; i++) {
-          if (Math.abs(m.timestamp - timestamps[i]) <= 345600000) return true;
-        }
-        return false;
-      };
-
-      const sulMatchesClassicos = [];
-      let missingSulCountClassicos = 0;
-
-      MATCHES_DATA.forEach(m => {
-        if (!m.isMaracanaNorm) return;
-        if (!isMatchInFilteredClassicos(m)) return;
-        if (m.sul !== null && m.sul > 0) {
-          sulMatchesClassicos.push(m);
-        } else {
-          missingSulCountClassicos++;
-        }
-      });
-
-      const avgSulClassicos = sulMatchesClassicos.length ? sulMatchesClassicos.reduce((acc, x) => acc + x.sul, 0) / sulMatchesClassicos.length : 0;
-      
-      let xxxx = "-", yyyy = "-";
-      if (sulMatchesClassicos.length > 0) {
-          const years = sulMatchesClassicos.map(m => m.ano).filter(y => !isNaN(y));
-          xxxx = Math.min(...years);
-          yyyy = Math.max(...years);
-      }
-      
-      const elMediaSul = document.getElementById("classicos-kpi-media-sul");
-      const elSubSul = document.getElementById("classicos-kpi-sub-sul");
-      if (elMediaSul) elMediaSul.textContent = sulMatchesClassicos.length > 0 ? fmt(avgSulClassicos) : "-";
-      if (elSubSul) elSubSul.textContent = sulMatchesClassicos.length > 0 ? `${sulMatchesClassicos.length} jogos (${xxxx} - ${yyyy})` : "Sem dados do Setor Sul";
-
-      const taxaSulClassicos = avgSulClassicos > 0 ? (avgSulClassicos / 20000) * 100 : 0;
-      const elTaxaSul = document.getElementById("classicos-kpi-taxa-sul");
-      if (elTaxaSul) elTaxaSul.textContent = taxaSulClassicos > 0 ? `${taxaSulClassicos.toFixed(1)}%` : "-";
-
-      const recordedCountEl = document.getElementById("classicos-sul-recorded-count");
-      if (recordedCountEl) recordedCountEl.textContent = `${sulMatchesClassicos.length} jogos`;
-
-      const alertRecordsEl = document.getElementById("classicos-sul-alert-records");
-      if (alertRecordsEl) {
-          if (sulMatchesClassicos.length > 0) {
-              document.getElementById("classicos-sul-record-z").textContent = sulMatchesClassicos.length;
-              document.getElementById("classicos-sul-record-x").textContent = xxxx;
-              document.getElementById("classicos-sul-record-y").textContent = yyyy;
-              alertRecordsEl.classList.remove("hidden");
-          } else {
-              alertRecordsEl.classList.add("hidden");
-          }
-      }
-
-      const classicosAlertEl = document.getElementById("classicos-sul-alert-missing");
-      const classicosCountEl = document.getElementById("classicos-sul-missing-count");
-      if (classicosAlertEl && classicosCountEl) {
-        if (missingSulCountClassicos > 0) {
-          classicosCountEl.textContent = missingSulCountClassicos;
-          classicosAlertEl.classList.remove("hidden");
-        } else {
-          classicosAlertEl.classList.add("hidden");
-        }
-      }
-
-      const topSulMatchesClassicos = [...sulMatchesClassicos]
-        .sort((a, b) => b.sul - a.sul)
-        .slice(0, 10);
-
-      renderSulBarChart("chartClassicosSetorSul", topSulMatchesClassicos);
-      renderClassicosTable(filteredClassicos);
-      renderAdvTable('classicos-adv-table-body', advStatsClassicos);
-    }
-
-    function updateClassicosChart(data) {
-      const sortedData = [...data].sort((a, b) => a.sortTime - b.sortTime);
-
-      let vFla = 0, vVas = 0, vBot = 0, vTot = 0;
-      const labels = [], dFla = [], dVas = [], dBot = [], dTot = [];
-
-      sortedData.forEach(c => {
-         if (c.gf !== null && c.ga !== null) {
-             const diff = c.gf - c.ga;
-             if (diff > 0) {
-                 vTot++;
-                 if (c.advNorm === 'flamengo') vFla++;
-                 else if (c.advNorm === 'vasco') vVas++;
-                 else if (c.advNorm === 'botafogo') vBot++;
-             } else if (diff < 0) {
-                 vTot--;
-                 if (c.advNorm === 'flamengo') vFla--;
-                 else if (c.advNorm === 'vasco') vVas--;
-                 else if (c.advNorm === 'botafogo') vBot--;
-             }
-         }
-         
-         labels.push(c.data);
-         dFla.push(vFla);
-         dVas.push(vVas);
-         dBot.push(vBot);
-         dTot.push(vTot);
-      });
-
-      const selAdv = classicosState.adversario.map(a => a.toLowerCase());
-      const showAll = selAdv.length === 0;
-      const showBot = showAll || selAdv.some(a => a.includes('botafogo'));
-      const showVas = showAll || selAdv.some(a => a.includes('vasco'));
-      const showFla = showAll || selAdv.some(a => a.includes('flamengo'));
-
-      const activeRivalsCount = [showBot, showVas, showFla].filter(Boolean).length;
-      const isSingleRival = activeRivalsCount === 1;
-
-      const datasets = [];
-
-      if (!isSingleRival) {
-          datasets.push({ 
-              label: 'Saldo Total', 
-              data: dTot, 
-              borderColor: '#22c55e', 
-              backgroundColor: '#22c55e', 
-              borderWidth: 2.5, 
-              tension: 0, 
-              pointRadius: 0, 
-              pointHoverRadius: 5 
-          });
-      }
-
-      if (showBot) {
-          datasets.push({ 
-              label: 'Botafogo', 
-              data: dBot, 
-              borderColor: '#ffffff', 
-              backgroundColor: '#ffffff', 
-              borderWidth: isSingleRival ? 2.5 : 1.5, 
-              tension: 0, 
-              pointRadius: 0, 
-              pointHoverRadius: 4 
-          });
-      }
-      if (showVas) {
-          datasets.push({ 
-              label: 'Vasco', 
-              data: dVas, 
-              borderColor: '#9ca3af', 
-              backgroundColor: '#9ca3af', 
-              borderWidth: isSingleRival ? 2.5 : 1.5, 
-              tension: 0, 
-              pointRadius: 0, 
-              pointHoverRadius: 4 
-          });
-      }
-      if (showFla) {
-          datasets.push({ 
-              label: 'Flamengo', 
-              data: dFla, 
-              borderColor: '#ef4444', 
-              backgroundColor: '#ef4444', 
-              borderWidth: isSingleRival ? 2.5 : 1.5, 
-              tension: 0, 
-              pointRadius: 0, 
-              pointHoverRadius: 4 
-          });
-      }
-
-      if (activeCharts["chartEvolucaoClassicos"]) activeCharts["chartEvolucaoClassicos"].destroy();
-      
-      activeCharts["chartEvolucaoClassicos"] = new Chart(document.getElementById("chartEvolucaoClassicos").getContext('2d'), {
-         type: 'line',
-         data: {
-             labels: labels,
-             datasets: datasets
-         },
-         options: {
-             responsive: true, maintainAspectRatio: false,
-             interaction: { mode: 'index', intersect: false },
-             plugins: { 
-                 legend: { position: 'bottom', labels: { color: 'rgba(255,255,255,0.7)', usePointStyle: true, boxWidth: 8 } },
-                 tooltip: { callbacks: { title: (items) => `Data: ${items[0].label}` } }
-             },
-             scales: {
-                 x: { ticks: { maxTicksLimit: 10, color: 'rgba(255,255,255,0.4)' }, grid: { display: false } },
-                 y: { 
-                     grid: { 
-                         color: (ctx) => ctx.tick && ctx.tick.value === 0 ? 'rgba(255, 255, 255, 0.4)' : 'rgba(255,255,255,0.05)',
-                         lineWidth: (ctx) => ctx.tick && ctx.tick.value === 0 ? 2 : 1
-                     }, 
-                     ticks: { color: 'rgba(255,255,255,0.6)' }
-                 }
-             }
-         }
-      });
-    }
-
-    function renderClassicosTable(data) {
-      const tbody = document.getElementById('classicos-table-body');
-      if (!tbody) return;
-      if (data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-white/40 italic">Nenhum clássico encontrado para os filtros selecionados.</td></tr>`;
-        return;
-      }
-      tbody.innerHTML = data.map(c => `<tr class="hover:bg-white/[0.04] transition border-b border-white/5">
-          <td class="p-3 text-white/90">${c.data}</td>
-          <td class="p-3 font-sans font-bold text-white">${c.adv}</td>
-          <td class="p-3 text-center font-bold text-white">${c.placar}</td>
-          <td class="p-3 font-sans text-[11px] text-white/80 max-w-[170px] truncate" title="${c.torneio}">${c.torneio}</td>
-        </tr>`).join('');
-    }
-
-    window.onload = function() {
-      if (window.lucide) lucide.createIcons();
-      fetchLiveGoogleSheet();
-    };
-  </script>
+  <script src="./app.js" defer></script>
 </body>
 </html>

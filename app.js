@@ -1088,7 +1088,8 @@ function renderSulBarChart(canvasId, sulMatchesList) {
             autoSkip: false,
             maxRotation: 0,
             minRotation: 0,
-            padding: 8
+            padding: 8,
+            font: { size: window.matchMedia('(max-width: 639px)').matches ? 10 : 12, lineHeight: 1.25 }
           }
         },
         y: { beginAtZero: true, max: 22000, ticks: { callback: v => v === 22000 ? '' : v.toLocaleString('pt-BR') } }
@@ -1408,7 +1409,7 @@ function renderTable() {
   const pageItems = validFiltered.slice(start, end);
 
   if (pageItems.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="13" class="p-8 text-center text-white/40 font-sans">Nenhuma partida encontrada para os filtros selecionados.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="12" class="p-8 text-center text-white/40 font-sans">Nenhuma partida encontrada para os filtros selecionados.</td></tr>`;
     document.getElementById("table-pagination").innerHTML = "";
     return;
   }
@@ -1421,7 +1422,6 @@ function renderTable() {
     const presBadge = m.presente === "Sim" ? `<span class="px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 font-sans text-[10px] font-bold border border-cyan-500/40">Sim</span>` : `<span class="text-white/30">Não</span>`;
 
     return `<tr class="hover:bg-white/[0.04] transition border-b border-white/5">
-      <td class="p-3 text-[#C5A059] font-mono text-[11px] whitespace-nowrap">${escapeHtml(m.id)}</td>
       <td class="p-3 text-white/90 whitespace-nowrap">${escapeHtml(m.data || "-")}</td>
       <td class="p-3 text-white/50">${escapeHtml(m.hora || "-")}</td>
       <td class="p-3 font-sans text-[11px] text-white/80 max-w-[170px] truncate" title="${escapeHtml(m.torneio)}">${escapeHtml(m.torneio)}</td>

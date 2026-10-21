@@ -1073,7 +1073,7 @@ function renderSulBarChart(canvasId, sulMatchesList) {
         const dia = p[0].length === 4 ? p[2] : p[0];
         const mes = p[1];
         const ano = p[0].length === 4 ? p[0].slice(2, 4) : p[2].slice(2, 4);
-        if (mobile) return [String(m.adv || '').slice(0, 3).toUpperCase(), `${dia}/${mes}`];
+        if (mobile) return [String(m.adv || '').slice(0, 3).toUpperCase(), `${mes}/${ano}`];
         return [`${m.adv}`, `(${dia}-${mes}-${ano})`];
       }),
       datasets: [

@@ -876,7 +876,7 @@ function formatK(value, decimals = 0) {
   return `${(n / 1000).toLocaleString('pt-BR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}k`;
 }
 
-function makeValueLabelsPlugin(id, { decimals = 0, horizontal = false, fontSize = 11 } = {}) {
+function makeValueLabelsPlugin(id, { decimals = 0, horizontal = false, fontSize = 11, mobileOutside = false } = {}) {
   return {
     id,
     afterDatasetsDraw(chart) {
@@ -892,7 +892,11 @@ function makeValueLabelsPlugin(id, { decimals = 0, horizontal = false, fontSize 
         meta.data.forEach((element, dataIndex) => {
           const value = Number(dataset.data[dataIndex]);
           if (!Number.isFinite(value) || value <= 0) return;
-          if (horizontal) ctx.fillText(formatK(value, decimals), Math.min(element.x + 6, chartArea.right - 34), element.y);
+          if (horizontal) {
+            const isMobile = window.matchMedia('(max-width: 767px)').matches;
+            const x = (mobileOutside && isMobile) ? element.x + 8 : Math.min(element.x + 6, chartArea.right - 34);
+            ctx.fillText(formatK(value, decimals), x, element.y);
+          }
           else ctx.fillText(formatK(value, decimals), element.x, Math.max(chartArea.top + 12, element.y - 6));
         });
       });
@@ -1337,19 +1341,19 @@ function updateCharts() {
   });
 
   let datasetsTemp = [];
-  if (chartMode === 'mandante') datasetsTemp = [{ label: 'Média Mandante', data: dsMand, backgroundColor: '#0E4735', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: countMand }];
-  else if (chartMode === 'visitante') datasetsTemp = [{ label: 'Média Visitante', data: dsVis, backgroundColor: '#870A28', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: countVis }];
+  if (chartMode === 'mandante') datasetsTemp = [{ label: 'Mandante', data: dsMand, backgroundColor: '#0E4735', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: countMand }];
+  else if (chartMode === 'visitante') datasetsTemp = [{ label: 'Visitante', data: dsVis, backgroundColor: '#870A28', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: countVis }];
   else if (chartMode === 'neutro') datasetsTemp = [{ label: 'Média Neutro', data: dsNeu, backgroundColor: '#0f766e', borderColor: '#06b6d4', borderWidth: 1.5, borderRadius: 6, customCount: countNeu }];
   else {
     datasetsTemp = [
-      { label: 'Média Mandante', data: dsMand, backgroundColor: '#0E4735', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: countMand },
-      { label: 'Média Visitante', data: dsVis, backgroundColor: '#870A28', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: countVis }
+      { label: 'Mandante', data: dsMand, backgroundColor: '#0E4735', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: countMand },
+      { label: 'Visitante', data: dsVis, backgroundColor: '#870A28', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: countVis }
     ];
   }
   activeCharts["chartTemporada"] = new Chart(getChartCanvas("chartTemporada"), {
     type: 'bar', data: { labels: seasons.map(String), datasets: datasetsTemp },
-    plugins: [makeValueLabelsPlugin('publicoMedioTemporadaLabels', { decimals: window.matchMedia('(min-width: 640px)').matches ? 1 : 0 })],
-    options: { layout: { padding: { top: 18 } }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: showLegend, position: 'top', labels: {color: 'rgba(255,255,255,0.7)'} }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } } }
+    plugins: [makeValueLabelsPlugin('publicoMedioTemporadaLabels', { decimals: 1 })],
+    options: { layout: { padding: { top: 18 } }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: showLegend, position: 'top', labels: {color: 'rgba(255,255,255,0.7)'} }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { y: { beginAtZero: true, ticks: { display: false, callback: v => v.toLocaleString('pt-BR') } } } }
   });
 
   // 2. COMPETICAO
@@ -1369,19 +1373,19 @@ function updateCharts() {
   else filteredCompStats = compStats.filter(s => s.cM > 0 || s.cV > 0).sort((a,b) => Math.max(b.mM, b.mV) - Math.max(a.mM, a.mV));
 
   let datasetsComp = [];
-  if (chartMode === 'mandante') datasetsComp = [{ label: 'Média Mandante', data: filteredCompStats.map(s=>s.mM), backgroundColor: '#0E4735', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: filteredCompStats.map(s=>s.cM) }];
-  else if (chartMode === 'visitante') datasetsComp = [{ label: 'Média Visitante', data: filteredCompStats.map(s=>s.mV), backgroundColor: '#870A28', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: filteredCompStats.map(s=>s.cV) }];
+  if (chartMode === 'mandante') datasetsComp = [{ label: 'Mandante', data: filteredCompStats.map(s=>s.mM), backgroundColor: '#0E4735', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: filteredCompStats.map(s=>s.cM) }];
+  else if (chartMode === 'visitante') datasetsComp = [{ label: 'Visitante', data: filteredCompStats.map(s=>s.mV), backgroundColor: '#870A28', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: filteredCompStats.map(s=>s.cV) }];
   else if (chartMode === 'neutro') datasetsComp = [{ label: 'Média Neutro', data: filteredCompStats.map(s=>s.mN), backgroundColor: '#0f766e', borderColor: '#06b6d4', borderWidth: 1.5, borderRadius: 6, customCount: filteredCompStats.map(s=>s.cN) }];
   else {
     datasetsComp = [
-      { label: 'Média Mandante', data: filteredCompStats.map(s=>s.mM), backgroundColor: '#0E4735', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: filteredCompStats.map(s=>s.cM) },
-      { label: 'Média Visitante', data: filteredCompStats.map(s=>s.mV), backgroundColor: '#870A28', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: filteredCompStats.map(s=>s.cV) }
+      { label: 'Mandante', data: filteredCompStats.map(s=>s.mM), backgroundColor: '#0E4735', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: filteredCompStats.map(s=>s.cM) },
+      { label: 'Visitante', data: filteredCompStats.map(s=>s.mV), backgroundColor: '#870A28', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: filteredCompStats.map(s=>s.cV) }
     ];
   }
   activeCharts["chartCompeticao"] = new Chart(getChartCanvas("chartCompeticao"), {
     type: 'bar', data: { labels: filteredCompStats.map(s => s.comp), datasets: datasetsComp },
     plugins: [makeValueLabelsPlugin('publicoMedioCompeticaoLabels', { decimals: 1, horizontal: true })],
-    options: { indexAxis: 'y', layout: { padding: { right: 42 } }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: showLegend, position: 'top', labels: {color: 'rgba(255,255,255,0.7)'} }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.x.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { x: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } } }
+    options: { indexAxis: 'y', layout: { padding: { right: 42 } }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: showLegend, position: 'top', labels: {color: 'rgba(255,255,255,0.7)'} }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.x.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { x: { beginAtZero: true, ticks: { display: false, callback: v => v.toLocaleString('pt-BR') } }, y: { ticks: { display: true } } } }
   });
 
   // 3. DIA DA SEMANA
@@ -1396,20 +1400,20 @@ function updateCharts() {
   const bgVisitante = daysOrder.map(d => ['Sábado', 'Domingo'].includes(d) ? '#e11d48' : '#8A1538');
   const bgNeutro = daysOrder.map(d => ['Sábado', 'Domingo'].includes(d) ? '#06b6d4' : '#0f766e');
   let datasetsDia = [];
-  if (chartMode === 'mandante') datasetsDia = [{ label: 'Média Mandante', data: dsMandDia, backgroundColor: bgMandante, borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 8, customCount: countMandDia }];
-  else if (chartMode === 'visitante') datasetsDia = [{ label: 'Média Visitante', data: dsVisDia, backgroundColor: bgVisitante, borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 8, customCount: countVisDia }];
+  if (chartMode === 'mandante') datasetsDia = [{ label: 'Mandante', data: dsMandDia, backgroundColor: bgMandante, borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 8, customCount: countMandDia }];
+  else if (chartMode === 'visitante') datasetsDia = [{ label: 'Visitante', data: dsVisDia, backgroundColor: bgVisitante, borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 8, customCount: countVisDia }];
   else if (chartMode === 'neutro') datasetsDia = [{ label: 'Média Neutro', data: dsNeuDia, backgroundColor: bgNeutro, borderColor: '#06b6d4', borderWidth: 1.5, borderRadius: 8, customCount: countNeuDia }];
   else {
     const bwDuplo = daysOrder.map(d => ['Sábado', 'Domingo'].includes(d) ? 2.5 : 1.5);
     datasetsDia = [
-      { label: 'Média Mandante', data: dsMandDia, backgroundColor: '#0E4735', borderColor: '#C5A059', borderWidth: bwDuplo, borderRadius: 6, customCount: countMandDia },
-      { label: 'Média Visitante', data: dsVisDia, backgroundColor: '#870A28', borderColor: '#C5A059', borderWidth: bwDuplo, borderRadius: 6, customCount: countVisDia }
+      { label: 'Mandante', data: dsMandDia, backgroundColor: '#0E4735', borderColor: '#C5A059', borderWidth: bwDuplo, borderRadius: 6, customCount: countMandDia },
+      { label: 'Visitante', data: dsVisDia, backgroundColor: '#870A28', borderColor: '#C5A059', borderWidth: bwDuplo, borderRadius: 6, customCount: countVisDia }
     ];
   }
   activeCharts["chartDiaSemana"] = new Chart(getChartCanvas("chartDiaSemana"), {
     type: 'bar', data: { labels: daysOrder.map(d => d.replace('-feira', '')), datasets: datasetsDia },
-    plugins: [makeValueLabelsPlugin('publicoMedioDiaLabels', { decimals: window.matchMedia('(min-width: 640px)').matches ? 1 : 0 })],
-    options: { layout: { padding: { top: 18 } }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: showLegend, position: 'top', labels: {color: 'rgba(255,255,255,0.7)'} }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } } }
+    plugins: [makeValueLabelsPlugin('publicoMedioDiaLabels', { decimals: 1 })],
+    options: { layout: { padding: { top: 18 } }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: showLegend, position: 'top', labels: {color: 'rgba(255,255,255,0.7)'} }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { y: { beginAtZero: true, ticks: { display: false, callback: v => v.toLocaleString('pt-BR') } } } }
   });
 
   // 4. HORARIO
@@ -1420,19 +1424,19 @@ function updateCharts() {
     dsNeuHor.push(hr.cN ? Math.round(hr.sN / hr.cN) : 0); countNeuHor.push(hr.cN);
   });
   let datasetsHor = [];
-  if (chartMode === 'mandante') datasetsHor = [{ label: 'Média Mandante', data: dsMandHor, borderColor: '#C5A059', backgroundColor: 'rgba(14, 71, 53, 0.25)', borderWidth: 2.5, fill: true, tension: 0.35, pointBackgroundColor: '#8A1538', pointBorderColor: '#FFF', pointRadius: 6, customCount: countMandHor }];
-  else if (chartMode === 'visitante') datasetsHor = [{ label: 'Média Visitante', data: dsVisHor, borderColor: '#e11d48', backgroundColor: 'rgba(138, 21, 56, 0.25)', borderWidth: 2.5, fill: true, tension: 0.35, pointBackgroundColor: '#C5A059', pointBorderColor: '#FFF', pointRadius: 6, customCount: countVisHor }];
+  if (chartMode === 'mandante') datasetsHor = [{ label: 'Mandante', data: dsMandHor, borderColor: '#C5A059', backgroundColor: 'rgba(14, 71, 53, 0.25)', borderWidth: 2.5, fill: true, tension: 0.35, pointBackgroundColor: '#8A1538', pointBorderColor: '#FFF', pointRadius: 6, customCount: countMandHor }];
+  else if (chartMode === 'visitante') datasetsHor = [{ label: 'Visitante', data: dsVisHor, borderColor: '#e11d48', backgroundColor: 'rgba(138, 21, 56, 0.25)', borderWidth: 2.5, fill: true, tension: 0.35, pointBackgroundColor: '#C5A059', pointBorderColor: '#FFF', pointRadius: 6, customCount: countVisHor }];
   else if (chartMode === 'neutro') datasetsHor = [{ label: 'Média Neutro', data: dsNeuHor, borderColor: '#06b6d4', backgroundColor: 'rgba(15, 118, 110, 0.25)', borderWidth: 2.5, fill: true, tension: 0.35, pointBackgroundColor: '#0f766e', pointBorderColor: '#FFF', pointRadius: 6, customCount: countNeuHor }];
   else {
     datasetsHor = [
-      { label: 'Média Mandante', data: dsMandHor, borderColor: '#0E4735', backgroundColor: 'rgba(14, 71, 53, 0.15)', borderWidth: 2.5, fill: true, tension: 0.35, pointBackgroundColor: '#C5A059', pointRadius: 5, customCount: countMandHor },
-      { label: 'Média Visitante', data: dsVisHor, borderColor: '#870A28', backgroundColor: 'rgba(138, 21, 56, 0.15)', borderWidth: 2.5, fill: true, tension: 0.35, pointBackgroundColor: '#C5A059', pointRadius: 5, customCount: countVisHor }
+      { label: 'Mandante', data: dsMandHor, borderColor: '#0E4735', backgroundColor: 'rgba(14, 71, 53, 0.15)', borderWidth: 2.5, fill: true, tension: 0.35, pointBackgroundColor: '#C5A059', pointRadius: 5, customCount: countMandHor },
+      { label: 'Visitante', data: dsVisHor, borderColor: '#870A28', backgroundColor: 'rgba(138, 21, 56, 0.15)', borderWidth: 2.5, fill: true, tension: 0.35, pointBackgroundColor: '#C5A059', pointRadius: 5, customCount: countVisHor }
     ];
   }
   activeCharts["chartHorario"] = new Chart(getChartCanvas("chartHorario"), {
     type: 'line', data: { labels: hourRanges.map(h => h.label), datasets: datasetsHor },
     plugins: [makeValueLabelsPlugin('publicoMedioHorarioLabels', { decimals: 1 })],
-    options: { layout: { padding: { top: 18 } }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: showLegend, position: 'top', labels: {color: 'rgba(255,255,255,0.7)'} }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } } }
+    options: { layout: { padding: { top: 18 } }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: showLegend, position: 'top', labels: {color: 'rgba(255,255,255,0.7)'} }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { y: { beginAtZero: true, ticks: { display: false, callback: v => v.toLocaleString('pt-BR') } } } }
   });
 
   // 5. TOP VISITANTE
@@ -1448,8 +1452,8 @@ function updateCharts() {
       if (topEstadios.length > 0) {
         activeCharts["chartTopVisitante"] = new Chart(getChartCanvas("chartTopVisitante"), {
           type: 'bar', data: { labels: topEstadios.map(e => e.est), datasets: [{ label: 'Média de Público', data: topEstadios.map(e => e.avg), backgroundColor: '#870A28', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: topEstadios.map(e => e.count) }] },
-          plugins: [makeValueLabelsPlugin('topVisitanteLabels', { decimals: 1, horizontal: true })],
-          options: { indexAxis: 'y', layout: { padding: { right: 42 } }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` Média: ${ctx.parsed.x.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { x: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } } }
+          plugins: [makeValueLabelsPlugin('topVisitanteLabels', { decimals: 1, horizontal: true, mobileOutside: true })],
+          options: { indexAxis: 'y', layout: { padding: { right: window.matchMedia('(max-width: 767px)').matches ? 54 : 42 } }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` Média: ${ctx.parsed.x.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { x: { beginAtZero: true, grace: window.matchMedia('(max-width: 767px)').matches ? '14%' : 0, ticks: { display: false, callback: v => v.toLocaleString('pt-BR') } }, y: { ticks: { display: true } } } }
         });
       } else {
         const ctx = getChartCanvas("chartTopVisitante"); ctx.font = "12px 'Plus Jakarta Sans', sans-serif"; ctx.fillStyle = "rgba(255,255,255,0.4)"; ctx.textAlign = "center"; ctx.fillText("Nenhum dado de público visitante para os filtros atuais.", ctx.canvas.width / 2, 50);
@@ -1547,7 +1551,7 @@ function updateCharts() {
             },
             y: {
               beginAtZero: true,
-              ticks: { precision: 0 }
+              ticks: { display: false, precision: 0 }
             }
           }
         }
@@ -1579,7 +1583,7 @@ function updateCharts() {
         meta.data.forEach((bar, dataIndex) => {
           const value = dataset.data[dataIndex];
           if (value === null || value === undefined || Number.isNaN(Number(value))) return;
-          const y = Math.max(bar.y - 7, chartArea.top + 14);
+          const y = Math.max(bar.y - 10, chartArea.top + 14);
           ctx.fillText(Number(value).toLocaleString('pt-BR'), bar.x, y);
         });
       });
@@ -1600,14 +1604,14 @@ function updateCharts() {
     plugins: [desempenhoTemporadaLabelsPlugin],
     options: {
       responsive: true, maintainAspectRatio: false,
-      layout: { padding: { top: 18 } },
+      layout: { padding: { top: 24 } },
       plugins: { 
         legend: { position: 'top', labels: { color: 'rgba(255,255,255,0.7)' } },
         tooltip: { mode: 'index', intersect: false }
       },
       scales: {
         x: { stacked: false, ticks: { color: 'rgba(255,255,255,0.7)' }, grid: { display: false } },
-        y: { beginAtZero: true, grace: '8%', ticks: { color: 'rgba(255,255,255,0.7)' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+        y: { beginAtZero: true, grace: '8%', ticks: { display: false, color: 'rgba(255,255,255,0.7)' }, grid: { color: 'rgba(255,255,255,0.05)' } }
       }
     }
   });

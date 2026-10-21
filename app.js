@@ -1019,6 +1019,34 @@ function renderSulBarChart(canvasId, sulMatchesList) {
   ctxLeg.fillRect(0, 0, 60, 14);
 
   const padraoLegenda = ctxSul.createPattern(canvasLegenda, 'repeat');
+  const sulMobile = window.matchMedia('(max-width: 639px)').matches;
+
+  // V3.1.2: no mobile, desenha sigla (10px) e data (8px) separadamente.
+  // O Chart.js aplica uma única fonte a todas as linhas de um tick; este plugin
+  // permite reduzir apenas a data sem afetar a versão desktop.
+  const sulMobileAxisLabels = {
+    id: `sulMobileAxisLabels-${canvasId}`,
+    afterDraw(chart) {
+      if (!sulMobile) return;
+      const xScale = chart.scales.x;
+      const ctx = chart.ctx;
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillStyle = '#A3B8B0';
+
+      chart.data.labels.forEach((label, index) => {
+        const lines = Array.isArray(label) ? label : [String(label), ''];
+        const x = xScale.getPixelForTick(index);
+        const y = xScale.bottom + 8;
+        ctx.font = "10px 'Plus Jakarta Sans', sans-serif";
+        ctx.fillText(lines[0] || '', x, y);
+        ctx.font = "8px 'Plus Jakarta Sans', sans-serif";
+        ctx.fillText(lines[1] || '', x, y + 13);
+      });
+      ctx.restore();
+    }
+  };
 
   activeCharts[canvasId] = new Chart(ctxSul, {
     type: 'bar',
@@ -1040,9 +1068,11 @@ function renderSulBarChart(canvasId, sulMatchesList) {
         { label: 'Capacidade Máxima Pagantes (20K)', data: sulMatchesList.map(() => CONFIG.capacidadeSulPagantes), type: 'line', borderColor: '#f59e0b', borderDash: [5, 5], borderWidth: 3, pointRadius: 0, pointHoverRadius: 0, fill: false, order: 1 }
       ]
     },
+    plugins: [sulMobileAxisLabels],
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      layout: { padding: { bottom: sulMobile ? 30 : 0 } },
       plugins: { 
         legend: { 
           position: 'top', 
@@ -1088,8 +1118,9 @@ function renderSulBarChart(canvasId, sulMatchesList) {
             autoSkip: false,
             maxRotation: 0,
             minRotation: 0,
-            padding: 8,
-            font: { size: window.matchMedia('(max-width: 639px)').matches ? 10 : 12, lineHeight: 1.25 }
+            padding: sulMobile ? 0 : 8,
+            display: !sulMobile,
+            font: { size: 12, lineHeight: 1.25 }
           }
         },
         y: { beginAtZero: true, max: 22000, ticks: { callback: v => v === 22000 ? '' : v.toLocaleString('pt-BR') } }

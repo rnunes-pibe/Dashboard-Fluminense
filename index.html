@@ -403,23 +403,45 @@
         </div>
       </div>
 
-      <!-- SEÇÃO EXCLUSIVA: TOP 10 ESTÁDIOS VISITANTE -->
-      <section id="section-top-visitante" class="glass-panel rounded-2xl p-6 shadow-2xl border border-rose-500/30 hidden">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4 mb-6">
-          <div>
-            <h3 class="text-base font-black text-white flex items-center gap-2">
-              <i data-lucide="map-pin" class="w-4 h-4 text-rose-900"></i>
-              Top 10 Estádios - Fluminense Visitante 
-            </h3>
-            <p class="text-xs text-white/60 mt-0.5">
-              Maiores médias de público pagante (torcida visitante do Fluminense)
-            </p>
+      <!-- TOP 10 ESTÁDIOS + DISTRIBUIÇÃO MANDANTE: lado a lado no desktop quando ambos visíveis -->
+      <div class="charts-estadios-distribuicao">
+        <!-- SEÇÃO EXCLUSIVA: TOP 10 ESTÁDIOS VISITANTE -->
+        <section id="section-top-visitante" class="glass-panel rounded-2xl p-6 shadow-2xl border border-rose-500/30 hidden">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4 mb-6">
+            <div>
+              <h3 class="text-base font-black text-white flex items-center gap-2">
+                <i data-lucide="map-pin" class="w-4 h-4 text-rose-900"></i>
+                Top 10 Estádios - Fluminense Visitante 
+              </h3>
+              <p class="text-xs text-white/60 mt-0.5">
+                Maiores médias de público pagante (torcida visitante do Fluminense)
+              </p>
+            </div>
           </div>
-        </div>
-        <div class="relative w-full h-[280px]">
-          <canvas id="chartTopVisitante"></canvas>
-        </div>
-      </section>
+          <div class="relative w-full h-[280px]">
+            <canvas id="chartTopVisitante"></canvas>
+          </div>
+        </section>
+
+        <!-- DISTRIBUIÇÃO DO PÚBLICO: somente quando Mandante estiver incluído no filtro Mando -->
+        <section id="section-distribuicao-mandante" class="glass-panel rounded-2xl p-6 shadow-2xl border border-emerald-500/25 hidden">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4 mb-6">
+            <div>
+              <h3 class="text-base font-black text-white flex items-center gap-2">
+                <i data-lucide="bar-chart-3" class="w-4 h-4 text-[#C5A059]"></i>
+                Distribuição do Público (Mandante)
+              </h3>
+              <p class="text-xs text-white/60 mt-0.5">
+                Quantidade de jogos por faixa de público pagante, considerando apenas o Fluminense como mandante
+              </p>
+            </div>
+          </div>
+          <div class="relative w-full h-[300px]">
+            <canvas id="chartDistribuicaoMandante"></canvas>
+          </div>
+        </section>
+
+      </div>
 
       <div id="section-geral-dia-horario" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="glass-panel rounded-2xl p-6 shadow-xl flex flex-col">
@@ -481,7 +503,7 @@
             </p>
             <p id="sul-alert-missing" class="text-[10px] text-amber-400 mt-2 flex items-center gap-1.5 font-medium hidden">
               <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i>
-              <span>Não há registros OFICIAIS de público do Setor Sul de <strong id="sul-missing-count">0</strong> jogos (Torneios Conmebol)</span>
+              <span id="sul-missing-summary">Sem dados oficiais do Setor Sul em 0 jogos</span>
             </p>
           </div>
           <div class="flex items-center gap-4 text-xs">

@@ -886,6 +886,7 @@ function updateKpis() {
   let sumVis = 0, countVis = 0;
   let sumSul = 0, countSul = 0;
   let missingSulCount = 0;
+  const missingSulByTournament = new Map();
 
   let vitorias = 0, empates = 0, derrotas = 0, gpTotal = 0, gcTotal = 0;
   const advStatsEstadio = {}; 
@@ -909,6 +910,8 @@ function updateKpis() {
         countSul++;
       } else {
         missingSulCount++;
+        const tournament = (m.torneio && m.torneio !== "-") ? m.torneio : "Sem torneio informado";
+        missingSulByTournament.set(tournament, (missingSulByTournament.get(tournament) || 0) + 1);
       }
     }
 
@@ -950,10 +953,20 @@ function updateKpis() {
   document.getElementById("sul-recorded-count").textContent = `${countSul} jogos`;
 
   const alertEl = document.getElementById("sul-alert-missing");
-  const countEl = document.getElementById("sul-missing-count");
-  if (alertEl && countEl) {
+  const summaryEl = document.getElementById("sul-missing-summary");
+  if (alertEl && summaryEl) {
     if (missingSulCount > 0) {
-      countEl.textContent = missingSulCount;
+      const shortTournamentName = (tournament) => {
+        const normalized = normalizeComparable(tournament);
+        if (normalized === "libertadores da america" || normalized === "conmebol libertadores") return "Libertadores";
+        if (normalized === "copa sul-americana" || normalized === "copa sul americana" || normalized === "conmebol sul-americana" || normalized === "conmebol sul americana") return "Sul-Americana";
+        return tournament;
+      };
+      const tournamentSummary = [...missingSulByTournament.entries()]
+        .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "pt-BR"))
+        .map(([tournament, count]) => `${shortTournamentName(tournament)} (${count})`)
+        .join(" · ");
+      summaryEl.textContent = `Sem dados oficiais do Setor Sul em ${missingSulCount} ${missingSulCount === 1 ? "jogo" : "jogos"}${tournamentSummary ? `: ${tournamentSummary}` : ""}`;
       alertEl.classList.remove("hidden");
     } else {
       alertEl.classList.add("hidden");
@@ -1178,6 +1191,7 @@ function updateCharts() {
   ];
 
   const visitEstadioMap = {};
+  const mandantePublicos = [];
   const sulCandidates = [];
 
   validFiltered.forEach(m => {
@@ -1215,6 +1229,7 @@ function updateCharts() {
 
     // Acumula públicos conforme Mando
     if (m.mando === 'Mandante' && m.pub > 0) {
+      mandantePublicos.push(m.pub);
       yrObj.sM += m.pub; yrObj.cM++;
       if (compObj) { compObj.sM += m.pub; compObj.cM++; }
       if (dayObj) { dayObj.sM += m.pub; dayObj.cM++; }
@@ -1375,7 +1390,109 @@ function updateCharts() {
     }
   }
 
-  // 6. DESEMPENHO POR TEMPORADA
+  // 6. DISTRIBUIÇÃO DO PÚBLICO (MANDANTE)
+  // Exibe quando Mandante faz parte do filtro Mando. Se houver outras opções
+  // selecionadas junto com Mandante, somente os jogos como mandante entram aqui.
+  const distribuicaoMandanteSection = document.getElementById('section-distribuicao-mandante');
+  if (distribuicaoMandanteSection) {
+    if (hasM) {
+      distribuicaoMandanteSection.classList.remove('hidden');
+
+      const faixas = [
+        { label: '0–10 mil', min: 0, max: 10000 },
+        { label: '10–20 mil', min: 10000, max: 20000 },
+        { label: '20–30 mil', min: 20000, max: 30000 },
+        { label: '30–40 mil', min: 30000, max: 40000 },
+        { label: '40–50 mil', min: 40000, max: 50000 },
+        { label: '50–60 mil', min: 50000, max: 60000 },
+        { label: '60 mil+', min: 60000, max: Infinity }
+      ].map(f => ({ ...f, count: 0, sum: 0 }));
+
+      mandantePublicos.forEach(pub => {
+        const faixa = faixas.find(f => pub >= f.min && pub < f.max);
+        if (faixa) { faixa.count += 1; faixa.sum += pub; }
+      });
+
+      const totalMandante = mandantePublicos.length;
+      const countLabelsPlugin = {
+        id: 'distribuicaoMandanteCountLabels',
+        afterDatasetsDraw(chart) {
+          const { ctx, chartArea } = chart;
+          ctx.save();
+          ctx.font = "700 11px 'Plus Jakarta Sans', sans-serif";
+          ctx.fillStyle = 'rgba(255,255,255,0.88)';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'bottom';
+          const meta = chart.getDatasetMeta(0);
+          meta.data.forEach((bar, i) => {
+            const value = chart.data.datasets[0].data[i];
+            if (!value) return;
+            ctx.fillText(String(value), bar.x, Math.max(chartArea.top + 12, bar.y - 6));
+          });
+          ctx.restore();
+        }
+      };
+
+      activeCharts['chartDistribuicaoMandante'] = new Chart(getChartCanvas('chartDistribuicaoMandante'), {
+        type: 'bar',
+        data: {
+          labels: faixas.map(f => f.label),
+          datasets: [{
+            label: 'Jogos',
+            data: faixas.map(f => f.count),
+            backgroundColor: '#0E4735',
+            borderColor: '#C5A059',
+            borderWidth: 1.5,
+            borderRadius: 7,
+            customSum: faixas.map(f => f.sum)
+          }]
+        },
+        plugins: [countLabelsPlugin],
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          layout: { padding: { top: 18 } },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                title: items => items.length ? items[0].label : '',
+                label: ctx => {
+                  const jogos = ctx.parsed.y || 0;
+                  const pct = totalMandante > 0 ? ((jogos / totalMandante) * 100).toFixed(1).replace('.', ',') : '0,0';
+                  return ` Jogos: ${jogos} (${pct}%)`;
+                },
+                afterLabel: ctx => {
+                  const jogos = ctx.parsed.y || 0;
+                  const soma = ctx.dataset.customSum[ctx.dataIndex] || 0;
+                  const media = jogos > 0 ? Math.round(soma / jogos) : 0;
+                  return ` Público médio: ${media.toLocaleString('pt-BR')}`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              ticks: { maxRotation: 0, minRotation: 0, font: { size: window.innerWidth <= 639 ? 9 : 11 } },
+              grid: { display: false }
+            },
+            y: {
+              beginAtZero: true,
+              ticks: { precision: 0 }
+            }
+          }
+        }
+      });
+    } else {
+      distribuicaoMandanteSection.classList.add('hidden');
+      if (activeCharts['chartDistribuicaoMandante']) {
+        activeCharts['chartDistribuicaoMandante'].destroy();
+        delete activeCharts['chartDistribuicaoMandante'];
+      }
+    }
+  }
+
+  // 7. DESEMPENHO POR TEMPORADA
   const desempenhoTemporadaLabelsPlugin = {
     id: 'desempenhoTemporadaLabels',
     afterDatasetsDraw(chart) {

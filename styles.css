@@ -171,3 +171,18 @@ body {
     min-width: 0;
   }
 }
+
+/* V3.2.1 — Top 10 Estádios + Distribuição do Público (Mandante)
+   Mobile: empilhados. Desktop: lado a lado quando ambos estiverem visíveis.
+   Se apenas um estiver visível, ele ocupa toda a largura disponível. */
+.charts-estadios-distribuicao {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .charts-estadios-distribuicao {
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  }
+}

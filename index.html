@@ -169,7 +169,7 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
           
           <div class="relative" id="dropdown-container-mando">
             <label class="block text-xs font-semibold text-emerald-200/80 mb-1.5 flex items-center gap-1.5">
@@ -210,6 +210,19 @@
             <label class="block text-xs font-semibold text-emerald-200/80 mb-1.5 flex items-center gap-1.5"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-[#C5A059]"></i> Estádio</label>
             <button type="button" data-action="toggle-dropdown" data-filter="estadio" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="label-estadio">Todos</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
             <div id="panel-estadio" class="ms-dropdown-menu hidden absolute top-full left-0 w-64 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><input type="text" placeholder="Buscar estádio..." data-input-action="filter-dropdown-options" data-filter="estadio" class="w-full text-[11px] rounded-lg px-2.5 py-1.5 bg-black/50 border border-white/15 text-white"><div class="flex items-center justify-between text-[11px] pb-1 border-b border-white/10"><button data-action="select-all-filter" data-filter="estadio" data-select="true" class="text-[#C5A059] hover:underline font-medium">Todos</button><button data-action="select-all-filter" data-filter="estadio" data-select="false" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-44" id="list-estadio"></div></div>
+          </div>
+
+          <div class="relative" id="quick-filter-sem-rivais">
+            <div class="sem-rivais-label-row mb-1.5">
+              <label class="text-xs font-semibold text-emerald-200/80 flex items-center gap-1.5"><i data-lucide="shield-x" class="w-3.5 h-3.5 text-[#C5A059]"></i> Sem Rivais</label>
+              <span class="sem-rivais-info-wrap">
+                <button type="button" class="sem-rivais-info" aria-label="Informações sobre o filtro Sem Rivais" aria-describedby="tooltip-sem-rivais">i</button>
+                <span role="tooltip" id="tooltip-sem-rivais" class="sem-rivais-tooltip">Exclui Flamengo, Vasco e Botafogo dos dados exibidos nesta aba.</span>
+              </span>
+            </div>
+            <button type="button" data-action="toggle-sem-rivais" id="btn-sem-rivais" aria-pressed="false" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition">
+              <span id="label-sem-rivais" class="truncate pr-1 text-white/90">Desativado</span><i data-lucide="toggle-left" id="icon-sem-rivais" class="w-4 h-4 text-[#C5A059] shrink-0"></i>
+            </button>
           </div>
 
           <div class="relative" id="dropdown-container-dia">

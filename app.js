@@ -29,6 +29,12 @@ let filteredMatches = [];
 let tableCurrentPage = 1;
 const tablePageSize = CONFIG.tablePageSize;
 let searchDebounceTimer = null;
+let semRivaisAtivo = false;
+const RIVAIS_RAPIDOS = ['flamengo', 'botafogo', 'vasco'];
+function isRivalRapido(adversario) {
+  const nome = normalizeComparable(adversario);
+  return RIVAIS_RAPIDOS.some(rival => nome.includes(rival));
+}
 
 // ============================================================
 // V3.0 — CAMADA DE UTILITÁRIOS / PRÉ-PROCESSAMENTO
@@ -505,6 +511,8 @@ function restoreFiltersFromUrl() {
       const values = params.getAll(paramKey).map(normalizeText).filter(Boolean);
       if (values.length) selectedState[stateKey] = [...new Set(values)];
     });
+    semRivaisAtivo = params.get('semRivais') === '1';
+    updateSemRivaisButton();
     const search = normalizeText(params.get('busca') || '');
     const searchBox = document.getElementById('search-adversario');
     if (searchBox && search) searchBox.value = search;
@@ -519,6 +527,7 @@ function syncFiltersToUrl() {
     Object.values(URL_FILTER_KEYS).forEach(key => url.searchParams.delete(key));
     url.searchParams.delete('busca');
     url.searchParams.delete('v');
+    url.searchParams.delete('semRivais');
 
     Object.entries(URL_FILTER_KEYS).forEach(([stateKey, paramKey]) => {
       selectedState[stateKey].forEach(value => url.searchParams.append(paramKey, value));
@@ -526,8 +535,9 @@ function syncFiltersToUrl() {
     const searchBox = document.getElementById('search-adversario');
     const search = normalizeText(searchBox?.value || '');
     if (search) url.searchParams.set('busca', search);
+    if (semRivaisAtivo) url.searchParams.set('semRivais', '1');
 
-    const hasState = Object.values(selectedState).some(values => values.length > 0) || Boolean(search);
+    const hasState = Object.values(selectedState).some(values => values.length > 0) || Boolean(search) || semRivaisAtivo;
     if (hasState) url.searchParams.set('v', CONFIG.urlStateVersion);
     history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
   } catch (err) {
@@ -655,6 +665,7 @@ function getMatchesExcluding(excludeDimension) {
     if (setHor && !setHor.has(m.hora)) return false;
     if (setAdv && !setAdv.has(m.adv)) return false;
     if (setPres && !setPres.has(m.presente)) return false;
+    if (semRivaisAtivo && isRivalRapido(m.adv)) return false;
     if (search && !m.advLower.includes(search)) return false;
     return true;
   });
@@ -832,10 +843,62 @@ function removeFilterItem(type, val) {
 function resetFilters() {
   Object.keys(selectedState).forEach(k => { selectedState[k] = []; });
   selectedState.mando = [];
+  semRivaisAtivo = false;
+  updateSemRivaisButton();
   document.querySelectorAll('#view-estadio input[type="text"]').forEach(input => input.value = '');
   const searchBox = document.getElementById("search-adversario");
   if (searchBox) searchBox.value = "";
   applyFilters();
+}
+
+function updateSemRivaisButton() {
+  const btn = document.getElementById('btn-sem-rivais');
+  const label = document.getElementById('label-sem-rivais');
+  const icon = document.getElementById('icon-sem-rivais');
+  if (!btn || !label) return;
+  btn.setAttribute('aria-pressed', semRivaisAtivo ? 'true' : 'false');
+  label.textContent = semRivaisAtivo ? 'Ativado' : 'Desativado';
+  btn.classList.toggle('bg-[#0E4735]', semRivaisAtivo);
+  btn.classList.toggle('border-[#C5A059]', semRivaisAtivo);
+  label.classList.toggle('text-[#C5A059]', semRivaisAtivo);
+  if (icon) icon.setAttribute('data-lucide', semRivaisAtivo ? 'toggle-right' : 'toggle-left');
+  if (window.lucide) lucide.createIcons();
+}
+
+function toggleSemRivais() {
+  semRivaisAtivo = !semRivaisAtivo;
+  updateSemRivaisButton();
+  applyFilters();
+}
+
+function formatK(value, decimals = 0) {
+  const n = Number(value) || 0;
+  return `${(n / 1000).toLocaleString('pt-BR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}k`;
+}
+
+function makeValueLabelsPlugin(id, { decimals = 0, horizontal = false, fontSize = 11 } = {}) {
+  return {
+    id,
+    afterDatasetsDraw(chart) {
+      const { ctx, chartArea } = chart;
+      ctx.save();
+      ctx.font = `700 ${fontSize}px 'Plus Jakarta Sans', sans-serif`;
+      ctx.fillStyle = 'rgba(255,255,255,0.88)';
+      ctx.textAlign = horizontal ? 'left' : 'center';
+      ctx.textBaseline = horizontal ? 'middle' : 'bottom';
+      chart.data.datasets.forEach((dataset, datasetIndex) => {
+        const meta = chart.getDatasetMeta(datasetIndex);
+        if (meta.hidden) return;
+        meta.data.forEach((element, dataIndex) => {
+          const value = Number(dataset.data[dataIndex]);
+          if (!Number.isFinite(value) || value <= 0) return;
+          if (horizontal) ctx.fillText(formatK(value, decimals), Math.min(element.x + 6, chartArea.right - 34), element.y);
+          else ctx.fillText(formatK(value, decimals), element.x, Math.max(chartArea.top + 12, element.y - 6));
+        });
+      });
+      ctx.restore();
+    }
+  };
 }
 
 function applyFilters() {
@@ -863,6 +926,7 @@ function applyFilters() {
     if (setHor && !setHor.has(m.hora)) return false;
     if (setAdv && !setAdv.has(m.adv)) return false;
     if (setPres && !setPres.has(m.presente)) return false;
+    if (semRivaisAtivo && isRivalRapido(m.adv)) return false;
     if (search && !m.advLower.includes(search)) return false;
     return true;
   });
@@ -1284,7 +1348,8 @@ function updateCharts() {
   }
   activeCharts["chartTemporada"] = new Chart(getChartCanvas("chartTemporada"), {
     type: 'bar', data: { labels: seasons.map(String), datasets: datasetsTemp },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: showLegend, position: 'top', labels: {color: 'rgba(255,255,255,0.7)'} }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } } }
+    plugins: [makeValueLabelsPlugin('publicoMedioTemporadaLabels', { decimals: window.matchMedia('(min-width: 640px)').matches ? 1 : 0 })],
+    options: { layout: { padding: { top: 18 } }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: showLegend, position: 'top', labels: {color: 'rgba(255,255,255,0.7)'} }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } } }
   });
 
   // 2. COMPETICAO
@@ -1315,7 +1380,8 @@ function updateCharts() {
   }
   activeCharts["chartCompeticao"] = new Chart(getChartCanvas("chartCompeticao"), {
     type: 'bar', data: { labels: filteredCompStats.map(s => s.comp), datasets: datasetsComp },
-    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: showLegend, position: 'top', labels: {color: 'rgba(255,255,255,0.7)'} }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.x.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { x: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } } }
+    plugins: [makeValueLabelsPlugin('publicoMedioCompeticaoLabels', { decimals: 1, horizontal: true })],
+    options: { indexAxis: 'y', layout: { padding: { right: 42 } }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: showLegend, position: 'top', labels: {color: 'rgba(255,255,255,0.7)'} }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.x.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { x: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } } }
   });
 
   // 3. DIA DA SEMANA
@@ -1342,7 +1408,8 @@ function updateCharts() {
   }
   activeCharts["chartDiaSemana"] = new Chart(getChartCanvas("chartDiaSemana"), {
     type: 'bar', data: { labels: daysOrder.map(d => d.replace('-feira', '')), datasets: datasetsDia },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: showLegend, position: 'top', labels: {color: 'rgba(255,255,255,0.7)'} }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } } }
+    plugins: [makeValueLabelsPlugin('publicoMedioDiaLabels', { decimals: window.matchMedia('(min-width: 640px)').matches ? 1 : 0 })],
+    options: { layout: { padding: { top: 18 } }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: showLegend, position: 'top', labels: {color: 'rgba(255,255,255,0.7)'} }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } } }
   });
 
   // 4. HORARIO
@@ -1364,7 +1431,8 @@ function updateCharts() {
   }
   activeCharts["chartHorario"] = new Chart(getChartCanvas("chartHorario"), {
     type: 'line', data: { labels: hourRanges.map(h => h.label), datasets: datasetsHor },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: showLegend, position: 'top', labels: {color: 'rgba(255,255,255,0.7)'} }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } } }
+    plugins: [makeValueLabelsPlugin('publicoMedioHorarioLabels', { decimals: 1 })],
+    options: { layout: { padding: { top: 18 } }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: showLegend, position: 'top', labels: {color: 'rgba(255,255,255,0.7)'} }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } } }
   });
 
   // 5. TOP VISITANTE
@@ -1380,7 +1448,8 @@ function updateCharts() {
       if (topEstadios.length > 0) {
         activeCharts["chartTopVisitante"] = new Chart(getChartCanvas("chartTopVisitante"), {
           type: 'bar', data: { labels: topEstadios.map(e => e.est), datasets: [{ label: 'Média de Público', data: topEstadios.map(e => e.avg), backgroundColor: '#870A28', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: topEstadios.map(e => e.count) }] },
-          options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` Média: ${ctx.parsed.x.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { x: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } } }
+          plugins: [makeValueLabelsPlugin('topVisitanteLabels', { decimals: 1, horizontal: true })],
+          options: { indexAxis: 'y', layout: { padding: { right: 42 } }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` Média: ${ctx.parsed.x.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { x: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('pt-BR') } } } }
         });
       } else {
         const ctx = getChartCanvas("chartTopVisitante"); ctx.font = "12px 'Plus Jakarta Sans', sans-serif"; ctx.fillStyle = "rgba(255,255,255,0.4)"; ctx.textAlign = "center"; ctx.fillText("Nenhum dado de público visitante para os filtros atuais.", ctx.canvas.width / 2, 50);
@@ -1419,7 +1488,7 @@ function updateCharts() {
         afterDatasetsDraw(chart) {
           const { ctx, chartArea } = chart;
           ctx.save();
-          ctx.font = "700 11px 'Plus Jakarta Sans', sans-serif";
+          ctx.font = `700 ${window.innerWidth <= 639 ? 11 : 11}px 'Plus Jakarta Sans', sans-serif`;
           ctx.fillStyle = 'rgba(255,255,255,0.88)';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'bottom';
@@ -1436,7 +1505,7 @@ function updateCharts() {
       activeCharts['chartDistribuicaoMandante'] = new Chart(getChartCanvas('chartDistribuicaoMandante'), {
         type: 'bar',
         data: {
-          labels: faixas.map(f => f.label),
+          labels: faixas.map(f => window.innerWidth <= 639 ? (f.label === '60 mil+' ? ['60', 'mil+'] : [f.label.replace(' mil', ''), 'mil']) : f.label),
           datasets: [{
             label: 'Jogos',
             data: faixas.map(f => f.count),
@@ -2119,6 +2188,7 @@ function handleDelegatedClick(event) {
   const actions = {
     'refresh-data': () => fetchLiveGoogleSheet(),
     'reset-filters': () => resetFilters(),
+    'toggle-sem-rivais': () => toggleSemRivais(),
     'reset-classicos-filters': () => resetClassicosFilters(),
     'copy-filtered-url': () => copyFilteredUrl(),
     'export-filtered-csv': () => exportFilteredCsv(),

@@ -186,3 +186,99 @@ body {
     grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
   }
 }
+
+
+/* V3.2.7 — Sem Rivais: tooltip contextual corrigido */
+.sem-rivais-label-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.sem-rivais-info-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.sem-rivais-info {
+  width: 1.05rem;
+  height: 1.05rem;
+  border: 1px solid rgba(197, 160, 89, 0.7);
+  border-radius: 9999px;
+  color: rgba(236, 253, 245, 0.82);
+  background: rgba(18, 32, 26, 0.96);
+  font: 700 0.68rem/1 system-ui, sans-serif;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: help;
+  transition: border-color .2s ease, color .2s ease, background-color .2s ease;
+}
+.sem-rivais-info:hover,
+.sem-rivais-info:focus-visible {
+  color: #fff;
+  border-color: #C5A059;
+  background: rgba(197, 160, 89, 0.18);
+  outline: none;
+}
+.sem-rivais-tooltip {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 0.55rem);
+  transform: translateX(-50%) translateY(-0.2rem);
+  width: min(17rem, calc(100vw - 2rem));
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.65rem;
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(8, 18, 15, .98);
+  color: rgba(255,255,255,.92);
+  box-shadow: 0 10px 28px rgba(0,0,0,.38);
+  font-size: 0.72rem;
+  font-weight: 500;
+  line-height: 1.4;
+  z-index: 80;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .16s ease, transform .16s ease, visibility .16s ease;
+}
+.sem-rivais-tooltip::before {
+  content: '';
+  position: absolute;
+  top: -0.3rem;
+  left: 50%;
+  width: 0.55rem;
+  height: 0.55rem;
+  background: rgba(8, 18, 15, .98);
+  border-left: 1px solid rgba(255,255,255,.16);
+  border-top: 1px solid rgba(255,255,255,.16);
+  transform: translateX(-50%) rotate(45deg);
+}
+.sem-rivais-info-wrap:hover .sem-rivais-tooltip,
+.sem-rivais-info-wrap:focus-within .sem-rivais-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+#btn-sem-rivais[aria-pressed="true"] {
+  background: #0E4735 !important;
+  border-color: #C5A059 !important;
+  box-shadow: inset 0 0 0 1px rgba(197,160,89,.16), 0 0 0 2px rgba(16,185,129,.08);
+}
+#btn-sem-rivais[aria-pressed="true"] #label-sem-rivais {
+  color: #E8C978 !important;
+  font-weight: 700;
+}
+@media (max-width: 639px) {
+  .sem-rivais-tooltip {
+    left: 0;
+    transform: translateY(-0.2rem);
+  }
+  .sem-rivais-tooltip::before {
+    left: 0.55rem;
+    transform: rotate(45deg);
+  }
+  .sem-rivais-info-wrap:hover .sem-rivais-tooltip,
+  .sem-rivais-info-wrap:focus-within .sem-rivais-tooltip {
+    transform: translateY(0);
+  }
+}

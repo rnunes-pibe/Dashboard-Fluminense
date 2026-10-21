@@ -93,3 +93,81 @@ body {
   box-shadow: 0 0 6px rgba(0,0,0,0.7);
   border: 1px solid #F3DEAB;
 }
+
+/* V3.1 — refinamentos exclusivos para mobile */
+@media (max-width: 639px) {
+  /* Aproveita melhor a largura útil sem encostar o conteúdo nas bordas. */
+  main {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+
+  /* Cabeçalho: reduz a marca e evita disputa horizontal entre atualização e status. */
+  header > div > div:first-child {
+    gap: 0.75rem;
+  }
+  header > div > div:first-child > div:first-child {
+    width: 3rem !important;
+    height: 3rem !important;
+    border-radius: 0.85rem !important;
+  }
+  header > div > div:first-child > div:first-child > div {
+    font-size: 1.05rem !important;
+  }
+  #update-data-button + div > span:first-child {
+    display: none;
+  }
+  #update-data-button + div {
+    min-width: 0;
+  }
+  #last-update-time {
+    display: block;
+    max-width: 12.5rem;
+    line-height: 1.25;
+  }
+
+  /* Painéis: um pouco mais de área útil para gráficos, filtros e tabelas. */
+  .glass-panel {
+    border-radius: 0.875rem;
+  }
+  section.glass-panel {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  /* Abas das tabelas: duas metades, sem rolagem horizontal. */
+  #tab-inner-catalogo,
+  #tab-inner-estatisticas,
+  #tab-classicos-catalogo,
+  #tab-classicos-estatisticas {
+    width: 50%;
+    min-width: 0;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    white-space: normal !important;
+    line-height: 1.2;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #tab-inner-catalogo,
+  #tab-classicos-catalogo {
+    min-height: 2.75rem;
+  }
+  #tab-inner-catalogo + #tab-inner-estatisticas,
+  #tab-classicos-catalogo + #tab-classicos-estatisticas {
+    min-height: 2.75rem;
+  }
+  div:has(> #tab-inner-catalogo),
+  div:has(> #tab-classicos-catalogo) {
+    width: 100%;
+    overflow-x: hidden !important;
+    gap: 0.25rem !important;
+  }
+
+  /* Evita que elementos flexíveis forcem largura maior que a tela. */
+  header *, main * {
+    min-width: 0;
+  }
+}

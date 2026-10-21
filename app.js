@@ -1024,11 +1024,15 @@ function renderSulBarChart(canvasId, sulMatchesList) {
     type: 'bar',
     data: {
       labels: sulMatchesList.map(m => {
-        if (!m.data || m.data === "-") return [`${m.adv}`, `(-)`];
+        const mobile = window.matchMedia('(max-width: 639px)').matches;
+        if (!m.data || m.data === "-") {
+          return mobile ? [String(m.adv || '').slice(0, 3).toUpperCase(), '-'] : [`${m.adv}`, `(-)`];
+        }
         const p = m.data.split(/[-/]/);
         const dia = p[0].length === 4 ? p[2] : p[0];
         const mes = p[1];
         const ano = p[0].length === 4 ? p[0].slice(2, 4) : p[2].slice(2, 4);
+        if (mobile) return [String(m.adv || '').slice(0, 3).toUpperCase(), `${dia}/${mes}`];
         return [`${m.adv}`, `(${dia}-${mes}-${ano})`];
       }),
       datasets: [
@@ -1055,6 +1059,18 @@ function renderSulBarChart(canvasId, sulMatchesList) {
         }, 
         tooltip: { 
           callbacks: { 
+            ...(window.matchMedia('(max-width: 639px)').matches ? {
+              title: function(context) {
+                const index = context[0].dataIndex;
+                const match = sulMatchesList[index];
+                if (!match.data || match.data === '-') return match.adv;
+                const p = match.data.split(/[-/]/);
+                const dia = p[0].length === 4 ? p[2] : p[0];
+                const mes = p[1];
+                const ano = p[0].length === 4 ? p[0] : p[2];
+                return `${match.adv} • ${dia}/${mes}/${ano}`;
+              }
+            } : {}),
             afterTitle: function(context) {
               const index = context[0].dataIndex;
               return sulMatchesList[index].torneio;

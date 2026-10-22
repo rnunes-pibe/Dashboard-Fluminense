@@ -876,7 +876,11 @@ function formatK(value, decimals = 0) {
   return `${(n / 1000).toLocaleString('pt-BR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}k`;
 }
 
-function makeValueLabelsPlugin(id, { decimals = 0, horizontal = false, fontSize = 11, mobileOutside = false } = {}) {
+function formatFull(value) {
+  return Math.round(Number(value) || 0).toLocaleString('pt-BR');
+}
+
+function makeValueLabelsPlugin(id, { decimals = 0, horizontal = false, fontSize = 11, mobileOutside = false, fullValue = false } = {}) {
   return {
     id,
     afterDatasetsDraw(chart) {
@@ -894,10 +898,11 @@ function makeValueLabelsPlugin(id, { decimals = 0, horizontal = false, fontSize 
           if (!Number.isFinite(value) || value <= 0) return;
           if (horizontal) {
             const isMobile = window.matchMedia('(max-width: 767px)').matches;
-            const x = (mobileOutside && isMobile) ? element.x + 8 : Math.min(element.x + 6, chartArea.right - 34);
-            ctx.fillText(formatK(value, decimals), x, element.y);
+            const rightReserve = fullValue ? 50 : 34;
+            const x = (mobileOutside && isMobile) ? element.x + 8 : Math.min(element.x + 6, chartArea.right - rightReserve);
+            ctx.fillText(fullValue ? formatFull(value) : formatK(value, decimals), x, element.y);
           }
-          else ctx.fillText(formatK(value, decimals), element.x, Math.max(chartArea.top + 12, element.y - 6));
+          else ctx.fillText(fullValue ? formatFull(value) : formatK(value, decimals), element.x, Math.max(chartArea.top + 12, element.y - 6));
         });
       });
       ctx.restore();
@@ -1384,9 +1389,23 @@ function updateCharts() {
     ];
   }
   activeCharts["chartCompeticao"] = new Chart(getChartCanvas("chartCompeticao"), {
-    type: 'bar', data: { labels: filteredCompStats.map(s => s.comp), datasets: datasetsComp },
-    plugins: [makeValueLabelsPlugin('publicoMedioCompeticaoLabels', { decimals: 1, horizontal: true })],
-    options: { indexAxis: 'y', layout: { padding: { left: chartsMobile ? 0 : 0, right: chartsMobile ? 28 : 42 } }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: showLegend, position: 'top', labels: {color: 'rgba(255,255,255,0.7)'} }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.x.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { x: { display: !chartsMobile, beginAtZero: true, ticks: { display: false, callback: v => v.toLocaleString('pt-BR') } }, y: { ticks: { display: true, padding: chartsMobile ? 2 : 6 } } } }
+    type: 'bar',
+    data: { labels: filteredCompStats.map(s => s.comp), datasets: datasetsComp },
+    plugins: [makeValueLabelsPlugin('publicoMedioCompeticaoLabels', { horizontal: true, fullValue: true })],
+    options: {
+      indexAxis: 'y',
+      layout: { padding: { left: 0, right: chartsMobile ? 44 : 58 } },
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: showLegend, position: 'top', labels: { color: 'rgba(255,255,255,0.7)' } },
+        tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.x.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } }
+      },
+      scales: {
+        x: { display: !chartsMobile, beginAtZero: true, grace: chartsMobile ? '4%' : 0, ticks: { display: false, callback: v => v.toLocaleString('pt-BR') } },
+        y: { ticks: { display: true, padding: chartsMobile ? 2 : 6, font: { size: chartsMobile ? 10 : 12 } }, afterFit: scale => { if (chartsMobile) scale.width = Math.min(150, Math.max(scale.width, 132)); } }
+      }
+    }
   });
 
   // 3. DIA DA SEMANA
@@ -1435,9 +1454,22 @@ function updateCharts() {
     ];
   }
   activeCharts["chartHorario"] = new Chart(getChartCanvas("chartHorario"), {
-    type: 'line', data: { labels: hourRanges.map(h => h.label), datasets: datasetsHor },
-    plugins: [makeValueLabelsPlugin('publicoMedioHorarioLabels', { decimals: 1 })],
-    options: { layout: { padding: { top: 18, left: chartsMobile ? 0 : 6, right: chartsMobile ? 2 : 6 } }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: showLegend, position: 'top', labels: {color: 'rgba(255,255,255,0.7)'} }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { y: { display: !chartsMobile, beginAtZero: true, ticks: { display: false, callback: v => v.toLocaleString('pt-BR') } } } }
+    type: 'line',
+    data: { labels: chartsMobile ? [['Manhã', '(<13h)'], ['Tarde', '(13h–17h59)'], ['Noite', '(18h–20h59)'], ['Noite Tardia', '(≥21h)']] : hourRanges.map(h => h.label), datasets: datasetsHor },
+    plugins: [makeValueLabelsPlugin('publicoMedioHorarioLabels', { fullValue: true })],
+    options: {
+      layout: { padding: { top: 18, left: chartsMobile ? 0 : 6, right: chartsMobile ? 2 : 6 } },
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: showLegend, position: 'top', labels: { color: 'rgba(255,255,255,0.7)' } },
+        tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } }
+      },
+      scales: {
+        x: { ticks: { maxRotation: 0, minRotation: 0, autoSkip: false, font: { size: chartsMobile ? 9 : 12 } } },
+        y: { display: !chartsMobile, beginAtZero: true, ticks: { display: false, callback: v => v.toLocaleString('pt-BR') } }
+      }
+    }
   });
 
   // 5. TOP VISITANTE
@@ -1453,8 +1485,8 @@ function updateCharts() {
       if (topEstadios.length > 0) {
         activeCharts["chartTopVisitante"] = new Chart(getChartCanvas("chartTopVisitante"), {
           type: 'bar', data: { labels: topEstadios.map(e => e.est), datasets: [{ label: 'Média de Público', data: topEstadios.map(e => e.avg), backgroundColor: '#870A28', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: topEstadios.map(e => e.count) }] },
-          plugins: [makeValueLabelsPlugin('topVisitanteLabels', { decimals: 1, horizontal: true, mobileOutside: true })],
-          options: { indexAxis: 'y', layout: { padding: { right: chartsMobile ? 34 : 42 } }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` Média: ${ctx.parsed.x.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { x: { display: !chartsMobile, beginAtZero: true, grace: chartsMobile ? '10%' : 0, ticks: { display: false, callback: v => v.toLocaleString('pt-BR') } }, y: { ticks: { display: true, padding: chartsMobile ? 2 : 6 } } } }
+          plugins: [makeValueLabelsPlugin('topVisitanteLabels', { horizontal: true, mobileOutside: true, fullValue: true })],
+          options: { indexAxis: 'y', layout: { padding: { right: chartsMobile ? 46 : 58 } }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` Média: ${ctx.parsed.x.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { x: { display: !chartsMobile, beginAtZero: true, grace: chartsMobile ? '5%' : 0, ticks: { display: false, callback: v => v.toLocaleString('pt-BR') } }, y: { ticks: { display: true, padding: chartsMobile ? 2 : 6 } } } }
         });
       } else {
         const ctx = getChartCanvas("chartTopVisitante"); ctx.font = "12px 'Plus Jakarta Sans', sans-serif"; ctx.fillStyle = "rgba(255,255,255,0.4)"; ctx.textAlign = "center"; ctx.fillText("Nenhum dado de público visitante para os filtros atuais.", ctx.canvas.width / 2, 50);

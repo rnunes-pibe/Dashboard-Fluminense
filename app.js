@@ -190,6 +190,18 @@ async function fetchWithTimeout(url) {
   }
 }
 
+function describeUpdateError(err) {
+  if (!navigator.onLine) return 'Sem conexão com a internet';
+  if (err?.name === 'AbortError') return 'Tempo de resposta excedido';
+
+  const message = normalizeText(err?.message || '');
+  const comparable = normalizeComparable(message);
+  if (comparable.includes('comunicacao com as bases') || comparable.includes('http')) return 'Erro ao acessar a planilha';
+  if (comparable.includes('coluna(s) obrigatoria(s)') || comparable.includes('base principal vazia') || comparable.includes('base de classicos vazia') || comparable.includes('dados') || comparable.includes('valid')) return 'Dados recebidos inválidos';
+  if (err instanceof TypeError) return 'Não foi possível conectar às planilhas';
+  return message ? `Falha na atualização: ${message}` : 'Falha na atualização';
+}
+
 function debouncedApplyFilters() {
   if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
   searchDebounceTimer = setTimeout(() => {
@@ -489,9 +501,10 @@ async function fetchLiveGoogleSheet() {
       applyLoadedData(cache.matches, cache.classicos);
       const cachedAt = new Date(cache.updatedAt);
       const cachedLabel = Number.isNaN(cachedAt.getTime()) ? 'data desconhecida' : `${cachedAt.toLocaleDateString('pt-BR')} às ${cachedAt.toLocaleTimeString('pt-BR')}`;
-      setUpdateStatus(`Falha na atualização. Exibindo última base válida de ${cachedLabel}.`, true);
+      const cause = describeUpdateError(err);
+      setUpdateStatus(`${cause}. Exibindo última base válida de ${cachedLabel}.`, true);
     } else {
-      setUpdateStatus(`Falha na atualização: ${err.message || 'erro desconhecido'}.`, true);
+      setUpdateStatus(`${describeUpdateError(err)}.`, true);
     }
   } finally {
     fetchLiveGoogleSheet.isRunning = false;
@@ -880,7 +893,7 @@ function formatFull(value) {
   return Math.round(Number(value) || 0).toLocaleString('pt-BR');
 }
 
-function makeValueLabelsPlugin(id, { decimals = 0, horizontal = false, fontSize = 11, mobileOutside = false, fullValue = false } = {}) {
+function makeValueLabelsPlugin(id, { decimals = 0, horizontal = false, fontSize = 11, mobileOutside = false, fullValue = false, fullWhenSingleVisible = false } = {}) {
   return {
     id,
     afterDatasetsDraw(chart) {
@@ -890,6 +903,8 @@ function makeValueLabelsPlugin(id, { decimals = 0, horizontal = false, fontSize 
       ctx.fillStyle = 'rgba(255,255,255,0.88)';
       ctx.textAlign = horizontal ? 'left' : 'center';
       ctx.textBaseline = horizontal ? 'middle' : 'bottom';
+      const visibleDatasetCount = chart.data.datasets.reduce((count, _dataset, datasetIndex) => count + (chart.isDatasetVisible(datasetIndex) ? 1 : 0), 0);
+      const useFullValue = fullValue || (fullWhenSingleVisible && visibleDatasetCount === 1);
       chart.data.datasets.forEach((dataset, datasetIndex) => {
         const meta = chart.getDatasetMeta(datasetIndex);
         if (meta.hidden) return;
@@ -900,9 +915,9 @@ function makeValueLabelsPlugin(id, { decimals = 0, horizontal = false, fontSize 
             const isMobile = window.matchMedia('(max-width: 767px)').matches;
             const rightReserve = fullValue ? 50 : 34;
             const x = (mobileOutside && isMobile) ? element.x + 8 : Math.min(element.x + 6, chartArea.right - rightReserve);
-            ctx.fillText(fullValue ? formatFull(value) : formatK(value, decimals), x, element.y);
+            ctx.fillText(useFullValue ? formatFull(value) : formatK(value, decimals), x, element.y);
           }
-          else ctx.fillText(fullValue ? formatFull(value) : formatK(value, decimals), element.x, Math.max(chartArea.top + 12, element.y - 6));
+          else ctx.fillText(useFullValue ? formatFull(value) : formatK(value, decimals), element.x, Math.max(chartArea.top + 12, element.y - 6));
         });
       });
       ctx.restore();
@@ -1358,7 +1373,7 @@ function updateCharts() {
   }
   activeCharts["chartTemporada"] = new Chart(getChartCanvas("chartTemporada"), {
     type: 'bar', data: { labels: seasons.map(String), datasets: datasetsTemp },
-    plugins: [makeValueLabelsPlugin('publicoMedioTemporadaLabels', { decimals: 1 })],
+    plugins: [makeValueLabelsPlugin('publicoMedioTemporadaLabels', { decimals: 1, fullWhenSingleVisible: true })],
     options: { layout: { padding: { top: 18 } }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: showLegend, position: 'top', labels: {color: 'rgba(255,255,255,0.7)'} }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { y: { beginAtZero: true, ticks: { display: false, callback: v => v.toLocaleString('pt-BR') } } } }
   });
 
@@ -1432,7 +1447,7 @@ function updateCharts() {
   }
   activeCharts["chartDiaSemana"] = new Chart(getChartCanvas("chartDiaSemana"), {
     type: 'bar', data: { labels: chartsMobile ? ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB', 'DOM'] : daysOrder.map(d => d.replace('-feira', '')), datasets: datasetsDia },
-    plugins: [makeValueLabelsPlugin('publicoMedioDiaLabels', { decimals: 1 })],
+    plugins: [makeValueLabelsPlugin('publicoMedioDiaLabels', { decimals: 1, fullWhenSingleVisible: true })],
     options: { layout: { padding: { top: 18, left: chartsMobile ? 0 : 6, right: chartsMobile ? 2 : 6 } }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: showLegend, position: 'top', labels: {color: 'rgba(255,255,255,0.7)'} }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { y: { display: !chartsMobile, beginAtZero: true, ticks: { display: false, callback: v => v.toLocaleString('pt-BR') } } } }
   });
 
@@ -2217,6 +2232,37 @@ function renderClassicosTable(data) {
     </tr>`).join('');
 }
 
+// Recuperação responsiva: corrige canvases restaurados com dimensões incorretas
+// após retorno à página/aba, rotação ou redimensionamento no mobile.
+let chartRecoveryTimer = null;
+function recoverChartSizes() {
+  if (chartRecoveryTimer) clearTimeout(chartRecoveryTimer);
+  chartRecoveryTimer = setTimeout(() => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        Object.values(activeCharts).forEach(chart => {
+          if (!chart || typeof chart.resize !== 'function') return;
+          try {
+            chart.resize();
+            chart.update('none');
+          } catch (err) {
+            console.warn('Não foi possível reajustar um gráfico:', err);
+          }
+        });
+      });
+    });
+  }, 80);
+}
+
+function initChartRecoveryHandlers() {
+  window.addEventListener('pageshow', recoverChartSizes);
+  window.addEventListener('resize', recoverChartSizes, { passive: true });
+  window.addEventListener('orientationchange', recoverChartSizes, { passive: true });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') recoverChartSizes();
+  });
+}
+
 // --- CAMADA DE EVENTOS / BOOTSTRAP (V3.0) ---
 function handleDelegatedClick(event) {
   const target = event.target.closest('[data-action]');
@@ -2269,6 +2315,7 @@ function initEventHandlers() {
 
 function initDashboard() {
   initEventHandlers();
+  initChartRecoveryHandlers();
   restoreFiltersFromUrl();
   if (window.lucide) lucide.createIcons();
   fetchLiveGoogleSheet();

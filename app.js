@@ -1,3 +1,5 @@
+const DASHBOARD_VERSION = '3.2.14';
+
 const CONFIG = Object.freeze({
   googleSheetsCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVyyhMTbQRPjb1lXdljnsi6kjWt7mU5xKEeZRB24-Ic5hZKzkZCG9gIYvlN81CXVpd0SGc6e0XW18b/pub?gid=1810912358&single=true&output=csv",
   classicosCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTW1huagd5Q9phZyCJE3fit-z1Is8ny15NpTMB1KiHB_wNAopeF9-mecdx0cH4BidxqFS9vTLB6UOvc/pub?gid=1492939094&single=true&output=csv",
@@ -1121,6 +1123,14 @@ function renderSulBarChart(canvasId, sulMatchesList) {
 
   const padraoLegenda = ctxSul.createPattern(canvasLegenda, 'repeat');
   const sulMobile = window.matchMedia('(max-width: 639px)').matches;
+
+  // V3.2.14: altera apenas Top 5/Top 10 sem reescrever o restante do subtítulo.
+  // Assim, o intervalo dinâmico de anos continua sendo atualizado por updateDynamicYearRange().
+  const sulSubtitleId = canvasId === 'chartClassicosSetorSul' ? 'classicos-sul-chart-subtitle' : 'sul-chart-subtitle';
+  const sulSubtitleEl = document.getElementById(sulSubtitleId);
+  const sulTopCountEl = sulSubtitleEl?.querySelector('.sul-top-count');
+  if (sulTopCountEl) sulTopCountEl.textContent = sulMobile ? 'Top 5' : 'Top 10';
+
   // Mobile exibe Top 5; desktop preserva o Top 10 recebido pela função.
   const sulMatchesExibidos = sulMobile ? sulMatchesList.slice(0, 5) : sulMatchesList;
 
@@ -1185,7 +1195,10 @@ function renderSulBarChart(canvasId, sulMatchesList) {
         const dia = p[0].length === 4 ? p[2] : p[0];
         const mes = p[1];
         const ano = p[0].length === 4 ? p[0].slice(2, 4) : p[2].slice(2, 4);
-        if (mobile) return [String(m.adv || '').slice(0, 3).toUpperCase(), `${mes}/${ano}`];
+        if (mobile) {
+          const anoCompleto = p[0].length === 4 ? p[0] : p[2];
+          return [String(m.adv || '').slice(0, 3).toUpperCase(), `${dia}/${mes}/${anoCompleto}`];
+        }
         return [`${m.adv}`, `(${dia}-${mes}-${ano})`];
       }),
       datasets: [
@@ -2345,4 +2358,10 @@ function initDashboard() {
   fetchLiveGoogleSheet();
 }
 
+
+
+function renderDashboardVersion() {
+  const versionEl = document.getElementById('dashboard-version');
+  if (versionEl) versionEl.textContent = `v${DASHBOARD_VERSION}`;
+}
 document.addEventListener('DOMContentLoaded', initDashboard);

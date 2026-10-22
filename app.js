@@ -1212,6 +1212,7 @@ function renderSulBarChart(canvasId, sulMatchesList) {
 
 function updateCharts() {
   const validFiltered = filteredMatches;
+  const chartsMobile = window.matchMedia('(max-width: 767px)').matches;
   Chart.defaults.color = '#A3B8B0';
   Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.07)';
   Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
@@ -1385,7 +1386,7 @@ function updateCharts() {
   activeCharts["chartCompeticao"] = new Chart(getChartCanvas("chartCompeticao"), {
     type: 'bar', data: { labels: filteredCompStats.map(s => s.comp), datasets: datasetsComp },
     plugins: [makeValueLabelsPlugin('publicoMedioCompeticaoLabels', { decimals: 1, horizontal: true })],
-    options: { indexAxis: 'y', layout: { padding: { right: 42 } }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: showLegend, position: 'top', labels: {color: 'rgba(255,255,255,0.7)'} }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.x.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { x: { beginAtZero: true, ticks: { display: false, callback: v => v.toLocaleString('pt-BR') } }, y: { ticks: { display: true } } } }
+    options: { indexAxis: 'y', layout: { padding: { left: chartsMobile ? 0 : 0, right: chartsMobile ? 28 : 42 } }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: showLegend, position: 'top', labels: {color: 'rgba(255,255,255,0.7)'} }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.x.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { x: { display: !chartsMobile, beginAtZero: true, ticks: { display: false, callback: v => v.toLocaleString('pt-BR') } }, y: { ticks: { display: true, padding: chartsMobile ? 2 : 6 } } } }
   });
 
   // 3. DIA DA SEMANA
@@ -1411,9 +1412,9 @@ function updateCharts() {
     ];
   }
   activeCharts["chartDiaSemana"] = new Chart(getChartCanvas("chartDiaSemana"), {
-    type: 'bar', data: { labels: daysOrder.map(d => d.replace('-feira', '')), datasets: datasetsDia },
+    type: 'bar', data: { labels: chartsMobile ? ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB', 'DOM'] : daysOrder.map(d => d.replace('-feira', '')), datasets: datasetsDia },
     plugins: [makeValueLabelsPlugin('publicoMedioDiaLabels', { decimals: 1 })],
-    options: { layout: { padding: { top: 18 } }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: showLegend, position: 'top', labels: {color: 'rgba(255,255,255,0.7)'} }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { y: { beginAtZero: true, ticks: { display: false, callback: v => v.toLocaleString('pt-BR') } } } }
+    options: { layout: { padding: { top: 18, left: chartsMobile ? 0 : 6, right: chartsMobile ? 2 : 6 } }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: showLegend, position: 'top', labels: {color: 'rgba(255,255,255,0.7)'} }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { y: { display: !chartsMobile, beginAtZero: true, ticks: { display: false, callback: v => v.toLocaleString('pt-BR') } } } }
   });
 
   // 4. HORARIO
@@ -1436,7 +1437,7 @@ function updateCharts() {
   activeCharts["chartHorario"] = new Chart(getChartCanvas("chartHorario"), {
     type: 'line', data: { labels: hourRanges.map(h => h.label), datasets: datasetsHor },
     plugins: [makeValueLabelsPlugin('publicoMedioHorarioLabels', { decimals: 1 })],
-    options: { layout: { padding: { top: 18 } }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: showLegend, position: 'top', labels: {color: 'rgba(255,255,255,0.7)'} }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { y: { beginAtZero: true, ticks: { display: false, callback: v => v.toLocaleString('pt-BR') } } } }
+    options: { layout: { padding: { top: 18, left: chartsMobile ? 0 : 6, right: chartsMobile ? 2 : 6 } }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: showLegend, position: 'top', labels: {color: 'rgba(255,255,255,0.7)'} }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { y: { display: !chartsMobile, beginAtZero: true, ticks: { display: false, callback: v => v.toLocaleString('pt-BR') } } } }
   });
 
   // 5. TOP VISITANTE
@@ -1453,7 +1454,7 @@ function updateCharts() {
         activeCharts["chartTopVisitante"] = new Chart(getChartCanvas("chartTopVisitante"), {
           type: 'bar', data: { labels: topEstadios.map(e => e.est), datasets: [{ label: 'Média de Público', data: topEstadios.map(e => e.avg), backgroundColor: '#870A28', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: topEstadios.map(e => e.count) }] },
           plugins: [makeValueLabelsPlugin('topVisitanteLabels', { decimals: 1, horizontal: true, mobileOutside: true })],
-          options: { indexAxis: 'y', layout: { padding: { right: window.matchMedia('(max-width: 767px)').matches ? 54 : 42 } }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` Média: ${ctx.parsed.x.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { x: { beginAtZero: true, grace: window.matchMedia('(max-width: 767px)').matches ? '14%' : 0, ticks: { display: false, callback: v => v.toLocaleString('pt-BR') } }, y: { ticks: { display: true } } } }
+          options: { indexAxis: 'y', layout: { padding: { right: chartsMobile ? 34 : 42 } }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` Média: ${ctx.parsed.x.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { x: { display: !chartsMobile, beginAtZero: true, grace: chartsMobile ? '10%' : 0, ticks: { display: false, callback: v => v.toLocaleString('pt-BR') } }, y: { ticks: { display: true, padding: chartsMobile ? 2 : 6 } } } }
         });
       } else {
         const ctx = getChartCanvas("chartTopVisitante"); ctx.font = "12px 'Plus Jakarta Sans', sans-serif"; ctx.fillStyle = "rgba(255,255,255,0.4)"; ctx.textAlign = "center"; ctx.fillText("Nenhum dado de público visitante para os filtros atuais.", ctx.canvas.width / 2, 50);
@@ -1604,14 +1605,14 @@ function updateCharts() {
     plugins: [desempenhoTemporadaLabelsPlugin],
     options: {
       responsive: true, maintainAspectRatio: false,
-      layout: { padding: { top: 24 } },
+      layout: { padding: { top: chartsMobile ? 32 : 30 } },
       plugins: { 
         legend: { position: 'top', labels: { color: 'rgba(255,255,255,0.7)' } },
         tooltip: { mode: 'index', intersect: false }
       },
       scales: {
         x: { stacked: false, ticks: { color: 'rgba(255,255,255,0.7)' }, grid: { display: false } },
-        y: { beginAtZero: true, grace: '8%', ticks: { display: false, color: 'rgba(255,255,255,0.7)' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+        y: { beginAtZero: true, grace: chartsMobile ? '20%' : '16%', ticks: { display: false, color: 'rgba(255,255,255,0.7)' }, grid: { color: 'rgba(255,255,255,0.05)' } }
       }
     }
   });

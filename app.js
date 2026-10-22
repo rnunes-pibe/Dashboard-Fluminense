@@ -1121,6 +1121,8 @@ function renderSulBarChart(canvasId, sulMatchesList) {
 
   const padraoLegenda = ctxSul.createPattern(canvasLegenda, 'repeat');
   const sulMobile = window.matchMedia('(max-width: 639px)').matches;
+  // Mobile exibe Top 5; desktop preserva o Top 10 recebido pela função.
+  const sulMatchesExibidos = sulMobile ? sulMatchesList.slice(0, 5) : sulMatchesList;
 
   // V3.1.2: no mobile, desenha sigla (10px) e data (8px) separadamente.
   // O Chart.js aplica uma única fonte a todas as linhas de um tick; este plugin
@@ -1149,10 +1151,32 @@ function renderSulBarChart(canvasId, sulMatchesList) {
     }
   };
 
+  // Exibe o público completo dentro da barra, próximo ao ponto mais alto.
+  const sulBarValueLabels = {
+    id: `sulBarValueLabels-${canvasId}`,
+    afterDatasetsDraw(chart) {
+      const meta = chart.getDatasetMeta(0);
+      if (!meta || meta.hidden) return;
+      const ctx = chart.ctx;
+      ctx.save();
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.font = `700 ${sulMobile ? 10 : 11}px 'Plus Jakarta Sans', sans-serif`;
+
+      meta.data.forEach((bar, index) => {
+        const value = Number(chart.data.datasets[0].data[index]);
+        if (!Number.isFinite(value)) return;
+        ctx.fillText(value.toLocaleString('pt-BR'), bar.x, bar.y + 7);
+      });
+      ctx.restore();
+    }
+  };
+
   activeCharts[canvasId] = new Chart(ctxSul, {
     type: 'bar',
     data: {
-      labels: sulMatchesList.map(m => {
+      labels: sulMatchesExibidos.map(m => {
         const mobile = window.matchMedia('(max-width: 639px)').matches;
         if (!m.data || m.data === "-") {
           return mobile ? [String(m.adv || '').slice(0, 3).toUpperCase(), '-'] : [`${m.adv}`, `(-)`];
@@ -1165,15 +1189,15 @@ function renderSulBarChart(canvasId, sulMatchesList) {
         return [`${m.adv}`, `(${dia}-${mes}-${ano})`];
       }),
       datasets: [
-        { label: 'Sul Pagantes', data: sulMatchesList.map(m => m.sul), backgroundColor: degradeTricolor, borderRadius: 6, order: 2 },
-        { label: 'Capacidade Máxima Pagantes (20K)', data: sulMatchesList.map(() => CONFIG.capacidadeSulPagantes), type: 'line', borderColor: '#f59e0b', borderDash: [5, 5], borderWidth: 3, pointRadius: 0, pointHoverRadius: 0, fill: false, order: 1 }
+        { label: 'Sul Pagantes', data: sulMatchesExibidos.map(m => m.sul), backgroundColor: degradeTricolor, borderRadius: 6, order: 2 },
+        { label: 'Capacidade Máxima Pagantes (20K)', data: sulMatchesExibidos.map(() => CONFIG.capacidadeSulPagantes), type: 'line', borderColor: '#f59e0b', borderDash: [5, 5], borderWidth: 3, pointRadius: 0, pointHoverRadius: 0, fill: false, order: 1 }
       ]
     },
-    plugins: [sulMobileAxisLabels],
+    plugins: [sulMobileAxisLabels, sulBarValueLabels],
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      layout: { padding: { bottom: sulMobile ? 30 : 0 } },
+      layout: { padding: { left: sulMobile ? 0 : 0, right: 0, bottom: sulMobile ? 30 : 0 } },
       plugins: { 
         legend: { 
           position: 'top', 
@@ -1193,7 +1217,7 @@ function renderSulBarChart(canvasId, sulMatchesList) {
             ...(window.matchMedia('(max-width: 639px)').matches ? {
               title: function(context) {
                 const index = context[0].dataIndex;
-                const match = sulMatchesList[index];
+                const match = sulMatchesExibidos[index];
                 if (!match.data || match.data === '-') return match.adv;
                 const p = match.data.split(/[-/]/);
                 const dia = p[0].length === 4 ? p[2] : p[0];
@@ -1204,7 +1228,7 @@ function renderSulBarChart(canvasId, sulMatchesList) {
             } : {}),
             afterTitle: function(context) {
               const index = context[0].dataIndex;
-              return sulMatchesList[index].torneio;
+              return sulMatchesExibidos[index].torneio;
             },
             label: ctx => ctx.dataset.type === 'line' ? `Capacidade Máxima Pagantes (20K)` : ` Sul Pagantes: ${ctx.parsed.y.toLocaleString('pt-BR')} (${((ctx.parsed.y / CONFIG.capacidadeSulPagantes) * 100).toFixed(1)}% do setor)` 
           } 
@@ -1224,7 +1248,7 @@ function renderSulBarChart(canvasId, sulMatchesList) {
             font: { size: 12, lineHeight: 1.25 }
           }
         },
-        y: { beginAtZero: true, max: 22000, ticks: { callback: v => v === 22000 ? '' : v.toLocaleString('pt-BR') } }
+        y: { beginAtZero: true, max: 22000, ticks: { display: !sulMobile, callback: v => v === 22000 ? '' : v.toLocaleString('pt-BR') } }
       } 
     }
   });
@@ -1644,9 +1668,9 @@ function updateCharts() {
     data: {
       labels: seasons.map(String),
       datasets: [
-        { label: 'Vitórias', data: vTemporada, backgroundColor: '#10b981', borderRadius: 4 },
-        { label: 'Empates', data: eTemporada, backgroundColor: '#f59e0b', borderRadius: 4 },
-        { label: 'Derrotas', data: dTemporada, backgroundColor: '#f43f5e', borderRadius: 4 }
+        { label: 'Vitórias', data: vTemporada, backgroundColor: '#047857', borderRadius: 4 },
+        { label: 'Empates', data: eTemporada, backgroundColor: '#D97706', borderRadius: 4 },
+        { label: 'Derrotas', data: dTemporada, backgroundColor: '#BE123C', borderRadius: 4 }
       ]
     },
     plugins: [desempenhoTemporadaLabelsPlugin],

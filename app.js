@@ -1,4 +1,4 @@
-const DASHBOARD_VERSION = '3.2.16';
+const DASHBOARD_VERSION = '3.2.25';
 
 const CONFIG = Object.freeze({
   googleSheetsCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVyyhMTbQRPjb1lXdljnsi6kjWt7mU5xKEeZRB24-Ic5hZKzkZCG9gIYvlN81CXVpd0SGc6e0XW18b/pub?gid=1810912358&single=true&output=csv",
@@ -967,6 +967,206 @@ function applyFilters() {
   syncFiltersToUrl();
 }
 
+function toggleDataNotice() {
+  const content = document.getElementById('data-notice-content');
+  const button = document.getElementById('data-notice-toggle');
+  const label = document.getElementById('data-notice-toggle-label');
+  if (!content || !button || !label) return;
+  const opening = content.hidden;
+  content.hidden = !opening;
+  button.setAttribute('aria-expanded', String(opening));
+  label.textContent = opening ? 'Ocultar avisos' : 'Ver avisos';
+  button.classList.toggle('is-open', opening);
+}
+
+function formatShortMatchDate(match) {
+  if (!match || !match.data || match.data === '-') return '-';
+  const timestamp = match.timestamp || computeTimestamp(match.data);
+  if (!timestamp) return match.data;
+  const date = new Date(timestamp);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = String(date.getFullYear());
+  return `${day}/${month}/${year}`;
+}
+
+function formatMonthYearMatchDate(match) {
+  if (!match || !match.data || match.data === '-') return '-';
+  const timestamp = match.timestamp || computeTimestamp(match.data);
+  if (!timestamp) return match.data;
+  const date = new Date(timestamp);
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = String(date.getFullYear());
+  return `${month}/${year}`;
+}
+
+function sequenceResponsiveDate(match) {
+  return `<span class="sequence-date sequence-date-mobile">${escapeHtml(formatShortMatchDate(match))}</span><span class="sequence-date sequence-date-desktop">${escapeHtml(formatMonthYearMatchDate(match))}</span>`;
+}
+
+function formatMatchPeriod(startMatch, endMatch) {
+  if (!startMatch || !endMatch) return '-';
+  const start = formatShortMatchDate(startMatch);
+  const end = formatShortMatchDate(endMatch);
+  return start === end ? start : `${start} a ${end}`;
+}
+
+function calculateLongestStreak(matches, predicate) {
+  const chronological = matches
+    .filter(m => getMatchResult(m))
+    .slice()
+    .sort((a, b) => (a.timestamp || computeTimestamp(a.data)) - (b.timestamp || computeTimestamp(b.data)));
+  let best = [], current = [];
+  chronological.forEach(match => {
+    if (predicate(getMatchResult(match))) {
+      current.push(match);
+      if (current.length > best.length) best = current.slice();
+    } else current = [];
+  });
+  return best;
+}
+
+let performanceStreaks = { wins: [], unbeaten: [] };
+let expandedStreak = null;
+
+function recentRateColor(rate) {
+  if (rate < 40) return '#fb3f61';
+  if (rate < 50) return '#fb923c';
+  if (rate < 60) return '#facc15';
+  if (rate < 70) return '#6ee7b7';
+  return '#10c98b';
+}
+
+function renderStreakMatches(type) {
+  const container = document.getElementById(`streak-${type}-matches`);
+  if (!container) return;
+  const matches = performanceStreaks[type] || [];
+  if (!matches.length) {
+    container.innerHTML = '<div class="p-3 text-xs text-white/40">Nenhuma partida para exibir.</div>';
+    return;
+  }
+  const ordered = matches.slice().sort((a, b) => (a.timestamp || computeTimestamp(a.data)) - (b.timestamp || computeTimestamp(b.data)));
+  container.innerHTML = ordered.map(m => {
+    const result = getMatchResult(m);
+    return `<div class="streak-match-row streak-match-row-sequence">
+      ${sequenceResponsiveDate(m)}
+      <span class="streak-opponent" title="${escapeHtml(m.adv || '-')}">${escapeHtml(m.adv || '-')}</span>
+      <span class="streak-score streak-score-${(result || '').toLowerCase()}">${escapeHtml(m.placar || '-')}</span>
+    </div>`;
+  }).join('');
+}
+
+function syncStreakExpansion() {
+  ['wins', 'unbeaten'].forEach(type => {
+    const button = document.querySelector(`[data-action="toggle-streak-matches"][data-streak="${type}"]`);
+    const container = document.getElementById(`streak-${type}-matches`);
+    const open = expandedStreak === type;
+    if (button) {
+      button.setAttribute('aria-expanded', String(open));
+      button.innerHTML = open ? 'Ocultar partidas <span aria-hidden="true">⌃</span>' : 'Ver partidas <span aria-hidden="true">›</span>';
+      button.disabled = !(performanceStreaks[type] || []).length;
+    }
+    if (container) container.hidden = !open;
+    if (open) renderStreakMatches(type);
+  });
+}
+
+function toggleStreakMatches(type) {
+  if (!['wins', 'unbeaten'].includes(type) || !(performanceStreaks[type] || []).length) return;
+  expandedStreak = expandedStreak === type ? null : type;
+  syncStreakExpansion();
+}
+
+let recentPerformanceMatches = [];
+let expandedRecentForm = false;
+
+function renderRecentFormMatches() {
+  const container = document.getElementById('recent-form-matches');
+  if (!container) return;
+  container.innerHTML = recentPerformanceMatches.length ? recentPerformanceMatches.map(m => {
+    const result = getMatchResult(m);
+    return `<div class="streak-match-row recent-match-row">
+      <span class="recent-match-date">${escapeHtml(formatShortMatchDate(m))}</span>
+      <span class="recent-match-opponent-score">
+        <span class="streak-opponent" title="${escapeHtml(m.adv || '-')}">${escapeHtml(m.adv || '-')}</span>
+        <span class="streak-score streak-score-${(result || '').toLowerCase()}">${escapeHtml(m.placar || '-')}</span>
+      </span>
+    </div>`;
+  }).join('') : '<div class="p-3 text-xs text-white/40">Nenhuma partida para exibir.</div>';
+}
+
+function syncRecentFormExpansion() {
+  const button = document.querySelector('[data-action="toggle-recent-form-matches"]');
+  const container = document.getElementById('recent-form-matches');
+  if (button) {
+    button.disabled = !recentPerformanceMatches.length;
+    button.setAttribute('aria-expanded', String(expandedRecentForm));
+    button.innerHTML = expandedRecentForm ? 'Ocultar partidas <span aria-hidden="true">⌃</span>' : 'Ver partidas <span aria-hidden="true">›</span>';
+  }
+  if (container) container.hidden = !expandedRecentForm;
+  if (expandedRecentForm) renderRecentFormMatches();
+}
+
+function toggleRecentFormMatches() {
+  if (!recentPerformanceMatches.length) return;
+  expandedRecentForm = !expandedRecentForm;
+  syncRecentFormExpansion();
+}
+
+function updatePerformanceInsights() {
+  const scored = filteredMatches.filter(m => getMatchResult(m));
+  const recent = scored.slice().sort((a, b) => (b.timestamp || computeTimestamp(b.data)) - (a.timestamp || computeTimestamp(a.data))).slice(0, 5);
+  recentPerformanceMatches = recent;
+  if (expandedRecentForm && !recent.length) expandedRecentForm = false;
+  const recentResults = document.getElementById('recent-form-results');
+  if (recentResults) {
+    recentResults.innerHTML = recent.length ? recent.map(m => {
+      const r = getMatchResult(m);
+      return `<span class="recent-result recent-result-${r.toLowerCase()}" title="${escapeHtml(m.data)} · ${escapeHtml(m.adv)} · ${escapeHtml(m.placar)}">${r}</span>`;
+    }).join('') : '<span class="text-xs text-white/40">Sem jogos com placar no recorte.</span>';
+  }
+  const wins = recent.filter(m => getMatchResult(m) === 'V').length;
+  const draws = recent.filter(m => getMatchResult(m) === 'E').length;
+  const points = wins * 3 + draws;
+  const possible = recent.length * 3;
+  const gf = recent.reduce((sum, m) => sum + (Number.isFinite(m.gf) ? m.gf : 0), 0);
+  const ga = recent.reduce((sum, m) => sum + (Number.isFinite(m.ga) ? m.ga : 0), 0);
+  const rateEl = document.getElementById('recent-form-rate');
+  const gfEl = document.getElementById('recent-form-gf');
+  const gaEl = document.getElementById('recent-form-ga');
+  if (rateEl) {
+    const rate = possible ? Math.round((points / possible) * 100) : null;
+    rateEl.textContent = rate !== null ? `${rate}%` : '-';
+    rateEl.style.color = rate !== null ? recentRateColor(rate) : '';
+  }
+  if (gfEl) gfEl.textContent = recent.length ? gf.toLocaleString('pt-BR') : '-';
+  if (gaEl) gaEl.textContent = recent.length ? ga.toLocaleString('pt-BR') : '-';
+
+  const winStreak = calculateLongestStreak(filteredMatches, r => r === 'V');
+  const unbeatenStreak = calculateLongestStreak(filteredMatches, r => r === 'V' || r === 'E');
+  const winCount = document.getElementById('streak-wins-count');
+  const winPeriod = document.getElementById('streak-wins-period');
+  const unbeatenCount = document.getElementById('streak-unbeaten-count');
+  const unbeatenPeriod = document.getElementById('streak-unbeaten-period');
+  const unbeatenBreakdown = document.getElementById('streak-unbeaten-breakdown');
+  performanceStreaks = { wins: winStreak, unbeaten: unbeatenStreak };
+  if (expandedStreak && !performanceStreaks[expandedStreak].length) expandedStreak = null;
+  if (winCount) winCount.textContent = winStreak.length || '0';
+  if (winPeriod) winPeriod.textContent = winStreak.length ? formatMatchPeriod(winStreak[0], winStreak[winStreak.length - 1]) : 'Nenhuma vitória no recorte';
+  if (unbeatenCount) unbeatenCount.textContent = unbeatenStreak.length || '0';
+  if (unbeatenStreak.length) {
+    const v = unbeatenStreak.filter(m => getMatchResult(m) === 'V').length;
+    const e = unbeatenStreak.length - v;
+    if (unbeatenPeriod) unbeatenPeriod.textContent = formatMatchPeriod(unbeatenStreak[0], unbeatenStreak[unbeatenStreak.length - 1]);
+    if (unbeatenBreakdown) unbeatenBreakdown.textContent = `(${v}V / ${e}E)`;
+  } else {
+    if (unbeatenPeriod) unbeatenPeriod.textContent = 'Nenhuma sequência no recorte';
+    if (unbeatenBreakdown) unbeatenBreakdown.textContent = '';
+  }
+  syncStreakExpansion();
+  syncRecentFormExpansion();
+}
+
 function updateKpis() {
   const validFiltered = filteredMatches;
 
@@ -1087,6 +1287,7 @@ function updateKpis() {
     document.getElementById('estadio-sub-aproveitamento').textContent = `${ptsGanhos} de ${ptsPossiveis} pts`;
   }
   
+  updatePerformanceInsights();
   renderAdvTable('estadio-adv-table-body', advStatsEstadio);
 }
 
@@ -1834,7 +2035,7 @@ function renderTable() {
   const pageItems = validFiltered.slice(start, end);
 
   if (pageItems.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="12" class="p-8 text-center text-white/40 font-sans">Nenhuma partida encontrada para os filtros selecionados.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" class="p-8 text-center text-white/40 font-sans">Nenhuma partida encontrada para os filtros selecionados.</td></tr>`;
     document.getElementById("table-pagination").innerHTML = "";
     return;
   }
@@ -1843,22 +2044,16 @@ function renderTable() {
     const isHome = m.mando === "Mandante";
     const isAway = m.mando === "Visitante";
     const mandoBadge = isHome ? `<span class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 font-sans text-[10px] font-bold border border-emerald-500/40">Mandante</span>` : isAway ? `<span class="px-2 py-0.5 rounded bg-rose-950 text-rose-300 font-sans text-[10px] font-bold border border-rose-500/40">Visitante</span>` : `<span class="px-2 py-0.5 rounded bg-amber-950 text-amber-300 font-sans text-[10px] font-bold border border-amber-500/40">Neutro</span>`;
-    const sulRate = m.sul ? `${((m.sul / CONFIG.capacidadeSulPagantes) * 100).toFixed(1)}%` : "-";
-    const presBadge = m.presente === "Sim" ? `<span class="px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 font-sans text-[10px] font-bold border border-cyan-500/40">Sim</span>` : `<span class="text-white/30">Não</span>`;
-
     return `<tr class="hover:bg-white/[0.04] transition border-b border-white/5">
       <td class="p-3 text-white/90 whitespace-nowrap">${escapeHtml(m.data || "-")}</td>
-      <td class="p-3 text-white/50">${escapeHtml(m.hora || "-")}</td>
-      <td class="p-3 font-sans text-[11px] text-white/80 max-w-[170px] truncate" title="${escapeHtml(m.torneio)}">${escapeHtml(m.torneio)}</td>
-      <td class="p-3">${mandoBadge}</td>
       <td class="p-3 font-sans font-bold text-white">${escapeHtml(m.adv)}</td>
-      <td class="p-3 font-sans text-white/70 max-w-[150px] truncate" title="${escapeHtml(m.estadio)}">${escapeHtml(m.estadio)}</td>
       <td class="p-3 text-center">${resultBadge(m)}</td>
+      <td class="p-3 font-sans text-[11px] text-white/80" title="${escapeHtml(m.torneio)}">${escapeHtml(m.torneio)}</td>
+      <td class="p-3">${mandoBadge}</td>
+      <td class="p-3 font-sans text-white/70" title="${escapeHtml(m.estadio)}">${escapeHtml(m.estadio)}</td>
       <td class="p-3 text-right font-bold text-emerald-400">${fmt(m.pub)}</td>
       <td class="p-3 text-right text-rose-300">${fmt(m.pubVis)}</td>
       <td class="p-3 text-right text-cyan-300 font-semibold">${fmt(m.sul)}</td>
-      <td class="p-3 text-right text-amber-300 font-bold">${sulRate}</td>
-      <td class="p-3 text-center">${presBadge}</td>
     </tr>`;
   }).join('');
 
@@ -2178,6 +2373,7 @@ function applyClassicosFilters() {
   document.getElementById('classicos-kpi-aproveitamento').textContent = aprov;
   document.getElementById('classicos-sub-aproveitamento').textContent = `${ptsGanhos} de ${ptsPossiveis} pts`;
 
+  updateClassicosPerformanceInsights();
   updateClassicosChart(filteredClassicos);
 
   // Cruzamento ultra-rápido por chave indexada (Ano + Rival + Tolerância de 4 dias)
@@ -2254,6 +2450,138 @@ function applyClassicosFilters() {
   renderSulBarChart("chartClassicosSetorSul", topSulMatchesClassicos);
   renderClassicosTable(filteredClassicos);
   renderAdvTable('classicos-adv-table-body', advStatsClassicos);
+}
+
+
+let classicosStreaks = { wins: [], unbeaten: [] };
+let expandedClassicosStreak = null;
+
+function renderClassicosStreakMatches(type) {
+  const container = document.getElementById(`classicos-streak-${type}-matches`);
+  if (!container) return;
+  const matches = classicosStreaks[type] || [];
+  if (!matches.length) {
+    container.innerHTML = '<div class="p-3 text-xs text-white/40">Nenhuma partida para exibir.</div>';
+    return;
+  }
+  const ordered = matches.slice().sort((a, b) => (a.timestamp || computeTimestamp(a.data)) - (b.timestamp || computeTimestamp(b.data)));
+  container.innerHTML = ordered.map(m => {
+    const result = getMatchResult(m);
+    return `<div class="streak-match-row streak-match-row-sequence classicos-streak-match-row">
+      ${sequenceResponsiveDate(m)}
+      <span class="streak-opponent" title="${escapeHtml(m.adv || '-')}">${escapeHtml(m.adv || '-')}</span>
+      <span class="streak-score streak-score-${(result || '').toLowerCase()}">${escapeHtml(m.placar || '-')}</span>
+    </div>`;
+  }).join('');
+}
+
+function syncClassicosStreakExpansion() {
+  ['wins', 'unbeaten'].forEach(type => {
+    const button = document.querySelector(`[data-action="toggle-classicos-streak-matches"][data-streak="${type}"]`);
+    const container = document.getElementById(`classicos-streak-${type}-matches`);
+    const open = expandedClassicosStreak === type;
+    if (button) {
+      button.setAttribute('aria-expanded', String(open));
+      button.innerHTML = open ? 'Ocultar partidas <span aria-hidden="true">⌃</span>' : 'Ver partidas <span aria-hidden="true">›</span>';
+      button.disabled = !(classicosStreaks[type] || []).length;
+    }
+    if (container) container.hidden = !open;
+    if (open) renderClassicosStreakMatches(type);
+  });
+}
+
+function toggleClassicosStreakMatches(type) {
+  if (!['wins', 'unbeaten'].includes(type) || !(classicosStreaks[type] || []).length) return;
+  expandedClassicosStreak = expandedClassicosStreak === type ? null : type;
+  syncClassicosStreakExpansion();
+}
+
+let classicosRecentMatches = [];
+let expandedClassicosRecentForm = false;
+
+function renderClassicosRecentFormMatches() {
+  const container = document.getElementById('classicos-recent-form-matches');
+  if (!container) return;
+  container.innerHTML = classicosRecentMatches.length ? classicosRecentMatches.map(m => {
+    const result = getMatchResult(m);
+    return `<div class="streak-match-row recent-match-row">
+      <span class="recent-match-date">${escapeHtml(formatShortMatchDate(m))}</span>
+      <span class="recent-match-opponent-score">
+        <span class="streak-opponent" title="${escapeHtml(m.adv || '-')}">${escapeHtml(m.adv || '-')}</span>
+        <span class="streak-score streak-score-${(result || '').toLowerCase()}">${escapeHtml(m.placar || '-')}</span>
+      </span>
+    </div>`;
+  }).join('') : '<div class="p-3 text-xs text-white/40">Nenhuma partida para exibir.</div>';
+}
+
+function syncClassicosRecentFormExpansion() {
+  const button = document.querySelector('[data-action="toggle-classicos-recent-form-matches"]');
+  const container = document.getElementById('classicos-recent-form-matches');
+  if (button) {
+    button.disabled = !classicosRecentMatches.length;
+    button.setAttribute('aria-expanded', String(expandedClassicosRecentForm));
+    button.innerHTML = expandedClassicosRecentForm ? 'Ocultar partidas <span aria-hidden="true">⌃</span>' : 'Ver partidas <span aria-hidden="true">›</span>';
+  }
+  if (container) container.hidden = !expandedClassicosRecentForm;
+  if (expandedClassicosRecentForm) renderClassicosRecentFormMatches();
+}
+
+function toggleClassicosRecentFormMatches() {
+  if (!classicosRecentMatches.length) return;
+  expandedClassicosRecentForm = !expandedClassicosRecentForm;
+  syncClassicosRecentFormExpansion();
+}
+
+function getFilteredClassicosForInsights() {
+  const setComp = classicosState.competicao.length ? new Set(classicosState.competicao) : null;
+  const setAdv = classicosState.adversario.length ? new Set(classicosState.adversario) : null;
+  const setPres = classicosState.presente.length ? new Set(classicosState.presente) : null;
+  return CLASSICOS_DATA.filter(m => {
+    if (setComp && !setComp.has(m.torneio)) return false;
+    if (setAdv && !setAdv.has(m.adv)) return false;
+    if (setPres && !setPres.has(m.presente)) return false;
+    if (classicosState.minAno && m.ano < classicosState.minAno) return false;
+    if (classicosState.maxAno && m.ano > classicosState.maxAno) return false;
+    return true;
+  });
+}
+
+function updateClassicosPerformanceInsights() {
+  const data = getFilteredClassicosForInsights();
+  const scored = data.filter(m => getMatchResult(m));
+  const recent = scored.slice().sort((a,b) => (b.timestamp || computeTimestamp(b.data)) - (a.timestamp || computeTimestamp(a.data))).slice(0,5);
+  classicosRecentMatches = recent;
+  if (expandedClassicosRecentForm && !recent.length) expandedClassicosRecentForm = false;
+  const results = document.getElementById('classicos-recent-form-results');
+  if (results) results.innerHTML = recent.length ? recent.map(m => {
+    const r=getMatchResult(m);
+    return `<span class="recent-result recent-result-${r.toLowerCase()}" title="${escapeHtml(m.data)} · ${escapeHtml(m.adv)} · ${escapeHtml(m.placar)}">${r}</span>`;
+  }).join('') : '<span class="text-xs text-white/40">Sem jogos com placar no recorte.</span>';
+  const wins=recent.filter(m=>getMatchResult(m)==='V').length;
+  const draws=recent.filter(m=>getMatchResult(m)==='E').length;
+  const possible=recent.length*3, points=wins*3+draws;
+  const gf=recent.reduce((sum,m)=>sum+(Number.isFinite(m.gf)?m.gf:0),0);
+  const ga=recent.reduce((sum,m)=>sum+(Number.isFinite(m.ga)?m.ga:0),0);
+  const rateEl=document.getElementById('classicos-recent-form-rate');
+  if (rateEl) { const rate=possible?Math.round(points/possible*100):null; rateEl.textContent=rate!==null?`${rate}%`:'-'; rateEl.style.color=rate!==null?recentRateColor(rate):''; }
+  const gfEl=document.getElementById('classicos-recent-form-gf'); if(gfEl) gfEl.textContent=recent.length?gf.toLocaleString('pt-BR'):'-';
+  const gaEl=document.getElementById('classicos-recent-form-ga'); if(gaEl) gaEl.textContent=recent.length?ga.toLocaleString('pt-BR'):'-';
+
+  const winStreak=calculateLongestStreak(data,r=>r==='V');
+  const unbeatenStreak=calculateLongestStreak(data,r=>r==='V'||r==='E');
+  classicosStreaks={wins:winStreak,unbeaten:unbeatenStreak};
+  if(expandedClassicosStreak && !classicosStreaks[expandedClassicosStreak].length) expandedClassicosStreak=null;
+  const wc=document.getElementById('classicos-streak-wins-count'), wp=document.getElementById('classicos-streak-wins-period');
+  const uc=document.getElementById('classicos-streak-unbeaten-count'), up=document.getElementById('classicos-streak-unbeaten-period'), ub=document.getElementById('classicos-streak-unbeaten-breakdown');
+  if(wc) wc.textContent=winStreak.length||'0';
+  if(wp) wp.textContent=winStreak.length?formatMatchPeriod(winStreak[0],winStreak[winStreak.length-1]):'Nenhuma vitória no recorte';
+  if(uc) uc.textContent=unbeatenStreak.length||'0';
+  if(up) {
+    if(unbeatenStreak.length){ const v=unbeatenStreak.filter(m=>getMatchResult(m)==='V').length, e=unbeatenStreak.length-v; up.textContent=formatMatchPeriod(unbeatenStreak[0],unbeatenStreak[unbeatenStreak.length-1]); if(ub) ub.textContent=`(${v}V / ${e}E)`; }
+    else { up.textContent='Nenhuma sequência no recorte'; if(ub) ub.textContent=''; }
+  }
+  syncClassicosStreakExpansion();
+  syncClassicosRecentFormExpansion();
 }
 
 function updateClassicosChart(data) {
@@ -2431,6 +2759,11 @@ function handleDelegatedClick(event) {
 
   const actions = {
     'refresh-data': () => fetchLiveGoogleSheet(),
+    'toggle-data-notice': () => toggleDataNotice(),
+    'toggle-streak-matches': () => toggleStreakMatches(target.dataset.streak),
+    'toggle-recent-form-matches': () => toggleRecentFormMatches(),
+    'toggle-classicos-streak-matches': () => toggleClassicosStreakMatches(target.dataset.streak),
+    'toggle-classicos-recent-form-matches': () => toggleClassicosRecentFormMatches(),
     'reset-filters': () => resetFilters(),
     'toggle-sem-rivais': () => toggleSemRivais(),
     'reset-classicos-filters': () => resetClassicosFilters(),

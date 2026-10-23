@@ -403,3 +403,292 @@ body {
     padding-right: .45rem !important;
   }
 }
+
+
+/* V3.2.18 — avisos retráteis e cards de desempenho */
+.data-notice-header { display:flex; align-items:center; gap:1rem; }
+.data-notice-title { flex:1; min-width:0; }
+.data-notice-toggle { display:inline-flex; align-items:center; justify-content:center; gap:.55rem; min-width:132px; padding:.7rem 1rem; border:1px solid rgba(197,160,89,.65); border-radius:.75rem; color:#e7bd63; background:rgba(0,0,0,.18); font-size:.75rem; font-weight:800; transition:.2s ease; }
+.data-notice-toggle:hover { background:rgba(197,160,89,.08); color:#f4d38a; }
+.data-notice-toggle .data-notice-chevron { transition:transform .2s ease; }
+.data-notice-toggle.is-open .data-notice-chevron { transform:rotate(180deg); }
+.data-notice-content[hidden] { display:none; }
+
+.performance-insights-grid { display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr); gap:1.25rem; }
+.performance-insight-card { border:1px solid rgba(197,160,89,.65); }
+.performance-insight-heading { display:flex; align-items:flex-start; gap:.9rem; }
+.performance-insight-icon { width:3rem; height:3rem; flex:0 0 3rem; display:flex; align-items:center; justify-content:center; border-radius:.8rem; background:#0E4735; color:#E4B958; border:1px solid rgba(197,160,89,.35); }
+.recent-form-results { display:flex; gap:.75rem; align-items:center; min-height:3.5rem; margin:1.25rem 0 1rem; }
+.recent-result { width:3.1rem; height:3.1rem; border-radius:999px; display:inline-flex; align-items:center; justify-content:center; font-size:1rem; font-weight:900; color:#07110d; border:1px solid rgba(255,255,255,.12); box-shadow:inset 0 1px 0 rgba(255,255,255,.12); }
+.recent-result-v { background:#10c98b; }
+.recent-result-e { background:#facc15; color:#422006; }
+.recent-result-d { background:#fb3f61; color:white; }
+.recent-form-metrics { display:grid; grid-template-columns:repeat(3,1fr); border-top:1px solid rgba(255,255,255,.10); padding-top:1rem; }
+.recent-form-metrics > div { padding:0 1rem; border-right:1px solid rgba(255,255,255,.09); }
+.recent-form-metrics > div:first-child { padding-left:0; }
+.recent-form-metrics > div:last-child { border-right:0; }
+.recent-form-metrics span,.streak-item > span { display:block; font-size:.68rem; font-weight:700; text-transform:uppercase; color:rgba(255,255,255,.52); }
+.recent-form-metrics strong { display:block; margin-top:.4rem; font-size:1.45rem; font-weight:900; color:white; }
+.streak-grid { display:grid; grid-template-columns:1fr 1fr; gap:0; margin-top:1.45rem; }
+.streak-item { min-width:0; padding:.15rem 1.5rem; }
+.streak-item:first-child { padding-left:.75rem; border-right:1px solid rgba(255,255,255,.10); }
+.streak-item strong { display:flex; align-items:baseline; gap:.45rem; margin-top:.55rem; font-weight:900; }
+.streak-item strong b { font-size:2.65rem; line-height:1; }
+.streak-item strong small { font-size:1.15rem; }
+.streak-item p { margin-top:.55rem; font-size:.78rem; color:rgba(255,255,255,.58); }
+.streak-item .streak-breakdown { margin-top:.25rem; }
+
+@media (max-width: 767px) {
+  .data-notice-header { align-items:flex-start; flex-wrap:wrap; }
+  .data-notice-title { flex:1 1 calc(100% - 4rem); }
+  .data-notice-toggle { width:100%; margin-top:.25rem; }
+  .performance-insights-grid { grid-template-columns:1fr; }
+  .performance-insight-heading { gap:.7rem; }
+  .performance-insight-icon { width:2.65rem; height:2.65rem; flex-basis:2.65rem; }
+  .recent-form-results { gap:.55rem; }
+  .recent-result { width:2.65rem; height:2.65rem; }
+  .recent-form-metrics { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .recent-form-metrics > div { padding:0 .55rem; }
+  .recent-form-metrics span { font-size:.58rem; }
+  .recent-form-metrics strong { font-size:1.15rem; }
+  .streak-grid { grid-template-columns:1fr; }
+  .streak-item,.streak-item:first-child { padding:1rem 0; border-right:0; }
+  .streak-item:first-child { border-bottom:1px solid rgba(255,255,255,.10); }
+  .streak-item strong b { font-size:2.25rem; }
+}
+
+@media (min-width:1024px) {
+  .catalog-main-table th:nth-child(1), .catalog-main-table td:nth-child(1) { width:9%; }
+  .catalog-main-table th:nth-child(2), .catalog-main-table td:nth-child(2) { width:14%; }
+  .catalog-main-table th:nth-child(3), .catalog-main-table td:nth-child(3) { width:10%; }
+  .catalog-main-table th:nth-child(4), .catalog-main-table td:nth-child(4) { width:15%; }
+  .catalog-main-table th:nth-child(5), .catalog-main-table td:nth-child(5) { width:10%; }
+  .catalog-main-table th:nth-child(6), .catalog-main-table td:nth-child(6) { width:14%; }
+  .catalog-main-table th:nth-child(7), .catalog-main-table td:nth-child(7) { width:10%; }
+  .catalog-main-table th:nth-child(8), .catalog-main-table td:nth-child(8) { width:9%; }
+  .catalog-main-table th:nth-child(9), .catalog-main-table td:nth-child(9) { width:9%; }
+  .catalog-main-table td:nth-child(2), .catalog-main-table td:nth-child(4), .catalog-main-table td:nth-child(6) { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .catalog-main-table td:nth-child(3) > span { gap:.35rem !important; padding-left:.45rem !important; padding-right:.45rem !important; }
+}
+
+
+/* V3.2.19 — cards de desempenho mais compactos */
+.performance-insight-card { padding-top:1.05rem !important; padding-bottom:1.05rem !important; }
+.performance-insight-icon { width:2.65rem; height:2.65rem; flex-basis:2.65rem; }
+.recent-form-results { min-height:2.8rem; margin:.85rem 0 .7rem; gap:.65rem; }
+.recent-result { width:2.75rem; height:2.75rem; }
+.recent-form-metrics { padding-top:.7rem; }
+.recent-form-metrics strong { margin-top:.25rem; font-size:1.3rem; }
+.streak-grid { margin-top:.9rem; }
+.streak-item { padding-top:0; padding-bottom:0; }
+.streak-item strong { margin-top:.35rem; }
+.streak-item strong b { font-size:2.35rem; }
+.streak-item p { margin-top:.35rem; }
+
+@media (max-width: 767px) {
+  .performance-insight-card { padding-top:1rem !important; padding-bottom:1rem !important; }
+  .recent-form-results { margin:.8rem 0 .65rem; }
+  .recent-result { width:2.5rem; height:2.5rem; }
+  .streak-grid { margin-top:.7rem; }
+  .streak-item,.streak-item:first-child { padding:.7rem 0; }
+  .streak-item strong b { font-size:2rem; }
+}
+
+
+/* V3.2.20 — compactação adicional e consulta rápida das sequências */
+.performance-insight-card { padding-top:.8rem !important; padding-bottom:.8rem !important; }
+.performance-insight-heading { gap:.7rem; }
+.performance-insight-icon { width:2.4rem; height:2.4rem; flex-basis:2.4rem; border-radius:.7rem; }
+.recent-form-results { min-height:2.45rem; margin:.55rem 0 .45rem; gap:.55rem; }
+.recent-result { width:2.45rem; height:2.45rem; font-size:.9rem; }
+.recent-form-metrics { padding-top:.42rem; }
+.recent-form-metrics > div { padding:0 .8rem; }
+.recent-form-metrics span,.streak-item > span { font-size:.6rem; }
+.recent-form-metrics strong { margin-top:.12rem; font-size:1.18rem; line-height:1.1; }
+.streak-grid { margin-top:.55rem; }
+.streak-item { padding-top:0; padding-bottom:0; }
+.streak-item strong { margin-top:0; }
+.streak-item strong b { font-size:2.05rem; }
+.streak-item strong small { font-size:.95rem; }
+.streak-item p { margin-top:.2rem; font-size:.72rem; }
+.streak-value-row { display:flex; align-items:baseline; gap:.7rem; margin-top:.2rem; min-width:0; flex-wrap:wrap; }
+.streak-toggle { border:0; background:transparent; padding:.2rem 0; color:#60a5fa; font-size:.68rem; font-weight:800; white-space:nowrap; cursor:pointer; }
+.streak-toggle:hover { color:#93c5fd; }
+.streak-toggle:focus-visible { outline:2px solid #C5A059; outline-offset:3px; border-radius:.2rem; }
+.streak-matches { margin-top:.55rem; border:1px solid rgba(255,255,255,.09); border-radius:.65rem; overflow:auto; max-height:15rem; background:rgba(0,0,0,.12); }
+.streak-match-row { display:grid; grid-template-columns:4.6rem minmax(5rem,1fr) 3.2rem 4.1rem minmax(4.5rem,.8fr) 1.6rem; gap:.4rem; align-items:center; padding:.38rem .55rem; border-bottom:1px solid rgba(255,255,255,.07); font-size:.66rem; color:rgba(255,255,255,.7); }
+.streak-match-row:last-child { border-bottom:0; }
+.streak-match-row .streak-opponent { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:rgba(255,255,255,.9); font-weight:700; }
+.streak-match-row .streak-score { text-align:center; font-weight:800; color:white; }
+.streak-match-row .streak-result { width:1.45rem; height:1.45rem; border-radius:999px; display:inline-flex; align-items:center; justify-content:center; font-weight:900; color:#07110d; justify-self:end; }
+.streak-match-row .streak-result-v { background:#10c98b; }
+.streak-match-row .streak-result-e { background:#facc15; color:#422006; }
+
+@media (max-width: 767px) {
+  .performance-insight-card { padding-top:.75rem !important; padding-bottom:.75rem !important; }
+  .recent-form-results { margin:.5rem 0 .4rem; }
+  .recent-result { width:2.3rem; height:2.3rem; }
+  .recent-form-metrics > div { padding:0 .4rem; }
+  .recent-form-metrics span { font-size:.54rem; }
+  .recent-form-metrics strong { font-size:1.05rem; }
+  .streak-grid { margin-top:.45rem; }
+  .streak-item,.streak-item:first-child { padding:.55rem 0; }
+  .streak-item strong b { font-size:1.8rem; }
+  .streak-match-row { grid-template-columns:4.4rem minmax(5.5rem,1fr) 3rem 3.7rem 1.5rem; }
+  .streak-match-row .streak-comp { display:none; }
+}
+.classicos-streak-match-row { grid-template-columns:5.5rem minmax(5rem,1fr) 4.1rem minmax(4.5rem,.8fr) 1.6rem; }
+@media (max-width: 640px) {
+  .classicos-streak-match-row { grid-template-columns:5.4rem minmax(5.5rem,1fr) 3.8rem 1.5rem; }
+  .classicos-streak-match-row .streak-comp { display:none; }
+}
+
+/* V3.2.22 — listas compactas e controles da forma recente */
+.recent-form-title-row { display:flex; align-items:baseline; gap:.65rem; flex-wrap:wrap; }
+.recent-form-toggle { white-space:nowrap; }
+.streak-value-breakdown { font-size:.72rem; font-weight:900; color:rgba(255,255,255,.82); white-space:nowrap; }
+.streak-match-row.streak-match-row-simple,
+.classicos-streak-match-row.streak-match-row-simple {
+  grid-template-columns:6.2rem minmax(6rem,1fr) 4.5rem;
+  gap:.55rem;
+}
+.streak-match-row-simple .streak-score { justify-self:end; }
+.recent-form-matches { margin-top:.55rem; }
+@media (max-width: 640px) {
+  .streak-match-row.streak-match-row-simple,
+  .classicos-streak-match-row.streak-match-row-simple { grid-template-columns:5.8rem minmax(5rem,1fr) 3.8rem; }
+  .recent-form-title-row { gap:.4rem; }
+}
+
+
+/* V3.2.23 — listas de partidas compactas e placares por resultado */
+.streak-matches { overflow-x:hidden; }
+.streak-match-row.streak-match-row-sequence,
+.classicos-streak-match-row.streak-match-row-sequence {
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:.65rem;
+  width:100%;
+  min-width:0;
+}
+.streak-match-row-sequence .streak-score { justify-self:end; }
+.recent-match-row {
+  grid-template-columns:5.9rem minmax(0,1fr);
+  gap:.7rem;
+  width:100%;
+  min-width:0;
+}
+.recent-match-date { white-space:nowrap; }
+.recent-match-opponent-score {
+  display:inline-flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:.65rem;
+  min-width:0;
+}
+.recent-match-opponent-score .streak-opponent { flex:0 1 auto; min-width:0; }
+.recent-match-opponent-score .streak-score { flex:0 0 auto; text-align:left; }
+.streak-score-v { color:#10c98b !important; }
+.streak-score-e { color:#facc15 !important; }
+.streak-score-d { color:#fb3f61 !important; }
+@media (max-width:640px) {
+  .recent-match-row { grid-template-columns:5.4rem minmax(0,1fr); gap:.45rem; }
+  .recent-match-opponent-score { gap:.45rem; }
+}
+
+
+/* V3.2.24 — alinhamento rígido dos cards de desempenho */
+@media (min-width: 768px) {
+  .streak-value-row {
+    flex-wrap: nowrap;
+    gap: .55rem;
+    white-space: nowrap;
+  }
+  .streak-value-row > strong,
+  .streak-value-row > .streak-toggle {
+    flex: 0 0 auto;
+  }
+  .streak-value-breakdown { font-size: .68rem; }
+  .streak-value-row .streak-toggle { font-size: .64rem; }
+}
+
+/* Forma Recente: Data | Adversário | Placar em eixos fixos */
+.recent-match-opponent-score {
+  display: grid;
+  grid-template-columns: minmax(6.6rem, 8.4rem) 3.5rem;
+  column-gap: .55rem;
+  align-items: center;
+  justify-content: start;
+  width: 100%;
+}
+.recent-match-opponent-score .streak-opponent {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.recent-match-opponent-score .streak-score {
+  width: 3.5rem;
+  justify-self: start;
+  text-align: left;
+  white-space: nowrap;
+}
+@media (max-width: 640px) {
+  .recent-match-opponent-score {
+    grid-template-columns: minmax(5.6rem, 7.2rem) 3.25rem;
+    column-gap: .4rem;
+  }
+  .recent-match-opponent-score .streak-score { width: 3.25rem; }
+}
+
+
+/* V3.2.25 — Sequências Históricas: data responsiva e três colunas sem overflow horizontal */
+.streak-matches {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden !important;
+  min-width: 0;
+}
+.streak-match-row.streak-match-row-sequence,
+.classicos-streak-match-row.streak-match-row-sequence {
+  display: grid;
+  grid-template-columns: 4.6rem minmax(0, 1fr) 3.35rem;
+  gap: .45rem;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.streak-match-row-sequence .sequence-date {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: rgba(255,255,255,.68);
+}
+.streak-match-row-sequence .streak-opponent {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.streak-match-row-sequence .streak-score {
+  width: 3.35rem;
+  min-width: 3.35rem;
+  justify-self: end;
+  text-align: right;
+  white-space: nowrap;
+}
+.sequence-date-mobile { display: none; }
+.sequence-date-desktop { display: inline; }
+@media (max-width: 640px) {
+  .streak-match-row.streak-match-row-sequence,
+  .classicos-streak-match-row.streak-match-row-sequence {
+    grid-template-columns: 5.9rem minmax(0, 1fr) 3.25rem;
+    gap: .38rem;
+  }
+  .sequence-date-mobile { display: inline; }
+  .sequence-date-desktop { display: none; }
+  .streak-match-row-sequence .streak-score {
+    width: 3.25rem;
+    min-width: 3.25rem;
+  }
+}

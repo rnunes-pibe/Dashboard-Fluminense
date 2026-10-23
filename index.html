@@ -118,14 +118,23 @@
     <!-- VIEW ESTADIO (Público e Desempenho Combinados) -->
     <div id="view-estadio" class="hidden space-y-8">
 
-      <section class="glass-panel rounded-2xl p-5 sm:p-6 shadow-xl border border-[#C5A059]/30 flex items-start sm:items-center gap-4 relative overflow-hidden">
+      <section id="data-notice-card" class="glass-panel data-notice-card rounded-2xl p-5 sm:p-6 shadow-xl border border-[#C5A059]/30 relative overflow-hidden">
         <div class="absolute -right-8 -bottom-8 w-32 h-32 rounded-full bg-gradient-to-br from-[#8A1538]/20 via-[#0E4735]/20 to-[#C5A059]/20 blur-2xl pointer-events-none"></div>
-        <div class="p-3 rounded-xl bg-[#0E4735] text-[#C5A059] border border-[#C5A059]/30 shrink-0 relative z-10">
-          <i data-lucide="book-open" class="w-5 h-5"></i>
+        <div class="data-notice-header relative z-10">
+          <div class="p-3 rounded-xl bg-[#0E4735] text-[#C5A059] border border-[#C5A059]/30 shrink-0">
+            <i data-lucide="book-open" class="w-5 h-5"></i>
+          </div>
+          <div class="data-notice-title">
+            <p class="text-sm sm:text-base text-white/90 font-bold">Base com jogos oficiais (<span class="dynamic-year-range">...</span>)</p>
+            <p class="text-xs sm:text-sm text-white/60 mt-1">Avisos e critérios sobre os dados de público.</p>
+          </div>
+          <button type="button" data-action="toggle-data-notice" id="data-notice-toggle" class="data-notice-toggle" aria-expanded="false" aria-controls="data-notice-content">
+            <span id="data-notice-toggle-label">Ver avisos</span>
+            <i data-lucide="chevron-down" class="w-4 h-4 data-notice-chevron"></i>
+          </button>
         </div>
-        <div class="relative z-10">
-          <div class="text-sm sm:text-base text-white/90 font-medium leading-relaxed">
-            <p class="mb-4"><strong>Base com jogos oficiais (<span class="dynamic-year-range">...</span>)</strong></p>
+        <div id="data-notice-content" class="data-notice-content relative z-10" hidden>
+          <div class="text-sm sm:text-base text-white/90 font-medium leading-relaxed pt-5 mt-5 border-t border-white/10">
             <p class="mb-2"><strong>Avisos sobre os dados de público:</strong></p>
             <ul class="list-disc pl-5 space-y-3">
               <li><strong>Conmebol:</strong> Na ausência de boletins financeiros oficiais, em alguns jogos utilizamos estimativas divulgadas pela imprensa.</li>
@@ -383,6 +392,57 @@
         </div>
       </section>
 
+      <!-- Forma recente e sequências históricas -->
+      <section class="performance-insights-grid">
+        <div class="glass-panel performance-insight-card rounded-2xl p-5 sm:p-6 shadow-xl">
+          <div class="performance-insight-heading">
+            <div class="performance-insight-icon"><i data-lucide="chart-no-axes-column-increasing" class="w-5 h-5"></i></div>
+            <div>
+              <div class="recent-form-title-row"><h3 class="text-sm sm:text-base font-black uppercase tracking-wide text-white">Forma Recente <span class="text-white/45">· Últimos 5 jogos</span></h3><button type="button" class="streak-toggle recent-form-toggle" data-action="toggle-recent-form-matches" aria-expanded="false">Ver partidas <span aria-hidden="true">›</span></button></div>
+              <p class="text-xs text-white/50 mt-1">Últimos 5 jogos do recorte selecionado · Responde aos filtros aplicados</p>
+            </div>
+          </div>
+          <div id="recent-form-results" class="recent-form-results" aria-label="Forma recente"></div>
+          <div id="recent-form-matches" class="streak-matches recent-form-matches" hidden></div>
+          <div class="recent-form-metrics">
+            <div><span>Aproveitamento</span><strong id="recent-form-rate" class="text-emerald-400">-</strong></div>
+            <div><span>Gols marcados</span><strong id="recent-form-gf">-</strong></div>
+            <div><span>Gols sofridos</span><strong id="recent-form-ga">-</strong></div>
+          </div>
+        </div>
+
+        <div class="glass-panel performance-insight-card rounded-2xl p-5 sm:p-6 shadow-xl">
+          <div class="performance-insight-heading">
+            <div class="performance-insight-icon"><i data-lucide="trophy" class="w-5 h-5"></i></div>
+            <div>
+              <h3 class="text-sm sm:text-base font-black uppercase tracking-wide text-white">Sequências Históricas</h3>
+              <p class="text-xs text-white/50 mt-1">Maiores sequências no recorte selecionado · Responde aos filtros aplicados</p>
+            </div>
+          </div>
+          <div class="streak-grid">
+            <div class="streak-item">
+              <span>Maior sequência de vitórias</span>
+              <div class="streak-value-row">
+                <strong class="text-emerald-400"><b id="streak-wins-count">-</b> <small>jogos</small></strong>
+                <button type="button" class="streak-toggle" data-action="toggle-streak-matches" data-streak="wins" aria-expanded="false">Ver partidas <span aria-hidden="true">›</span></button>
+              </div>
+              <p id="streak-wins-period">-</p>
+              <div id="streak-wins-matches" class="streak-matches" hidden></div>
+            </div>
+            <div class="streak-item">
+              <span>Maior sequência invicta</span>
+              <div class="streak-value-row">
+                <strong class="text-[#F4C95D]"><b id="streak-unbeaten-count">-</b> <small>jogos</small></strong>
+                <strong id="streak-unbeaten-breakdown" class="streak-value-breakdown"></strong>
+                <button type="button" class="streak-toggle" data-action="toggle-streak-matches" data-streak="unbeaten" aria-expanded="false">Ver partidas <span aria-hidden="true">›</span></button>
+              </div>
+              <p id="streak-unbeaten-period">-</p>
+              <div id="streak-unbeaten-matches" class="streak-matches" hidden></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- GRÁFICOS DINÂMICOS GERAIS UNIFICADOS -->
       <div id="section-geral-temporada-competicao" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="glass-panel rounded-2xl p-6 shadow-xl flex flex-col">
@@ -570,17 +630,14 @@
               <thead class="catalog-sticky-head text-[11px] font-bold uppercase tracking-wider text-[#C5A059] border-b border-white/10">
                 <tr>
                   <th class="p-3"><button data-action="sort-catalog" data-sort-scope="main" data-sort-key="date" class="table-sort-button">Data <span class="sort-indicator"></span></button></th>
-                  <th class="p-3"><button data-action="sort-catalog" data-sort-scope="main" data-sort-key="time" class="table-sort-button">Horário <span class="sort-indicator"></span></button></th>
+                  <th class="p-3"><button data-action="sort-catalog" data-sort-scope="main" data-sort-key="opponent" class="table-sort-button">Adversário <span class="sort-indicator"></span></button></th>
+                  <th class="p-3 text-center"><button data-action="sort-catalog" data-sort-scope="main" data-sort-key="score" class="table-sort-button justify-center">Placar <span class="sort-indicator"></span></button></th>
                   <th class="p-3"><button data-action="sort-catalog" data-sort-scope="main" data-sort-key="competition" class="table-sort-button">Competição <span class="sort-indicator"></span></button></th>
                   <th class="p-3"><button data-action="sort-catalog" data-sort-scope="main" data-sort-key="homeAway" class="table-sort-button">Mando <span class="sort-indicator"></span></button></th>
-                  <th class="p-3"><button data-action="sort-catalog" data-sort-scope="main" data-sort-key="opponent" class="table-sort-button">Adversário <span class="sort-indicator"></span></button></th>
                   <th class="p-3"><button data-action="sort-catalog" data-sort-scope="main" data-sort-key="stadium" class="table-sort-button">Estádio <span class="sort-indicator"></span></button></th>
-                  <th class="p-3 text-center"><button data-action="sort-catalog" data-sort-scope="main" data-sort-key="score" class="table-sort-button justify-center">Placar <span class="sort-indicator"></span></button></th>
-                  <th class="p-3 text-right"><button data-action="sort-catalog" data-sort-scope="main" data-sort-key="attendance" class="table-sort-button justify-end">Público <span class="sort-indicator"></span></button></th>
-                  <th class="p-3 text-right"><button data-action="sort-catalog" data-sort-scope="main" data-sort-key="visitors" class="table-sort-button justify-end">Visitante <span class="sort-indicator"></span></button></th>
+                  <th class="p-3 text-right"><button data-action="sort-catalog" data-sort-scope="main" data-sort-key="attendance" class="table-sort-button justify-end">Público Total <span class="sort-indicator"></span></button></th>
+                  <th class="p-3 text-right"><button data-action="sort-catalog" data-sort-scope="main" data-sort-key="visitors" class="table-sort-button justify-end">Flu Visitante <span class="sort-indicator"></span></button></th>
                   <th class="p-3 text-right"><button data-action="sort-catalog" data-sort-scope="main" data-sort-key="south" class="table-sort-button justify-end">Sul Pagantes <span class="sort-indicator"></span></button></th>
-                  <th class="p-3 text-right"><button data-action="sort-catalog" data-sort-scope="main" data-sort-key="southRate" class="table-sort-button justify-end">Ocup. Sul <span class="sort-indicator"></span></button></th>
-                  <th class="p-3 text-center"><button data-action="sort-catalog" data-sort-scope="main" data-sort-key="presence" class="table-sort-button justify-center">Presença <span class="sort-indicator"></span></button></th>
                 </tr>
               </thead>
               <tbody id="table-body" class="divide-y divide-white/5 font-mono text-[12px]"></tbody>
@@ -747,6 +804,47 @@
             <i data-lucide="pie-chart" class="w-4 h-4 text-amber-400"></i>
           </div>
           <span class="text-[10px] text-white/40 mt-1">Capacidade ~20.000</span>
+        </div>
+      </section>
+
+      <!-- Forma recente e sequências históricas — Clássicos -->
+      <section class="performance-insights-grid">
+        <div class="glass-panel performance-insight-card rounded-2xl p-5 sm:p-6 shadow-xl">
+          <div class="performance-insight-heading">
+            <div class="performance-insight-icon"><i data-lucide="chart-no-axes-column-increasing" class="w-5 h-5"></i></div>
+            <div>
+              <div class="recent-form-title-row"><h3 class="text-sm sm:text-base font-black uppercase tracking-wide text-white">Forma Recente <span class="text-white/45">· Últimos 5 jogos</span></h3><button type="button" class="streak-toggle recent-form-toggle" data-action="toggle-classicos-recent-form-matches" aria-expanded="false">Ver partidas <span aria-hidden="true">›</span></button></div>
+              <p class="text-xs text-white/50 mt-1">Últimos 5 clássicos do recorte selecionado · Responde aos filtros aplicados</p>
+            </div>
+          </div>
+          <div id="classicos-recent-form-results" class="recent-form-results" aria-label="Forma recente nos clássicos"></div>
+          <div id="classicos-recent-form-matches" class="streak-matches recent-form-matches" hidden></div>
+          <div class="recent-form-metrics">
+            <div><span>Aproveitamento</span><strong id="classicos-recent-form-rate">-</strong></div>
+            <div><span>Gols marcados</span><strong id="classicos-recent-form-gf">-</strong></div>
+            <div><span>Gols sofridos</span><strong id="classicos-recent-form-ga">-</strong></div>
+          </div>
+        </div>
+        <div class="glass-panel performance-insight-card rounded-2xl p-5 sm:p-6 shadow-xl">
+          <div class="performance-insight-heading">
+            <div class="performance-insight-icon"><i data-lucide="trophy" class="w-5 h-5"></i></div>
+            <div>
+              <h3 class="text-sm sm:text-base font-black uppercase tracking-wide text-white">Sequências Históricas</h3>
+              <p class="text-xs text-white/50 mt-1">Maiores sequências em clássicos no recorte selecionado · Responde aos filtros aplicados</p>
+            </div>
+          </div>
+          <div class="streak-grid">
+            <div class="streak-item">
+              <span>Maior sequência de vitórias</span>
+              <div class="streak-value-row"><strong class="text-emerald-400"><b id="classicos-streak-wins-count">-</b> <small>jogos</small></strong><button type="button" class="streak-toggle" data-action="toggle-classicos-streak-matches" data-streak="wins" aria-expanded="false">Ver partidas <span aria-hidden="true">›</span></button></div>
+              <p id="classicos-streak-wins-period">-</p><div id="classicos-streak-wins-matches" class="streak-matches" hidden></div>
+            </div>
+            <div class="streak-item">
+              <span>Maior sequência invicta</span>
+              <div class="streak-value-row"><strong class="text-[#F4C95D]"><b id="classicos-streak-unbeaten-count">-</b> <small>jogos</small></strong><strong id="classicos-streak-unbeaten-breakdown" class="streak-value-breakdown"></strong><button type="button" class="streak-toggle" data-action="toggle-classicos-streak-matches" data-streak="unbeaten" aria-expanded="false">Ver partidas <span aria-hidden="true">›</span></button></div>
+              <p id="classicos-streak-unbeaten-period">-</p><div id="classicos-streak-unbeaten-matches" class="streak-matches" hidden></div>
+            </div>
+          </div>
         </div>
       </section>
 

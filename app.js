@@ -1,4 +1,4 @@
-const DASHBOARD_VERSION = '3.2.25';
+const DASHBOARD_VERSION = '3.2.29';
 
 const CONFIG = Object.freeze({
   googleSheetsCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVyyhMTbQRPjb1lXdljnsi6kjWt7mU5xKEeZRB24-Ic5hZKzkZCG9gIYvlN81CXVpd0SGc6e0XW18b/pub?gid=1810912358&single=true&output=csv",
@@ -990,18 +990,19 @@ function formatShortMatchDate(match) {
   return `${day}/${month}/${year}`;
 }
 
-function formatMonthYearMatchDate(match) {
+function formatCompactMatchDate(match) {
   if (!match || !match.data || match.data === '-') return '-';
   const timestamp = match.timestamp || computeTimestamp(match.data);
   if (!timestamp) return match.data;
   const date = new Date(timestamp);
+  const day = String(date.getDate()).padStart(2, '0');
   const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = String(date.getFullYear());
-  return `${month}/${year}`;
+  const year = String(date.getFullYear()).slice(-2);
+  return `${day}/${month}/${year}`;
 }
 
 function sequenceResponsiveDate(match) {
-  return `<span class="sequence-date sequence-date-mobile">${escapeHtml(formatShortMatchDate(match))}</span><span class="sequence-date sequence-date-desktop">${escapeHtml(formatMonthYearMatchDate(match))}</span>`;
+  return `<span class="sequence-date sequence-date-mobile">${escapeHtml(formatShortMatchDate(match))}</span><span class="sequence-date sequence-date-desktop">${escapeHtml(formatCompactMatchDate(match))}</span>`;
 }
 
 function formatMatchPeriod(startMatch, endMatch) {
@@ -1091,6 +1092,7 @@ function renderRecentFormMatches() {
         <span class="streak-opponent" title="${escapeHtml(m.adv || '-')}">${escapeHtml(m.adv || '-')}</span>
         <span class="streak-score streak-score-${(result || '').toLowerCase()}">${escapeHtml(m.placar || '-')}</span>
       </span>
+      <span class="recent-match-tournament" title="${escapeHtml(m.torneio || '-')}">${escapeHtml(m.torneio || '-')}</span>
     </div>`;
   }).join('') : '<div class="p-3 text-xs text-white/40">Nenhuma partida para exibir.</div>';
 }
@@ -2510,6 +2512,7 @@ function renderClassicosRecentFormMatches() {
         <span class="streak-opponent" title="${escapeHtml(m.adv || '-')}">${escapeHtml(m.adv || '-')}</span>
         <span class="streak-score streak-score-${(result || '').toLowerCase()}">${escapeHtml(m.placar || '-')}</span>
       </span>
+      <span class="recent-match-tournament" title="${escapeHtml(m.torneio || '-')}">${escapeHtml(m.torneio || '-')}</span>
     </div>`;
   }).join('') : '<div class="p-3 text-xs text-white/40">Nenhuma partida para exibir.</div>';
 }

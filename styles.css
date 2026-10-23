@@ -692,3 +692,65 @@ body {
     min-width: 3.25rem;
   }
 }
+
+/* V3.2.27 — cards analíticos 50/50 com altura compacta no desktop */
+@media (min-width: 768px) {
+  .performance-insights-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: stretch;
+  }
+  .performance-insight-card {
+    min-width: 0;
+    overflow: hidden;
+  }
+  .performance-insight-card .streak-matches {
+    overflow-x: hidden;
+    overflow-y: auto;
+    max-height: 7.25rem;
+    min-width: 0;
+  }
+  .performance-insight-card .recent-form-matches {
+    max-height: 6.25rem;
+  }
+  .performance-insight-card .streak-grid {
+    min-width: 0;
+  }
+  .performance-insight-card .streak-item {
+    min-width: 0;
+    overflow: hidden;
+  }
+}
+
+
+/* V3.2.28 — Forma Recente: Torneio no espaço livre do desktop, sem alterar o card */
+@media (min-width: 768px) {
+  .recent-match-row {
+    grid-template-columns: 5.9rem minmax(13rem, 16rem) minmax(0, 1fr);
+    gap: .7rem;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+  }
+  .recent-match-tournament {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: rgba(255,255,255,.68);
+    font-weight: 600;
+  }
+}
+@media (max-width: 767px) {
+  .recent-match-tournament { display: none; }
+}
+
+
+/* V3.2.29 — Sequências Históricas: DD/MM/AA no desktop sem alterar dimensões */
+@media (min-width: 641px) {
+  .streak-match-row.streak-match-row-sequence,
+  .classicos-streak-match-row.streak-match-row-sequence {
+    grid-template-columns: 4.6rem minmax(0, 1fr) 3.35rem;
+  }
+}

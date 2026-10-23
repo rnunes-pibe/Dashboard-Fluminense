@@ -1,4 +1,4 @@
-const DASHBOARD_VERSION = '3.2.14';
+const DASHBOARD_VERSION = '3.2.16';
 
 const CONFIG = Object.freeze({
   googleSheetsCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVyyhMTbQRPjb1lXdljnsi6kjWt7mU5xKEeZRB24-Ic5hZKzkZCG9gIYvlN81CXVpd0SGc6e0XW18b/pub?gid=1810912358&single=true&output=csv",
@@ -31,6 +31,9 @@ let filteredMatches = [];
 let tableCurrentPage = 1;
 const tablePageSize = CONFIG.tablePageSize;
 let searchDebounceTimer = null;
+let mainTableSort = { key: 'date', direction: 'desc' };
+let classicosTableSort = { key: 'date', direction: 'desc' };
+let currentFilteredClassicos = [];
 let semRivaisAtivo = false;
 const RIVAIS_RAPIDOS = ['flamengo', 'botafogo', 'vasco'];
 function isRivalRapido(adversario) {
@@ -1706,9 +1709,125 @@ function updateCharts() {
   renderSulBarChart("chartSetorSul", sulMatches);
 }
 
+function getMatchResult(match) {
+  if (match.gf === null || match.gf === undefined || match.ga === null || match.ga === undefined) return null;
+  if (match.gf > match.ga) return 'V';
+  if (match.gf < match.ga) return 'D';
+  return 'E';
+}
+
+function resultBadge(match) {
+  const result = getMatchResult(match);
+  const styles = {
+    V: 'bg-emerald-950/90 border-emerald-500/60 text-emerald-300',
+    E: 'result-draw',
+    D: 'bg-rose-950/90 border-rose-500/60 text-rose-300'
+  };
+  if (!result) return `<span class="font-bold text-white">${escapeHtml(match.placar)}</span>`;
+  return `<span class="inline-flex items-center gap-2 px-2 py-1 rounded-lg border ${styles[result]} font-sans font-bold whitespace-nowrap"><span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-black/25 text-[10px]">${result}</span><span class="font-mono text-white">${escapeHtml(match.placar)}</span></span>`;
+}
+
+function compareTableValues(a, b, key) {
+  const values = {
+    date: m => m.timestamp || computeTimestamp(m.data),
+    time: m => String(m.hora || ''),
+    competition: m => normalizeComparable(m.torneio),
+    homeAway: m => normalizeComparable(m.mando),
+    opponent: m => normalizeComparable(m.adv),
+    stadium: m => normalizeComparable(m.estadio),
+    score: m => ((m.gf ?? -1) * 100) + (m.ga ?? -1),
+    attendance: m => m.pub ?? -1,
+    visitors: m => m.pubVis ?? -1,
+    south: m => m.sul ?? -1,
+    southRate: m => m.sul ?? -1,
+    presence: m => normalizeComparable(m.presente)
+  };
+  const getter = values[key] || values.date;
+  const av = getter(a), bv = getter(b);
+  if (typeof av === 'number' && typeof bv === 'number') return av - bv;
+  return String(av).localeCompare(String(bv), 'pt-BR', { numeric: true, sensitivity: 'base' });
+}
+
+function sortedTableData(data, state) {
+  return [...data].sort((a, b) => {
+    const result = compareTableValues(a, b, state.key);
+    return state.direction === 'asc' ? result : -result;
+  });
+}
+
+function sortIndicator(state, key) {
+  if (state.key !== key) return '<span class="table-sort-neutral">↕</span>';
+  return `<span class="table-sort-active">${state.direction === 'asc' ? '↑' : '↓'}</span>`;
+}
+
+function updateSortIndicators(scope, state) {
+  document.querySelectorAll(`[data-sort-scope="${scope}"]`).forEach(button => {
+    const indicator = button.querySelector('.sort-indicator');
+    if (indicator) indicator.innerHTML = sortIndicator(state, button.dataset.sortKey);
+    button.setAttribute('aria-sort', state.key === button.dataset.sortKey ? (state.direction === 'asc' ? 'ascending' : 'descending') : 'none');
+  });
+}
+
+function sortCatalog(scope, key) {
+  const state = scope === 'classicos' ? classicosTableSort : mainTableSort;
+  if (state.key === key) state.direction = state.direction === 'asc' ? 'desc' : 'asc';
+  else {
+    state.key = key;
+    state.direction = ['date', 'attendance', 'visitors', 'south', 'southRate'].includes(key) ? 'desc' : 'asc';
+  }
+  if (scope === 'classicos') renderClassicosTable(currentFilteredClassicos);
+  else {
+    tableCurrentPage = 1;
+    renderTable();
+  }
+}
+
+function mainFilterSummary() {
+  const labels = {
+    temporada: 'Temporada', competicao: 'Competição', mando: 'Mando', adversario: 'Adversário',
+    estadio: 'Estádio', dia: 'Dia', horario: 'Horário', presente: 'Presença'
+  };
+  const items = [];
+  Object.entries(selectedState).forEach(([key, values]) => {
+    if (values.length) items.push(`${labels[key] || key}: ${values.join(', ')}`);
+  });
+  if (semRivaisAtivo) items.push('Sem Rivais');
+  const search = normalizeText(document.getElementById('search-adversario')?.value || '');
+  if (search) items.push(`Busca: “${search}”`);
+  return items;
+}
+
+function classicosFilterSummary() {
+  const items = [];
+  if (classicosState.competicao.length) items.push(`Competição: ${classicosState.competicao.join(', ')}`);
+  if (classicosState.adversario.length) items.push(`Adversário: ${classicosState.adversario.join(', ')}`);
+  if (classicosState.presente.length) items.push(`Presença: ${classicosState.presente.join(', ')}`);
+  if (CLASSICOS_DATA.length) {
+    const years = CLASSICOS_DATA.map(m => m.ano).filter(Number.isFinite);
+    const minAll = Math.min(...years), maxAll = Math.max(...years);
+    if (classicosState.minAno > minAll || classicosState.maxAno < maxAll) items.push(`Período: ${classicosState.minAno}-${classicosState.maxAno}`);
+  }
+  return items;
+}
+
+function renderCatalogSummary(scope, count) {
+  const isClassicos = scope === 'classicos';
+  const container = document.getElementById(isClassicos ? 'classicos-catalog-summary' : 'catalog-summary');
+  if (!container) return;
+  const items = isClassicos ? classicosFilterSummary() : mainFilterSummary();
+  const clearAction = isClassicos ? 'reset-classicos-filters' : 'reset-filters';
+  container.innerHTML = `
+    <div class="catalog-summary-count"><strong>${count}</strong> ${count === 1 ? 'partida encontrada' : 'partidas encontradas'}</div>
+    <div class="catalog-summary-filters">${items.length ? items.map(item => `<span>${escapeHtml(item)}</span>`).join('') : '<span class="catalog-summary-empty">Nenhum filtro restritivo aplicado</span>'}</div>
+    ${items.length ? `<button type="button" data-action="${clearAction}" class="catalog-summary-clear">Limpar filtros</button>` : ''}
+  `;
+}
+
 function renderTable() {
-  const validFiltered = filteredMatches;
+  const validFiltered = sortedTableData(filteredMatches, mainTableSort);
   const tbody = document.getElementById("table-body");
+  renderCatalogSummary('main', validFiltered.length);
+  updateSortIndicators('main', mainTableSort);
   if (!tbody) return;
   const start = (tableCurrentPage - 1) * tablePageSize;
   const end = start + tablePageSize;
@@ -1734,7 +1853,7 @@ function renderTable() {
       <td class="p-3">${mandoBadge}</td>
       <td class="p-3 font-sans font-bold text-white">${escapeHtml(m.adv)}</td>
       <td class="p-3 font-sans text-white/70 max-w-[150px] truncate" title="${escapeHtml(m.estadio)}">${escapeHtml(m.estadio)}</td>
-      <td class="p-3 text-center font-bold text-white">${escapeHtml(m.placar)}</td>
+      <td class="p-3 text-center">${resultBadge(m)}</td>
       <td class="p-3 text-right font-bold text-emerald-400">${fmt(m.pub)}</td>
       <td class="p-3 text-right text-rose-300">${fmt(m.pubVis)}</td>
       <td class="p-3 text-right text-cyan-300 font-semibold">${fmt(m.sul)}</td>
@@ -2005,6 +2124,8 @@ function applyClassicosFilters() {
     return true;
   });
 
+  currentFilteredClassicos = filteredClassicos;
+
   const tag = document.getElementById('classicos-matches-tag');
   if (tag) tag.textContent = `${filteredClassicos.length} partidas`;
 
@@ -2257,14 +2378,17 @@ function updateClassicosChart(data) {
 function renderClassicosTable(data) {
   const tbody = document.getElementById('classicos-table-body');
   if (!tbody) return;
-  if (data.length === 0) {
+  const sorted = sortedTableData(data, classicosTableSort);
+  renderCatalogSummary('classicos', sorted.length);
+  updateSortIndicators('classicos', classicosTableSort);
+  if (sorted.length === 0) {
     tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-white/40 italic">Nenhum clássico encontrado para os filtros selecionados.</td></tr>`;
     return;
   }
-  tbody.innerHTML = data.map(c => `<tr class="hover:bg-white/[0.04] transition border-b border-white/5">
+  tbody.innerHTML = sorted.map(c => `<tr class="hover:bg-white/[0.04] transition border-b border-white/5">
       <td class="p-3 text-white/90">${escapeHtml(c.data)}</td>
       <td class="p-3 font-sans font-bold text-white">${escapeHtml(c.adv)}</td>
-      <td class="p-3 text-center font-bold text-white">${escapeHtml(c.placar)}</td>
+      <td class="p-3 text-center">${resultBadge(c)}</td>
       <td class="p-3 font-sans text-[11px] text-white/80 max-w-[170px] truncate" title="${escapeHtml(c.torneio)}">${escapeHtml(c.torneio)}</td>
     </tr>`).join('');
 }
@@ -2314,6 +2438,7 @@ function handleDelegatedClick(event) {
     'export-filtered-csv': () => exportFilteredCsv(),
     'export-classicos-csv': () => exportClassicosFilteredCsv(),
     'navigate-page': () => navigatePage(Number(target.dataset.direction)),
+    'sort-catalog': () => sortCatalog(target.dataset.sortScope, target.dataset.sortKey),
     'switch-tab': () => switchTab(target.dataset.tab),
     'switch-table-tab': () => switchTableTab(target.dataset.tab),
     'switch-classicos-table-tab': () => switchClassicosTableTab(target.dataset.tab),

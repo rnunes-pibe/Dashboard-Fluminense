@@ -564,22 +564,23 @@
 
         <!-- CONTEÚDO: CATÁLOGO DE PARTIDAS -->
         <div id="content-catalogo" class="space-y-4">
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs text-white/80">
-              <thead class="text-[11px] font-bold uppercase tracking-wider bg-white/5 text-[#C5A059] border-b border-white/10">
+          <div id="catalog-summary" class="catalog-summary"></div>
+          <div class="catalog-scroll">
+            <table class="catalog-main-table w-full text-left text-xs text-white/80">
+              <thead class="catalog-sticky-head text-[11px] font-bold uppercase tracking-wider text-[#C5A059] border-b border-white/10">
                 <tr>
-                  <th class="p-3">Data</th>
-                  <th class="p-3">Horário</th>
-                  <th class="p-3">Competição</th>
-                  <th class="p-3">Mando</th>
-                  <th class="p-3">Adversário</th>
-                  <th class="p-3">Estádio</th>
-                  <th class="p-3 text-center">Placar</th>
-                  <th class="p-3 text-right">Público Total</th>
-                  <th class="p-3 text-right">Visitante</th>
-                  <th class="p-3 text-right">Sul Pagantes</th>
-                  <th class="p-3 text-right">Ocup. Sul</th>
-                  <th class="p-3 text-center">Presença</th>
+                  <th class="p-3"><button data-action="sort-catalog" data-sort-scope="main" data-sort-key="date" class="table-sort-button">Data <span class="sort-indicator"></span></button></th>
+                  <th class="p-3"><button data-action="sort-catalog" data-sort-scope="main" data-sort-key="time" class="table-sort-button">Horário <span class="sort-indicator"></span></button></th>
+                  <th class="p-3"><button data-action="sort-catalog" data-sort-scope="main" data-sort-key="competition" class="table-sort-button">Competição <span class="sort-indicator"></span></button></th>
+                  <th class="p-3"><button data-action="sort-catalog" data-sort-scope="main" data-sort-key="homeAway" class="table-sort-button">Mando <span class="sort-indicator"></span></button></th>
+                  <th class="p-3"><button data-action="sort-catalog" data-sort-scope="main" data-sort-key="opponent" class="table-sort-button">Adversário <span class="sort-indicator"></span></button></th>
+                  <th class="p-3"><button data-action="sort-catalog" data-sort-scope="main" data-sort-key="stadium" class="table-sort-button">Estádio <span class="sort-indicator"></span></button></th>
+                  <th class="p-3 text-center"><button data-action="sort-catalog" data-sort-scope="main" data-sort-key="score" class="table-sort-button justify-center">Placar <span class="sort-indicator"></span></button></th>
+                  <th class="p-3 text-right"><button data-action="sort-catalog" data-sort-scope="main" data-sort-key="attendance" class="table-sort-button justify-end">Público <span class="sort-indicator"></span></button></th>
+                  <th class="p-3 text-right"><button data-action="sort-catalog" data-sort-scope="main" data-sort-key="visitors" class="table-sort-button justify-end">Visitante <span class="sort-indicator"></span></button></th>
+                  <th class="p-3 text-right"><button data-action="sort-catalog" data-sort-scope="main" data-sort-key="south" class="table-sort-button justify-end">Sul Pagantes <span class="sort-indicator"></span></button></th>
+                  <th class="p-3 text-right"><button data-action="sort-catalog" data-sort-scope="main" data-sort-key="southRate" class="table-sort-button justify-end">Ocup. Sul <span class="sort-indicator"></span></button></th>
+                  <th class="p-3 text-center"><button data-action="sort-catalog" data-sort-scope="main" data-sort-key="presence" class="table-sort-button justify-center">Presença <span class="sort-indicator"></span></button></th>
                 </tr>
               </thead>
               <tbody id="table-body" class="divide-y divide-white/5 font-mono text-[12px]"></tbody>
@@ -815,14 +816,15 @@
 
         <!-- CONTEÚDO 1: Catálogo de Partidas CLÁSSICOS -->
         <div id="content-classicos-catalogo" class="space-y-4">
-          <div class="overflow-x-auto">
+          <div id="classicos-catalog-summary" class="catalog-summary"></div>
+          <div class="catalog-scroll">
             <table class="w-full text-left text-xs text-white/80">
-              <thead class="text-[11px] font-bold uppercase tracking-wider bg-white/5 text-[#C5A059] border-b border-white/10">
+              <thead class="catalog-sticky-head text-[11px] font-bold uppercase tracking-wider text-[#C5A059] border-b border-white/10">
                 <tr>
-                  <th class="p-3">Data</th>
-                  <th class="p-3">Adversário</th>
-                  <th class="p-3 text-center">Placar</th>
-                  <th class="p-3">Competição</th>
+                  <th class="p-3"><button data-action="sort-catalog" data-sort-scope="classicos" data-sort-key="date" class="table-sort-button">Data <span class="sort-indicator"></span></button></th>
+                  <th class="p-3"><button data-action="sort-catalog" data-sort-scope="classicos" data-sort-key="opponent" class="table-sort-button">Adversário <span class="sort-indicator"></span></button></th>
+                  <th class="p-3 text-center"><button data-action="sort-catalog" data-sort-scope="classicos" data-sort-key="score" class="table-sort-button justify-center">Placar <span class="sort-indicator"></span></button></th>
+                  <th class="p-3"><button data-action="sort-catalog" data-sort-scope="classicos" data-sort-key="competition" class="table-sort-button">Competição <span class="sort-indicator"></span></button></th>
                 </tr>
               </thead>
               <tbody id="classicos-table-body" class="divide-y divide-white/5 font-mono text-[12px]">

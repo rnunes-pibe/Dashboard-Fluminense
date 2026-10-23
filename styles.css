@@ -282,3 +282,124 @@ body {
     transform: translateY(0);
   }
 }
+
+
+/* V3.2.15 — Catálogo de Partidas */
+.catalog-scroll {
+  max-height: 70vh;
+  overflow: auto;
+  border-radius: .75rem;
+  scrollbar-gutter: stable;
+}
+.catalog-sticky-head th {
+  position: sticky;
+  top: 0;
+  z-index: 12;
+  background: #16231f;
+  box-shadow: 0 1px 0 rgba(255,255,255,.10);
+}
+.table-sort-button {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  color: inherit;
+  font: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  white-space: nowrap;
+  transition: color .15s ease;
+}
+.table-sort-button:hover { color: #f4d47f; }
+.table-sort-neutral { color: rgba(255,255,255,.28); font-size: .8em; }
+.table-sort-active { color: #f4d47f; font-size: 1.05em; }
+.catalog-summary {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+  flex-wrap: wrap;
+  padding: .65rem .8rem;
+  border: 1px solid rgba(197,160,89,.18);
+  border-radius: .75rem;
+  background: rgba(7,18,15,.55);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 11px;
+}
+.catalog-summary-count { color: rgba(255,255,255,.78); white-space: nowrap; }
+.catalog-summary-count strong { color: #E8C978; }
+.catalog-summary-filters { display: flex; gap: .4rem; flex-wrap: wrap; flex: 1; }
+.catalog-summary-filters > span:not(.catalog-summary-empty) {
+  padding: .22rem .48rem;
+  border-radius: .45rem;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.05);
+  color: rgba(255,255,255,.68);
+}
+.catalog-summary-empty { color: rgba(255,255,255,.38); font-style: italic; }
+.catalog-summary-clear { color: #67e8f9; font-weight: 700; white-space: nowrap; }
+.catalog-summary-clear:hover { color: white; text-decoration: underline; }
+@media (max-width: 639px) {
+  .catalog-scroll { max-height: 68vh; }
+  .catalog-summary { align-items: flex-start; }
+  .catalog-summary-filters { flex-basis: 100%; order: 3; }
+}
+
+
+/* V3.2.16 — Catálogo desktop compacto + empate mais distinto */
+.result-draw {
+  background: rgba(250, 204, 21, .16) !important;
+  border-color: #facc15 !important;
+  color: #fde047 !important;
+}
+.result-draw > span:first-child {
+  background: #facc15 !important;
+  color: #422006 !important;
+}
+
+@media (min-width: 1024px) {
+  /* No desktop, a tabela ocupa exatamente a largura do card. */
+  .catalog-scroll {
+    overflow-x: hidden;
+  }
+  .catalog-main-table {
+    width: 100%;
+    table-layout: fixed;
+  }
+  .catalog-main-table th,
+  .catalog-main-table td {
+    padding-left: .48rem !important;
+    padding-right: .48rem !important;
+  }
+  .catalog-main-table thead {
+    font-size: 10px !important;
+    letter-spacing: .035em !important;
+  }
+  .catalog-main-table .table-sort-button {
+    gap: .18rem;
+  }
+  /* Distribuição das 12 colunas = 100%. Estádio e Placar ficam adjacentes e compactos. */
+  .catalog-main-table th:nth-child(1), .catalog-main-table td:nth-child(1) { width: 7.5%; }
+  .catalog-main-table th:nth-child(2), .catalog-main-table td:nth-child(2) { width: 6.5%; }
+  .catalog-main-table th:nth-child(3), .catalog-main-table td:nth-child(3) { width: 12.5%; }
+  .catalog-main-table th:nth-child(4), .catalog-main-table td:nth-child(4) { width: 7.5%; }
+  .catalog-main-table th:nth-child(5), .catalog-main-table td:nth-child(5) { width: 10%; }
+  .catalog-main-table th:nth-child(6), .catalog-main-table td:nth-child(6) { width: 9.5%; }
+  .catalog-main-table th:nth-child(7), .catalog-main-table td:nth-child(7) { width: 7.5%; }
+  .catalog-main-table th:nth-child(8), .catalog-main-table td:nth-child(8) { width: 8%; }
+  .catalog-main-table th:nth-child(9), .catalog-main-table td:nth-child(9) { width: 7.5%; }
+  .catalog-main-table th:nth-child(10), .catalog-main-table td:nth-child(10) { width: 8.5%; }
+  .catalog-main-table th:nth-child(11), .catalog-main-table td:nth-child(11) { width: 7.5%; }
+  .catalog-main-table th:nth-child(12), .catalog-main-table td:nth-child(12) { width: 7.5%; }
+  .catalog-main-table td:nth-child(3),
+  .catalog-main-table td:nth-child(5),
+  .catalog-main-table td:nth-child(6) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .catalog-main-table td:nth-child(7) > span {
+    gap: .35rem !important;
+    padding-left: .45rem !important;
+    padding-right: .45rem !important;
+  }
+}

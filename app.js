@@ -1,4 +1,4 @@
-const DASHBOARD_VERSION = '3.2.29';
+const DASHBOARD_VERSION = '3.2.30';
 
 const CONFIG = Object.freeze({
   googleSheetsCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVyyhMTbQRPjb1lXdljnsi6kjWt7mU5xKEeZRB24-Ic5hZKzkZCG9gIYvlN81CXVpd0SGc6e0XW18b/pub?gid=1810912358&single=true&output=csv",
@@ -1117,7 +1117,7 @@ function toggleRecentFormMatches() {
 
 function updatePerformanceInsights() {
   const scored = filteredMatches.filter(m => getMatchResult(m));
-  const recent = scored.slice().sort((a, b) => (b.timestamp || computeTimestamp(b.data)) - (a.timestamp || computeTimestamp(a.data))).slice(0, 5);
+  const recent = scored.slice().sort((a, b) => (b.timestamp || computeTimestamp(b.data)) - (a.timestamp || computeTimestamp(a.data))).slice(0, 5).reverse();
   recentPerformanceMatches = recent;
   if (expandedRecentForm && !recent.length) expandedRecentForm = false;
   const recentResults = document.getElementById('recent-form-results');
@@ -2552,7 +2552,7 @@ function getFilteredClassicosForInsights() {
 function updateClassicosPerformanceInsights() {
   const data = getFilteredClassicosForInsights();
   const scored = data.filter(m => getMatchResult(m));
-  const recent = scored.slice().sort((a,b) => (b.timestamp || computeTimestamp(b.data)) - (a.timestamp || computeTimestamp(a.data))).slice(0,5);
+  const recent = scored.slice().sort((a,b) => (b.timestamp || computeTimestamp(b.data)) - (a.timestamp || computeTimestamp(a.data))).slice(0,5).reverse();
   classicosRecentMatches = recent;
   if (expandedClassicosRecentForm && !recent.length) expandedClassicosRecentForm = false;
   const results = document.getElementById('classicos-recent-form-results');

@@ -1,4 +1,4 @@
-const DASHBOARD_VERSION = '3.2.30';
+const DASHBOARD_VERSION = '3.2.32';
 
 const CONFIG = Object.freeze({
   googleSheetsCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVyyhMTbQRPjb1lXdljnsi6kjWt7mU5xKEeZRB24-Ic5hZKzkZCG9gIYvlN81CXVpd0SGc6e0XW18b/pub?gid=1810912358&single=true&output=csv",
@@ -936,6 +936,7 @@ function applyFilters() {
   
   updateAllDropdowns();
   updateFilterLabels();
+  updatePublicFiltersToggleSummary();
 
   const setTemp = selectedState.temporada.length > 0 ? new Set(selectedState.temporada) : null;
   const setComp = selectedState.competicao.length > 0 ? new Set(selectedState.competicao) : null;
@@ -967,6 +968,42 @@ function applyFilters() {
   syncFiltersToUrl();
 }
 
+
+function updatePublicFiltersToggleSummary() {
+  const countEl = document.getElementById('public-filters-active-count');
+  if (!countEl) return;
+  const count = mainFilterSummary().length;
+  countEl.textContent = count === 1 ? '1 ativo' : `${count} ativos`;
+  countEl.hidden = count === 0;
+}
+
+let publicFiltersOpenedThisSession = false;
+
+function setPublicFiltersExpanded(expanded) {
+  const content = document.getElementById('public-filters-content');
+  const button = document.getElementById('public-filters-toggle');
+  const label = document.getElementById('public-filters-toggle-label');
+  if (!content || !button || !label) return;
+  content.hidden = !expanded;
+  button.setAttribute('aria-expanded', String(expanded));
+  button.classList.toggle('is-open', expanded);
+  if (expanded && window.matchMedia('(max-width: 767px)').matches) publicFiltersOpenedThisSession = true;
+  button.classList.toggle('attention-seen', publicFiltersOpenedThisSession);
+  label.textContent = expanded ? 'Ocultar filtros' : 'Ver filtros';
+  if (!expanded) document.querySelectorAll('.ms-dropdown-menu').forEach(menu => menu.classList.add('hidden'));
+}
+
+function togglePublicFilters() {
+  const content = document.getElementById('public-filters-content');
+  if (!content) return;
+  setPublicFiltersExpanded(content.hidden);
+}
+
+function initPublicFiltersPanel() {
+  setPublicFiltersExpanded(!window.matchMedia('(max-width: 767px)').matches);
+  updatePublicFiltersToggleSummary();
+}
+
 function toggleDataNotice() {
   const content = document.getElementById('data-notice-content');
   const button = document.getElementById('data-notice-toggle');
@@ -977,6 +1014,7 @@ function toggleDataNotice() {
   button.setAttribute('aria-expanded', String(opening));
   label.textContent = opening ? 'Ocultar avisos' : 'Ver avisos';
   button.classList.toggle('is-open', opening);
+  if (opening) button.classList.add('attention-seen');
 }
 
 function formatShortMatchDate(match) {
@@ -2763,6 +2801,7 @@ function handleDelegatedClick(event) {
   const actions = {
     'refresh-data': () => fetchLiveGoogleSheet(),
     'toggle-data-notice': () => toggleDataNotice(),
+    'toggle-public-filters': () => togglePublicFilters(),
     'toggle-streak-matches': () => toggleStreakMatches(target.dataset.streak),
     'toggle-recent-form-matches': () => toggleRecentFormMatches(),
     'toggle-classicos-streak-matches': () => toggleClassicosStreakMatches(target.dataset.streak),
@@ -2815,6 +2854,7 @@ function initDashboard() {
   initEventHandlers();
   initChartRecoveryHandlers();
   restoreFiltersFromUrl();
+  initPublicFiltersPanel();
   if (window.lucide) lucide.createIcons();
   fetchLiveGoogleSheet();
 }

@@ -754,3 +754,49 @@ body {
     grid-template-columns: 4.6rem minmax(0, 1fr) 3.35rem;
   }
 }
+
+
+/* V3.2.31 — filtros da aba Público retráteis */
+.public-filters-toggle { display:inline-flex; align-items:center; justify-content:center; gap:.5rem; padding:.45rem .75rem; border:1px solid rgba(197,160,89,.55); border-radius:.7rem; color:#e7bd63; background:rgba(0,0,0,.18); font-size:.72rem; font-weight:800; white-space:nowrap; transition:.2s ease; }
+.public-filters-toggle:hover { background:rgba(197,160,89,.08); color:#f4d38a; }
+.public-filters-chevron { transition:transform .2s ease; }
+.public-filters-toggle.is-open .public-filters-chevron { transform:rotate(180deg); }
+.public-filters-active-count { padding:.12rem .42rem; border-radius:999px; background:rgba(16,201,139,.13); border:1px solid rgba(16,201,139,.35); color:#6ee7b7; font-size:.64rem; font-weight:800; }
+.public-filters-content[hidden] { display:none !important; }
+@media (max-width: 767px) {
+  .public-filters-actions { width:100%; flex-wrap:wrap; }
+  .public-filters-toggle { width:100%; order:-1; min-height:2.35rem; }
+  .public-filters-actions > button[data-action="reset-filters"] { flex:1 1 auto; }
+  .public-filters-actions > div { flex:0 1 auto; }
+}
+
+/* V3.2.32 — atenção discreta somente nos controles recolhidos.
+   Animações não afetam largura, altura ou fluxo dos cards. */
+@keyframes expandable-gold-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(197,160,89,0); border-color: rgba(197,160,89,.55); }
+  45% { box-shadow: 0 0 0 3px rgba(197,160,89,.12), 0 0 13px rgba(231,189,99,.22); border-color: rgba(244,211,138,.95); }
+}
+@keyframes expandable-chevron-nudge {
+  0%, 100% { translate: 0 0; }
+  45% { translate: 0 3px; }
+}
+.data-notice-toggle:not(.is-open):not(.attention-seen),
+.public-filters-toggle:not(.is-open):not(.attention-seen) {
+  animation: expandable-gold-pulse 1.25s ease-in-out 3;
+}
+.data-notice-toggle:not(.is-open):not(.attention-seen) .data-notice-chevron,
+.public-filters-toggle:not(.is-open):not(.attention-seen) .public-filters-chevron {
+  animation: expandable-chevron-nudge 1.25s ease-in-out 3;
+}
+@media (max-width: 767px) {
+  .data-notice-toggle:not(.is-open):not(.attention-seen) .data-notice-chevron,
+  .public-filters-toggle:not(.is-open):not(.attention-seen) .public-filters-chevron {
+    animation: expandable-chevron-nudge 3.5s ease-in-out infinite;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .data-notice-toggle, .public-filters-toggle,
+  .data-notice-chevron, .public-filters-chevron {
+    animation: none !important;
+  }
+}

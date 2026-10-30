@@ -153,8 +153,8 @@
         </div>
       </section>
       
-      <section class="glass-panel rounded-2xl p-6 shadow-2xl relative z-30">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 border-b border-white/10 pb-3.5">
+      <section id="public-filters-card" class="glass-panel rounded-2xl p-6 shadow-2xl relative z-30">
+        <div class="public-filters-header flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-3.5">
           <div class="flex items-center gap-2.5">
             <div class="p-2 rounded-lg bg-[#0E4735] text-[#C5A059] border border-[#C5A059]/30">
               <i data-lucide="sliders-horizontal" class="w-4 h-4"></i>
@@ -166,7 +166,12 @@
               <p class="text-xs text-white/50">Cruze mandos, temporadas, competições, adversários, dias e horários</p>
             </div>
           </div>
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-3 public-filters-actions">
+            <button type="button" id="public-filters-toggle" data-action="toggle-public-filters" aria-expanded="true" aria-controls="public-filters-content" class="public-filters-toggle">
+              <span id="public-filters-toggle-label">Ocultar filtros</span>
+              <span id="public-filters-active-count" class="public-filters-active-count" hidden></span>
+              <i data-lucide="chevron-down" class="w-3.5 h-3.5 public-filters-chevron"></i>
+            </button>
             <button data-action="reset-filters" class="text-xs font-semibold text-[#C5A059] hover:text-white transition flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 hover:border-[#C5A059]/60 shadow-sm active:scale-95">
               <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
               <span>Restaurar Padrão</span>
@@ -178,6 +183,7 @@
           </div>
         </div>
 
+        <div id="public-filters-content" class="public-filters-content mt-5">
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
           
           <div class="relative" id="dropdown-container-mando">
@@ -257,6 +263,7 @@
         <div id="active-badges-container" class="mt-4 pt-3.5 border-t border-white/10 flex flex-wrap items-center gap-2 text-xs">
           <span class="text-white/40 text-[11px] uppercase tracking-wider font-semibold">Filtros Ativos:</span>
           <div id="active-badges-list" class="flex flex-wrap items-center gap-1.5"></div>
+        </div>
         </div>
       </section>
 

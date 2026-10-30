@@ -1193,3 +1193,298 @@ html[data-theme="light"] #content-catalogo .catalog-sticky-head th .sort-indicat
 html[data-theme="light"] #content-classicos-catalogo .catalog-sticky-head th .sort-indicator {
   color: #E6C06A !important;
 }
+
+/* V3.2.40: seção discreta de rivais */
+.rivals-menu-wrap{position:relative;align-self:center}.rivals-menu-wrap>button{font-size:19px;line-height:1;width:23px;height:28px;opacity:.28;color:inherit;border-radius:6px;transition:opacity .15s}.rivals-menu-wrap>button:hover,.rivals-menu-wrap>button:focus-visible{opacity:.85;background:rgba(127,154,140,.1)}#rivals-menu{position:absolute;right:0;top:100%;width:225px;z-index:100;background:#17251f;color:#f0f4f1;border:1px solid rgba(197,160,89,.25);border-radius:10px;box-shadow:0 12px 28px rgba(0,0,0,.24);padding:6px}#rivals-menu.hidden{display:none}#rivals-menu button{width:100%;text-align:left;padding:11px;border-radius:6px;font-size:13px;font-weight:700}#rivals-menu button:hover{background:rgba(197,160,89,.13)}#rivals-menu small{display:block;font-size:10px;opacity:.7;margin-top:3px;font-weight:400}
+.rivals-intro h1{font-size:clamp(22px,3vw,30px);font-weight:800;color:#d4bb79}.rivals-intro p,.rivals-help{font-size:12px;opacity:.72}.rivals-card{background:#12221b;border:1px solid rgba(197,160,89,.2);border-radius:15px;padding:20px;box-shadow:0 8px 22px rgba(0,0,0,.1)}.rivals-card h2{font-size:16px;font-weight:800;margin-bottom:14px}.rivals-bar-row{display:grid;grid-template-columns:190px minmax(0,1fr);gap:12px;align-items:center;margin:10px 0}.rivals-bar-label{font-size:12px;font-weight:650}.rivals-bar{display:flex;overflow:hidden;border-radius:5px;height:23px;background:#b7c0c7}.rivals-bar-segment{display:flex;align-items:center;justify-content:center;color:white;font-size:11px;font-weight:800;min-width:0;border-right:2px solid rgba(255,255,255,.12)}.rivals-bar-segment:last-child{border-right:0}.rivals-legend{display:flex;flex-wrap:wrap;justify-content:center;gap:16px;margin-top:16px;font-size:11px}.rivals-legend span{display:flex;gap:5px;align-items:center}.rivals-legend i{width:10px;height:10px;border-radius:2px}.rivals-chart{height:350px;position:relative}.rivals-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:15px}.rivals-tabs button{font-size:12px;padding:9px 13px;border-radius:7px;background:rgba(127,154,140,.15);font-weight:700}.rivals-tabs button.is-active{background:#104c37;color:white}.rivals-summary{font-size:13px;margin-bottom:12px}.rivals-table-wrap{max-height:430px;overflow:auto}.rivals-table{width:100%;border-collapse:collapse;font-size:12px;min-width:590px}.rivals-table th{position:sticky;top:0;text-align:left;background:#104c37;color:#e6c06a;padding:10px;white-space:nowrap}.rivals-table td{padding:9px 10px;border-bottom:1px solid rgba(127,154,140,.16)}
+html[data-theme="light"] #rivals-menu{background:white;color:#294735;border-color:#c9dccf}html[data-theme="light"] .rivals-card{background:white;color:#294735;border-color:#c9dccf}html[data-theme="light"] .rivals-intro h1{color:#104c37}html[data-theme="light"] .rivals-tabs button{background:#e8f1eb;color:#294735}html[data-theme="light"] .rivals-tabs button.is-active{background:#104c37;color:white}
+@media(max-width:640px){.rivals-card{padding:13px}.rivals-bar-row{grid-template-columns:1fr;gap:4px}.rivals-chart{height:310px}.rivals-tabs button{flex:1;font-size:11px;padding:8px 5px}}
+
+/* V3.2.41 — compact view toggles for both historical balance charts. */
+.saldo-mode-switch{display:flex;gap:5px;flex-wrap:wrap;align-items:center;justify-content:flex-end}
+.saldo-mode-switch button{border:1px solid rgba(197,160,89,.35);border-radius:7px;padding:7px 10px;font-size:11px;font-weight:700;color:#c6d4c9;background:rgba(255,255,255,.04);transition:background .15s,color .15s}
+.saldo-mode-switch button.is-active{background:#104c37;color:white;border-color:#c5a059}
+.saldo-mode-switch button:focus-visible{outline:2px solid #c5a059;outline-offset:2px}
+.rivals-saldo-mode{margin:8px 0 12px}
+html[data-theme="light"] .saldo-mode-switch button{color:#294735;background:#e8f1eb;border-color:#c9dccf}
+html[data-theme="light"] .saldo-mode-switch button.is-active{color:#fff;background:#104c37;border-color:#104c37}
+@media(max-width:640px){.saldo-mode-switch{justify-content:flex-start}.saldo-mode-switch button{padding:6px 9px}}
+
+/* V3.2.42 — Menu aprovado e novos filtros/cards (ambos os temas) */
+#rivals-menu{width:282px;padding:7px;border-radius:14px;background:#fefefe;color:#294735;box-shadow:0 8px 22px rgba(0,0,0,.14)}
+#rivals-menu button{background:#f5f3eb;color:#244835;border-radius:10px;padding:15px 14px;font-size:14px;line-height:1.35}
+#rivals-menu button:hover{background:#eeeade}#rivals-menu button strong{display:block;font-weight:800}#rivals-menu button span{display:block;color:#839187;font-size:12px;margin-top:5px;font-weight:400}
+.rivals-filter-card{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:12px}
+.rivals-filter-card>label,.rivals-years{display:flex;flex-direction:column;gap:9px;background:#12221b;border:1px solid rgba(197,160,89,.2);padding:15px;border-radius:14px;font-weight:700;color:#e5c078}
+.rivals-filter-card select,.rivals-performance-fields select{width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(197,160,89,.3);border-radius:10px;padding:11px 12px;color:inherit;font-size:14px}
+.rivals-filter-card select option,.rivals-performance-fields select option{color:#193b2b;background:white}
+.rivals-years-title{display:flex;justify-content:space-between;gap:8px}.rivals-years-title output{font-size:12px;background:rgba(197,160,89,.14);padding:4px 7px;border-radius:6px}
+.rivals-year-sliders{display:flex;gap:12px}.rivals-year-sliders input{width:50%;accent-color:#c5a059}
+.rivals-performance-fields{display:grid;grid-template-columns:1fr 1fr 1.25fr;gap:18px;margin-top:15px;align-items:end}
+.rivals-performance-fields label{display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:700}
+.rivals-selection-info{display:flex;flex-direction:column;gap:5px;padding:10px 12px;background:rgba(128,154,138,.12);border-radius:10px;font-size:12px}
+.rivals-selection-info span{font-weight:400}.rivals-performance-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.rivals-insight-card h2{font-size:15px}.rivals-insight-card .rivals-help{margin-top:-7px;margin-bottom:12px}
+.rivals-link{font-size:12px;color:#62a3ff;font-weight:700;margin-left:7px}.rivals-link:disabled{opacity:.35;cursor:default}
+.rivals-recent-circles{display:flex;gap:10px;min-height:57px;align-items:center}.rivals-result{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-weight:800;color:white}
+.rivals-result-V{background:#13c68d}.rivals-result-E{background:#ffce16;color:#1c211d}.rivals-result-D{background:#ff4164}
+.rivals-recent-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid rgba(128,154,138,.25);padding-top:10px;gap:8px}
+.rivals-recent-kpis>div+div{border-left:1px solid rgba(128,154,138,.25);padding-left:12px}
+.rivals-insight-card small{display:block;font-size:11px;opacity:.8;font-weight:800}.rivals-recent-kpis strong{font-size:24px;color:#17b983}
+.rivals-streak-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px}.rivals-streak-grid>div+div{border-left:1px solid rgba(128,154,138,.25);padding-left:16px}
+.rivals-streak-number{display:flex;align-items:center;flex-wrap:wrap;gap:5px;font-size:14px;font-weight:700}.rivals-streak-number strong{font-size:36px;color:#17b983}
+.rivals-streak-grid>div+div .rivals-streak-number strong{color:#c5a059}.rivals-streak-grid p{font-size:12px;opacity:.75}
+.rivals-insight-list{margin-top:12px;max-height:220px;overflow-y:auto;border-top:1px solid rgba(128,154,138,.25)}.rivals-insight-list[hidden]{display:none}
+.rivals-insight-row{display:grid;grid-template-columns:90px 1fr 65px 1fr;gap:8px;padding:8px 2px;font-size:11px;border-bottom:1px solid rgba(128,154,138,.15)}
+html[data-theme="light"] .rivals-filter-card>label,html[data-theme="light"] .rivals-years{background:#fff;color:#176045;border-color:#c9dccf}
+html[data-theme="light"] .rivals-filter-card select,html[data-theme="light"] .rivals-performance-fields select{background:white;color:#294735;border-color:#bdd5c4}
+@media(max-width:850px){.rivals-performance-grid{grid-template-columns:1fr}.rivals-performance-fields{grid-template-columns:1fr 1fr}.rivals-selection-info{grid-column:1/-1}}
+@media(max-width:600px){.rivals-filter-card,.rivals-performance-fields{grid-template-columns:1fr}.rivals-selection-info{grid-column:auto}.rivals-streak-grid{gap:8px}.rivals-insight-row{grid-template-columns:70px 1fr 55px;}.rivals-insight-row span:last-child{display:none}}
+
+
+/* V3.2.43 — Shared match details for all three dashboard sections. */
+@media(min-width:851px){
+ .performance-insights-grid,.rivals-performance-grid{
+  display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+ }
+ .performance-insights-grid > *, .rivals-performance-grid > *{
+  min-width:0!important;max-width:100%;box-sizing:border-box;
+ }
+}
+.performance-insight-card,.rivals-insight-card{min-width:0}
+.performance-insight-card .streak-matches,.rivals-insight-list{
+ overflow-x:hidden;max-width:100%;box-sizing:border-box;
+}
+.shared-match-row{
+ display:grid!important;grid-template-columns:minmax(83px,1.05fr) minmax(64px,1fr) minmax(54px,.8fr) minmax(72px,1.1fr)!important;
+ gap:7px;align-items:center;padding:8px 5px;border-bottom:1px solid rgba(145,164,152,.19);
+ font-size:11px;line-height:1.35;min-width:0;
+}
+.shared-match-row > span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.shared-match-head{position:sticky;top:0;z-index:3;background:#1b3027;color:#e6c06a;font-size:10px;font-weight:800;letter-spacing:.025em}
+.shared-match-score{display:inline-block!important;width:max-content;max-width:100%;border-radius:5px;padding:3px 5px;font-weight:800!important;color:#fff!important;text-align:center}
+.shared-match-score-V{background:#126d4b!important}
+.shared-match-score-E{background:#a87812!important}
+.shared-match-score-D{background:#a42d43!important}
+html[data-theme="light"] .shared-match-row{color:#294735!important}
+html[data-theme="light"] .shared-match-row .shared-match-date,
+html[data-theme="light"] .shared-match-row .shared-match-opponent,
+html[data-theme="light"] .shared-match-row .shared-match-comp{color:#294735!important}
+html[data-theme="light"] .shared-match-head{background:#e8f1eb!important;color:#104c37!important}
+html[data-theme="light"] .shared-match-head span{color:#104c37!important}
+html[data-theme="light"] .shared-match-score{color:#fff!important}
+.rivals-multi{position:relative;min-width:0}
+.rivals-multi-trigger{width:100%;min-height:42px;text-align:left;border:1px solid rgba(197,160,89,.3);border-radius:10px;padding:9px 30px 9px 12px;font-size:13px;position:relative;background:rgba(255,255,255,.06)}
+.rivals-multi-trigger:after{content:'⌄';position:absolute;right:12px}
+.rivals-multi-panel{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:80;padding:9px;background:#17251f;border:1px solid #a99a68;border-radius:10px;box-shadow:0 12px 20px rgba(0,0,0,.2)}
+.rivals-multi-panel[hidden]{display:none}
+.rivals-multi-panel label{display:flex!important;flex-direction:row!important;align-items:center;gap:9px;padding:7px 5px;cursor:pointer;font-weight:500}
+.rivals-multi-panel input{accent-color:#c5a059;width:16px;height:16px}
+html[data-theme="light"] .rivals-multi-trigger{background:#fff;border-color:#bdd5c4;color:#294735}
+html[data-theme="light"] .rivals-multi-panel{background:#fff;color:#294735;border-color:#c9dccf}
+@media(max-width:600px){
+ .shared-match-row{grid-template-columns:80px minmax(55px,1fr) 55px!important}
+ .shared-match-row>span:nth-child(4){display:none}
+}
+
+
+/* V3.2.44 — uniform six-card presentation and full-width historical details */
+.performance-insights-grid,.rivals-performance-grid{align-items:stretch}
+.performance-insight-card,.rivals-insight-card{min-width:0;overflow:hidden}
+.shared-streak-details{width:100%;min-width:0;margin-top:12px}
+.shared-streak-details:has(> :not([hidden])){border-top:1px solid rgba(128,154,138,.22);padding-top:8px}
+.shared-streak-details > [hidden]{display:none!important}
+.performance-insight-card .shared-streak-details .streak-matches,
+.rivals-insight-card .shared-streak-details .rivals-insight-list{
+ width:100%;max-width:100%;max-height:210px;overflow-y:auto;overflow-x:hidden;
+ box-sizing:border-box;margin-top:0;
+}
+.performance-insight-card .recent-form-matches,
+.rivals-insight-card #rivals-recent-list{
+ max-height:210px;overflow-y:auto;overflow-x:hidden;margin-top:12px;
+}
+.performance-insight-card .shared-match-row,
+.rivals-insight-card .shared-match-row{
+ grid-template-columns:minmax(85px,1fr) minmax(80px,1.1fr) minmax(57px,.72fr) minmax(92px,1fr)!important;
+ column-gap:9px;padding:9px 7px;
+}
+.performance-insight-card .shared-match-head,
+.rivals-insight-card .shared-match-head{
+ font-size:10px;letter-spacing:0;white-space:nowrap;
+}
+.performance-insight-card .shared-match-row>span,
+.rivals-insight-card .shared-match-row>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.performance-insight-card .shared-match-row>span:nth-child(4),
+.rivals-insight-card .shared-match-row>span:nth-child(4){display:block}
+.performance-insight-card .shared-match-head>span,
+.rivals-insight-card .shared-match-head>span{overflow:visible;text-overflow:clip}
+.performance-insight-card .shared-match-row .shared-match-comp,
+.rivals-insight-card .shared-match-row .shared-match-comp{font-size:10.5px}
+@media(max-width:600px){
+ .performance-insight-card .shared-match-row,
+ .rivals-insight-card .shared-match-row{
+  grid-template-columns:minmax(74px,1fr) minmax(58px,1fr) minmax(48px,.7fr) minmax(68px,.9fr)!important;
+  gap:4px;padding:8px 3px;font-size:10px;
+ }
+ .performance-insight-card .shared-match-head,
+ .rivals-insight-card .shared-match-head{font-size:9px}
+ .performance-insight-card .shared-match-head>span:nth-child(2),
+ .rivals-insight-card .shared-match-head>span:nth-child(2){font-size:0}
+ .performance-insight-card .shared-match-head>span:nth-child(2):after,
+ .rivals-insight-card .shared-match-head>span:nth-child(2):after{content:'ADV.';font-size:9px}
+ .performance-insight-card .shared-match-head>span:nth-child(4),
+ .rivals-insight-card .shared-match-head>span:nth-child(4){font-size:0}
+ .performance-insight-card .shared-match-head>span:nth-child(4):after,
+ .rivals-insight-card .shared-match-head>span:nth-child(4):after{content:'COMP.';font-size:9px}
+}
+
+.rivals-insight-heading{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-height:40px}
+.rivals-insight-heading .performance-insight-icon{width:2.4rem;height:2.4rem;flex:0 0 2.4rem}
+.rivals-insight-card .rivals-help{margin-top:0;margin-bottom:12px}
+
+
+/* V3.2.45 — cabeçalho + cinco partidas completas sem cortar a última linha.
+   A rolagem continua disponível para sequências com mais de cinco partidas. */
+.performance-insight-card .recent-form-matches,
+.rivals-insight-card #rivals-recent-list,
+.performance-insight-card .shared-streak-details .streak-matches,
+.rivals-insight-card .shared-streak-details .rivals-insight-list {
+  max-height: 300px;
+}
+
+
+/* V3.2.46: Historical detail lists must remain INSIDE their own cards. */
+.performance-insights-grid > .performance-insight-card,
+.rivals-performance-grid > .rivals-insight-card {min-width:0;position:relative}
+.performance-insight-card > .shared-streak-details,
+.rivals-insight-card > .shared-streak-details{
+ display:block;position:static;grid-column:auto;width:100%;max-width:100%;
+ min-width:0;box-sizing:border-box;clear:both;
+}
+.performance-insight-card > .shared-streak-details .streak-matches,
+.rivals-insight-card > .shared-streak-details .rivals-insight-list{
+ width:100%;max-width:100%;box-sizing:border-box;
+}
+/* Light mode: darker, legible palette for public/performance KPI cards only. */
+html[data-theme="light"] .glass-panel:has(> div > #kpi-partidas),
+html[data-theme="light"] .glass-panel:has(> div > #kpi-media-geral),
+html[data-theme="light"] .glass-panel:has(> div > #kpi-media-mandante),
+html[data-theme="light"] .glass-panel:has(> div > #kpi-media-visitante),
+html[data-theme="light"] .glass-panel:has(> div > #kpi-media-sul),
+html[data-theme="light"] .glass-panel:has(> div > #kpi-taxa-sul),
+html[data-theme="light"] .glass-panel:has(> div > [id^="estadio-kpi-"]){
+ border-color:#d5e2d8;
+}
+
+html[data-theme="light"] #kpi-partidas, html[data-theme="light"] .glass-panel:has(#kpi-partidas) > span:first-child, html[data-theme="light"] .glass-panel:has(#kpi-partidas) > div i {color:#176346!important;}
+
+html[data-theme="light"] #kpi-media-geral, html[data-theme="light"] .glass-panel:has(#kpi-media-geral) > span:first-child, html[data-theme="light"] .glass-panel:has(#kpi-media-geral) > div i {color:#B38632!important;}
+
+html[data-theme="light"] #kpi-media-mandante, html[data-theme="light"] .glass-panel:has(#kpi-media-mandante) > span:first-child, html[data-theme="light"] .glass-panel:has(#kpi-media-mandante) > div i {color:#008E79!important;}
+
+html[data-theme="light"] #kpi-media-visitante, html[data-theme="light"] .glass-panel:has(#kpi-media-visitante) > span:first-child, html[data-theme="light"] .glass-panel:has(#kpi-media-visitante) > div i {color:#C65B70!important;}
+
+html[data-theme="light"] #kpi-media-sul, html[data-theme="light"] .glass-panel:has(#kpi-media-sul) > span:first-child, html[data-theme="light"] .glass-panel:has(#kpi-media-sul) > div i {color:#168DA5!important;}
+
+html[data-theme="light"] #kpi-taxa-sul, html[data-theme="light"] .glass-panel:has(#kpi-taxa-sul) > span:first-child, html[data-theme="light"] .glass-panel:has(#kpi-taxa-sul) > div i {color:#B78A16!important;}
+
+html[data-theme="light"] #estadio-kpi-vitorias, html[data-theme="light"] .glass-panel:has(#estadio-kpi-vitorias) > span:first-child, html[data-theme="light"] .glass-panel:has(#estadio-kpi-vitorias) > div i {color:#176346!important;}
+
+html[data-theme="light"] #estadio-kpi-empates, html[data-theme="light"] .glass-panel:has(#estadio-kpi-empates) > span:first-child, html[data-theme="light"] .glass-panel:has(#estadio-kpi-empates) > div i {color:#B38632!important;}
+
+html[data-theme="light"] #estadio-kpi-derrotas, html[data-theme="light"] .glass-panel:has(#estadio-kpi-derrotas) > span:first-child, html[data-theme="light"] .glass-panel:has(#estadio-kpi-derrotas) > div i {color:#C13D56!important;}
+
+html[data-theme="light"] #estadio-kpi-gp, html[data-theme="light"] .glass-panel:has(#estadio-kpi-gp) > span:first-child, html[data-theme="light"] .glass-panel:has(#estadio-kpi-gp) > div i {color:#168DA5!important;}
+
+html[data-theme="light"] #estadio-kpi-gc, html[data-theme="light"] .glass-panel:has(#estadio-kpi-gc) > span:first-child, html[data-theme="light"] .glass-panel:has(#estadio-kpi-gc) > div i {color:#8762B2!important;}
+
+html[data-theme="light"] #estadio-kpi-aproveitamento, html[data-theme="light"] .glass-panel:has(#estadio-kpi-aproveitamento) > span:first-child, html[data-theme="light"] .glass-panel:has(#estadio-kpi-aproveitamento) > div i {color:#A57A2D!important;}
+
+/* V3.2.47: shared light-theme KPI colors, title/value/icon only. */
+html[data-theme="light"] .glass-panel:has(#estadio-kpi-vitorias) > span:first-child,html[data-theme="light"] #estadio-kpi-vitorias,html[data-theme="light"] .glass-panel:has(#estadio-kpi-vitorias) i[data-lucide],html[data-theme="light"] .glass-panel:has(#estadio-kpi-vitorias) svg.lucide {color:#176346!important;}
+html[data-theme="light"] .glass-panel:has(#estadio-kpi-empates) > span:first-child,html[data-theme="light"] #estadio-kpi-empates,html[data-theme="light"] .glass-panel:has(#estadio-kpi-empates) i[data-lucide],html[data-theme="light"] .glass-panel:has(#estadio-kpi-empates) svg.lucide {color:#B38632!important;}
+html[data-theme="light"] .glass-panel:has(#estadio-kpi-derrotas) > span:first-child,html[data-theme="light"] #estadio-kpi-derrotas,html[data-theme="light"] .glass-panel:has(#estadio-kpi-derrotas) i[data-lucide],html[data-theme="light"] .glass-panel:has(#estadio-kpi-derrotas) svg.lucide {color:#B91C1C!important;}
+html[data-theme="light"] .glass-panel:has(#estadio-kpi-gp) > span:first-child,html[data-theme="light"] #estadio-kpi-gp,html[data-theme="light"] .glass-panel:has(#estadio-kpi-gp) i[data-lucide],html[data-theme="light"] .glass-panel:has(#estadio-kpi-gp) svg.lucide {color:#168DA5!important;}
+html[data-theme="light"] .glass-panel:has(#estadio-kpi-gc) > span:first-child,html[data-theme="light"] #estadio-kpi-gc,html[data-theme="light"] .glass-panel:has(#estadio-kpi-gc) i[data-lucide],html[data-theme="light"] .glass-panel:has(#estadio-kpi-gc) svg.lucide {color:#8762B2!important;}
+html[data-theme="light"] .glass-panel:has(#estadio-kpi-aproveitamento) > span:first-child,html[data-theme="light"] #estadio-kpi-aproveitamento,html[data-theme="light"] .glass-panel:has(#estadio-kpi-aproveitamento) i[data-lucide],html[data-theme="light"] .glass-panel:has(#estadio-kpi-aproveitamento) svg.lucide {color:#A57A2D!important;}
+html[data-theme="light"] .glass-panel:has(#classicos-kpi-vitorias) > span:first-child,html[data-theme="light"] #classicos-kpi-vitorias,html[data-theme="light"] .glass-panel:has(#classicos-kpi-vitorias) i[data-lucide],html[data-theme="light"] .glass-panel:has(#classicos-kpi-vitorias) svg.lucide {color:#176346!important;}
+html[data-theme="light"] .glass-panel:has(#classicos-kpi-empates) > span:first-child,html[data-theme="light"] #classicos-kpi-empates,html[data-theme="light"] .glass-panel:has(#classicos-kpi-empates) i[data-lucide],html[data-theme="light"] .glass-panel:has(#classicos-kpi-empates) svg.lucide {color:#B38632!important;}
+html[data-theme="light"] .glass-panel:has(#classicos-kpi-derrotas) > span:first-child,html[data-theme="light"] #classicos-kpi-derrotas,html[data-theme="light"] .glass-panel:has(#classicos-kpi-derrotas) i[data-lucide],html[data-theme="light"] .glass-panel:has(#classicos-kpi-derrotas) svg.lucide {color:#B91C1C!important;}
+html[data-theme="light"] .glass-panel:has(#classicos-kpi-gp) > span:first-child,html[data-theme="light"] #classicos-kpi-gp,html[data-theme="light"] .glass-panel:has(#classicos-kpi-gp) i[data-lucide],html[data-theme="light"] .glass-panel:has(#classicos-kpi-gp) svg.lucide {color:#168DA5!important;}
+html[data-theme="light"] .glass-panel:has(#classicos-kpi-gc) > span:first-child,html[data-theme="light"] #classicos-kpi-gc,html[data-theme="light"] .glass-panel:has(#classicos-kpi-gc) i[data-lucide],html[data-theme="light"] .glass-panel:has(#classicos-kpi-gc) svg.lucide {color:#8762B2!important;}
+html[data-theme="light"] .glass-panel:has(#classicos-kpi-aproveitamento) > span:first-child,html[data-theme="light"] #classicos-kpi-aproveitamento,html[data-theme="light"] .glass-panel:has(#classicos-kpi-aproveitamento) i[data-lucide],html[data-theme="light"] .glass-panel:has(#classicos-kpi-aproveitamento) svg.lucide {color:#A57A2D!important;}
+html[data-theme="light"] .glass-panel:has(#classicos-kpi-media-sul) > span:first-child,html[data-theme="light"] #classicos-kpi-media-sul,html[data-theme="light"] .glass-panel:has(#classicos-kpi-media-sul) i[data-lucide],html[data-theme="light"] .glass-panel:has(#classicos-kpi-media-sul) svg.lucide {color:#168DA5!important;}
+html[data-theme="light"] .glass-panel:has(#classicos-kpi-taxa-sul) > span:first-child,html[data-theme="light"] #classicos-kpi-taxa-sul,html[data-theme="light"] .glass-panel:has(#classicos-kpi-taxa-sul) i[data-lucide],html[data-theme="light"] .glass-panel:has(#classicos-kpi-taxa-sul) svg.lucide {color:#B78A16!important;}
+html[data-theme="light"] .glass-panel:has(#estadio-kpi-derrotas),html[data-theme="light"] .glass-panel:has(#classicos-kpi-derrotas){border-color:#d5e2d8;}
+
+/* V3.2.47: historical rival matchup table, no wrapping in date or matchup. */
+.rivals-table{table-layout:auto;min-width:760px}
+.rivals-table th:nth-child(1),.rivals-table td:nth-child(1){width:115px;min-width:115px;white-space:nowrap}
+.rivals-table th:nth-child(2),.rivals-table td:nth-child(2){width:205px;min-width:205px;white-space:nowrap}
+.rivals-table td.rivals-cell-date,.rivals-table td.rivals-cell-confronto{white-space:nowrap;word-break:normal}
+@media(max-width:800px){.rivals-table-wrap{overflow-x:auto}}
+
+/* V3.2.48 — compact score badges and premium home/away colors in both themes. */
+.catalog-mando-badge.catalog-mando-home,
+html[data-theme="light"] .catalog-mando-badge.catalog-mando-home{
+ background:#14532D!important;color:#fff!important;border-color:#14532D!important;
+}
+.catalog-mando-badge.catalog-mando-away,
+html[data-theme="light"] .catalog-mando-badge.catalog-mando-away{
+ background:#7A0E2E!important;color:#fff!important;border-color:#7A0E2E!important;
+}
+.catalog-main-table .catalog-score-compact,
+#classicos-table-body .catalog-score-compact{
+ min-height:30px!important;height:30px!important;box-sizing:border-box;
+ padding:3px 11px!important;gap:7px!important;line-height:1!important;
+ width:max-content;max-width:100%;vertical-align:middle;
+}
+.catalog-main-table .catalog-score-compact .catalog-score-result,
+#classicos-table-body .catalog-score-compact .catalog-score-result{
+ width:24px!important;height:24px!important;min-width:24px;
+ line-height:1!important;flex-shrink:0;
+}
+.catalog-main-table tbody td,
+#classicos-table-body td{padding-top:6px!important;padding-bottom:6px!important}
+.catalog-main-table td:first-child,
+#classicos-table-body td:first-child{white-space:nowrap}
+
+/* V3.2.49 — Compact scores: 26px tall, 20px result disc, 4px cell vertical padding.
+   Target the actual catalog tables; do not modify recent-form or historical details. */
+.catalog-main-table tbody td,
+#classicos-table-body > tr > td { padding-top:4px!important; padding-bottom:4px!important; }
+.catalog-main-table tbody td:nth-child(3) > .catalog-score-compact,
+#classicos-table-body td:nth-child(3) > .catalog-score-compact {
+  display:inline-flex!important; align-items:center!important; justify-content:center;
+  box-sizing:border-box!important; height:26px!important; min-height:26px!important;
+  padding:2px 12px!important; gap:7px!important; line-height:1!important;
+  width:max-content; max-width:100%; vertical-align:middle;
+}
+.catalog-main-table .catalog-score-compact .catalog-score-result,
+#classicos-table-body .catalog-score-compact .catalog-score-result {
+  box-sizing:border-box!important; width:20px!important; height:20px!important;
+  min-width:20px!important; min-height:20px!important; flex:0 0 20px!important;
+  font-size:10px!important; line-height:1!important;
+}
+/* Light theme: the left border of each KPI matches its title/value/icon.
+   Explicitly limited to KPI panels: dark theme remains unchanged. */
+html[data-theme="light"] .glass-panel:has(#kpi-jogos) { border-left-color:#176346!important; }
+html[data-theme="light"] .glass-panel:has(#kpi-media-geral) { border-left-color:#B38632!important; }
+html[data-theme="light"] .glass-panel:has(#kpi-media-mandante) { border-left-color:#008E79!important; }
+html[data-theme="light"] .glass-panel:has(#kpi-media-visitante) { border-left-color:#C65B70!important; }
+html[data-theme="light"] .glass-panel:has(#kpi-media-sul) { border-left-color:#168DA5!important; }
+html[data-theme="light"] .glass-panel:has(#kpi-taxa-sul) { border-left-color:#B78A16!important; }
+html[data-theme="light"] .glass-panel:has(#estadio-kpi-vitorias) { border-left-color:#176346!important; }
+html[data-theme="light"] .glass-panel:has(#estadio-kpi-empates) { border-left-color:#B38632!important; }
+html[data-theme="light"] .glass-panel:has(#estadio-kpi-derrotas) { border-left-color:#B91C1C!important; }
+html[data-theme="light"] .glass-panel:has(#estadio-kpi-gp) { border-left-color:#168DA5!important; }
+html[data-theme="light"] .glass-panel:has(#estadio-kpi-gc) { border-left-color:#8762B2!important; }
+html[data-theme="light"] .glass-panel:has(#estadio-kpi-aproveitamento) { border-left-color:#A57A2D!important; }
+html[data-theme="light"] .glass-panel:has(#classicos-kpi-vitorias) { border-left-color:#176346!important; }
+html[data-theme="light"] .glass-panel:has(#classicos-kpi-empates) { border-left-color:#B38632!important; }
+html[data-theme="light"] .glass-panel:has(#classicos-kpi-derrotas) { border-left-color:#B91C1C!important; }
+html[data-theme="light"] .glass-panel:has(#classicos-kpi-gp) { border-left-color:#168DA5!important; }
+html[data-theme="light"] .glass-panel:has(#classicos-kpi-gc) { border-left-color:#8762B2!important; }
+html[data-theme="light"] .glass-panel:has(#classicos-kpi-aproveitamento) { border-left-color:#A57A2D!important; }
+html[data-theme="light"] .glass-panel:has(#classicos-kpi-media-sul) { border-left-color:#168DA5!important; }
+html[data-theme="light"] .glass-panel:has(#classicos-kpi-taxa-sul) { border-left-color:#B78A16!important; }

@@ -1,4 +1,4 @@
-const DASHBOARD_VERSION = '3.2.32';
+const DASHBOARD_VERSION = '3.2.39';
 
 const CONFIG = Object.freeze({
   googleSheetsCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVyyhMTbQRPjb1lXdljnsi6kjWt7mU5xKEeZRB24-Ic5hZKzkZCG9gIYvlN81CXVpd0SGc6e0XW18b/pub?gid=1810912358&single=true&output=csv",
@@ -283,7 +283,18 @@ document.addEventListener('click', (e) => {
   if (!isInside) document.querySelectorAll('.ms-dropdown-menu').forEach(p => p.classList.add('hidden'));
 });
 
+function markActiveTabs(ids, activeId) {
+  ids.forEach(id => {
+    const button = document.getElementById(id);
+    if (button) {
+      button.dataset.active = String(id === activeId);
+      button.setAttribute('aria-selected', String(id === activeId));
+    }
+  });
+}
+
 function switchTableTab(tab) {
+  markActiveTabs(['tab-inner-catalogo', 'tab-inner-estatisticas'], tab === 'catalogo' ? 'tab-inner-catalogo' : 'tab-inner-estatisticas');
   const contentCatalogo = document.getElementById('content-catalogo');
   const contentEstatisticas = document.getElementById('content-estatisticas');
   const btnCatalogo = document.getElementById('tab-inner-catalogo');
@@ -306,6 +317,7 @@ function switchTableTab(tab) {
 }
 
 function switchClassicosTableTab(tab) {
+  markActiveTabs(['tab-classicos-catalogo', 'tab-classicos-estatisticas'], tab === 'catalogo' ? 'tab-classicos-catalogo' : 'tab-classicos-estatisticas');
   const contentCatalogo = document.getElementById('content-classicos-catalogo');
   const contentEstatisticas = document.getElementById('content-classicos-estatisticas');
   const btnCatalogo = document.getElementById('tab-classicos-catalogo');
@@ -325,6 +337,7 @@ function switchClassicosTableTab(tab) {
 }
 
 function switchTab(tabName) {
+  markActiveTabs(['tab-btn-capa', 'tab-btn-estadio', 'tab-btn-classicos'], 'tab-btn-' + tabName);
   const viewCapa = document.getElementById('view-capa');
   const viewEstadio = document.getElementById('view-estadio');
   const viewClassicos = document.getElementById('view-classicos');
@@ -905,7 +918,7 @@ function makeValueLabelsPlugin(id, { decimals = 0, horizontal = false, fontSize 
       const { ctx, chartArea } = chart;
       ctx.save();
       ctx.font = `700 ${fontSize}px 'Plus Jakarta Sans', sans-serif`;
-      ctx.fillStyle = 'rgba(255,255,255,0.88)';
+      ctx.fillStyle = document.documentElement.dataset.theme === 'light' ? '#244634' : 'rgba(255,255,255,0.88)';
       ctx.textAlign = horizontal ? 'left' : 'center';
       ctx.textBaseline = horizontal ? 'middle' : 'bottom';
       const visibleDatasetCount = chart.data.datasets.reduce((count, _dataset, datasetIndex) => count + (chart.isDatasetVisible(datasetIndex) ? 1 : 0), 0);
@@ -1390,7 +1403,7 @@ function renderSulBarChart(canvasId, sulMatchesList) {
       ctx.save();
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
-      ctx.fillStyle = '#A3B8B0';
+      ctx.fillStyle = document.documentElement.dataset.theme === 'light' ? '#526b5b' : '#A3B8B0';
 
       chart.data.labels.forEach((label, index) => {
         const lines = Array.isArray(label) ? label : [String(label), ''];
@@ -1459,7 +1472,7 @@ function renderSulBarChart(canvasId, sulMatchesList) {
         legend: { 
           position: 'top', 
           labels: { 
-            color: 'rgba(255,255,255,0.7)',
+            color: (document.documentElement.dataset.theme === 'light' ? '#385642' : 'rgba(255,255,255,0.7)'),
             generateLabels: function(chart) {
               const originais = Chart.defaults.plugins.legend.labels.generateLabels(chart);
               originais.forEach(label => {
@@ -1514,8 +1527,9 @@ function renderSulBarChart(canvasId, sulMatchesList) {
 function updateCharts() {
   const validFiltered = filteredMatches;
   const chartsMobile = window.matchMedia('(max-width: 767px)').matches;
-  Chart.defaults.color = '#A3B8B0';
-  Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.07)';
+  const lightChart = document.documentElement.dataset.theme === 'light';
+  Chart.defaults.color = lightChart ? '#526b5b' : '#A3B8B0';
+  Chart.defaults.borderColor = lightChart ? 'rgba(35,90,58,.14)' : 'rgba(255, 255, 255, 0.07)';
   Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
 
   const mCount = selectedState.mando.length;
@@ -1655,7 +1669,7 @@ function updateCharts() {
   activeCharts["chartTemporada"] = new Chart(getChartCanvas("chartTemporada"), {
     type: 'bar', data: { labels: seasons.map(String), datasets: datasetsTemp },
     plugins: [makeValueLabelsPlugin('publicoMedioTemporadaLabels', { decimals: 1, fullWhenSingleVisible: true })],
-    options: { layout: { padding: { top: 18 } }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: showLegend, position: 'top', labels: {color: 'rgba(255,255,255,0.7)'} }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { y: { beginAtZero: true, ticks: { display: false, callback: v => v.toLocaleString('pt-BR') } } } }
+    options: { layout: { padding: { top: 18 } }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: showLegend, position: 'top', labels: {color: (document.documentElement.dataset.theme === 'light' ? '#385642' : 'rgba(255,255,255,0.7)')} }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { y: { beginAtZero: true, ticks: { display: false, callback: v => v.toLocaleString('pt-BR') } } } }
   });
 
   // 2. COMPETICAO
@@ -1694,7 +1708,7 @@ function updateCharts() {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { display: showLegend, position: 'top', labels: { color: 'rgba(255,255,255,0.7)' } },
+        legend: { display: showLegend, position: 'top', labels: { color: (document.documentElement.dataset.theme === 'light' ? '#385642' : 'rgba(255,255,255,0.7)') } },
         tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.x.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } }
       },
       scales: {
@@ -1729,7 +1743,7 @@ function updateCharts() {
   activeCharts["chartDiaSemana"] = new Chart(getChartCanvas("chartDiaSemana"), {
     type: 'bar', data: { labels: chartsMobile ? ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB', 'DOM'] : daysOrder.map(d => d.replace('-feira', '')), datasets: datasetsDia },
     plugins: [makeValueLabelsPlugin('publicoMedioDiaLabels', { decimals: 1, fullWhenSingleVisible: true })],
-    options: { layout: { padding: { top: 18, left: chartsMobile ? 0 : 6, right: chartsMobile ? 2 : 6 } }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: showLegend, position: 'top', labels: {color: 'rgba(255,255,255,0.7)'} }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { y: { display: !chartsMobile, beginAtZero: true, ticks: { display: false, callback: v => v.toLocaleString('pt-BR') } } } }
+    options: { layout: { padding: { top: 18, left: chartsMobile ? 0 : 6, right: chartsMobile ? 2 : 6 } }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: showLegend, position: 'top', labels: {color: (document.documentElement.dataset.theme === 'light' ? '#385642' : 'rgba(255,255,255,0.7)')} }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { y: { display: !chartsMobile, beginAtZero: true, ticks: { display: false, callback: v => v.toLocaleString('pt-BR') } } } }
   });
 
   // 4. HORARIO
@@ -1758,7 +1772,7 @@ function updateCharts() {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { display: showLegend, position: 'top', labels: { color: 'rgba(255,255,255,0.7)' } },
+        legend: { display: showLegend, position: 'top', labels: { color: (document.documentElement.dataset.theme === 'light' ? '#385642' : 'rgba(255,255,255,0.7)') } },
         tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } }
       },
       scales: {
@@ -1822,7 +1836,7 @@ function updateCharts() {
           const { ctx, chartArea } = chart;
           ctx.save();
           ctx.font = `700 ${window.innerWidth <= 639 ? 11 : 11}px 'Plus Jakarta Sans', sans-serif`;
-          ctx.fillStyle = 'rgba(255,255,255,0.88)';
+          ctx.fillStyle = document.documentElement.dataset.theme === 'light' ? '#244634' : 'rgba(255,255,255,0.88)';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'bottom';
           const meta = chart.getDatasetMeta(0);
@@ -1901,7 +1915,7 @@ function updateCharts() {
       const { ctx, chartArea } = chart;
       ctx.save();
       ctx.font = "600 12px 'Plus Jakarta Sans', sans-serif";
-      ctx.fillStyle = 'rgba(255,255,255,0.88)';
+      ctx.fillStyle = document.documentElement.dataset.theme === 'light' ? '#244634' : 'rgba(255,255,255,0.88)';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'bottom';
 
@@ -1935,12 +1949,12 @@ function updateCharts() {
       responsive: true, maintainAspectRatio: false,
       layout: { padding: { top: chartsMobile ? 32 : 30 } },
       plugins: { 
-        legend: { position: 'top', labels: { color: 'rgba(255,255,255,0.7)' } },
+        legend: { position: 'top', labels: { color: (document.documentElement.dataset.theme === 'light' ? '#385642' : 'rgba(255,255,255,0.7)') } },
         tooltip: { mode: 'index', intersect: false }
       },
       scales: {
-        x: { stacked: false, ticks: { color: 'rgba(255,255,255,0.7)' }, grid: { display: false } },
-        y: { beginAtZero: true, grace: chartsMobile ? '20%' : '16%', ticks: { display: false, color: 'rgba(255,255,255,0.7)' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+        x: { stacked: false, ticks: { color: (document.documentElement.dataset.theme === 'light' ? '#385642' : 'rgba(255,255,255,0.7)') }, grid: { display: false } },
+        y: { beginAtZero: true, grace: chartsMobile ? '20%' : '16%', ticks: { display: false, color: (document.documentElement.dataset.theme === 'light' ? '#385642' : 'rgba(255,255,255,0.7)') }, grid: { color: 'rgba(255,255,255,0.05)' } }
       }
     }
   });
@@ -1960,12 +1974,12 @@ function getMatchResult(match) {
 function resultBadge(match) {
   const result = getMatchResult(match);
   const styles = {
-    V: 'bg-emerald-950/90 border-emerald-500/60 text-emerald-300',
+    V: 'result-win bg-emerald-950/90 border-emerald-500/60 text-emerald-300',
     E: 'result-draw',
-    D: 'bg-rose-950/90 border-rose-500/60 text-rose-300'
+    D: 'result-loss bg-rose-950/90 border-rose-500/60 text-rose-300'
   };
   if (!result) return `<span class="font-bold text-white">${escapeHtml(match.placar)}</span>`;
-  return `<span class="inline-flex items-center gap-2 px-2 py-1 rounded-lg border ${styles[result]} font-sans font-bold whitespace-nowrap"><span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-black/25 text-[10px]">${result}</span><span class="font-mono text-white">${escapeHtml(match.placar)}</span></span>`;
+  return `<span class="inline-flex items-center gap-2 px-2 py-1 rounded-lg border ${styles[result]} font-sans font-bold whitespace-nowrap"><span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-black/25 text-[10px]">${result}</span><span class="font-mono result-score-text text-white">${escapeHtml(match.placar)}</span></span>`;
 }
 
 function compareTableValues(a, b, key) {
@@ -2727,21 +2741,30 @@ function updateClassicosChart(data) {
          responsive: true, maintainAspectRatio: false,
          interaction: { mode: 'index', intersect: false },
          plugins: { 
-             legend: { position: 'bottom', labels: { color: 'rgba(255,255,255,0.7)', usePointStyle: true, boxWidth: 8 } },
+             legend: { position: 'bottom', labels: { color: (document.documentElement.dataset.theme === 'light' ? '#385642' : 'rgba(255,255,255,0.7)'), usePointStyle: true, boxWidth: 8 } },
              tooltip: { callbacks: { title: (items) => `Data: ${items[0].label}` } }
          },
          scales: {
-             x: { ticks: { maxTicksLimit: 10, color: 'rgba(255,255,255,0.4)' }, grid: { display: false } },
+             x: { ticks: { maxTicksLimit: 10, color: () => evolucaoSaldoThemeColors().tick }, grid: { display: false } },
              y: { 
                  grid: { 
-                     color: (ctx) => ctx.tick && ctx.tick.value === 0 ? 'rgba(255, 255, 255, 0.4)' : 'rgba(255,255,255,0.05)',
-                     lineWidth: (ctx) => ctx.tick && ctx.tick.value === 0 ? 2 : 1
+                     color: (ctx) => ctx.tick?.value === 0 ? evolucaoSaldoThemeColors().zero : evolucaoSaldoThemeColors().grid,
+                     lineWidth: (ctx) => ctx.tick?.value === 0 ? 2 : 1
                  }, 
-                 ticks: { color: 'rgba(255,255,255,0.6)' }
+                 ticks: { color: () => evolucaoSaldoThemeColors().tick }
              }
          }
      }
   });
+}
+
+function evolucaoSaldoThemeColors() {
+  const light = document.documentElement.dataset.theme === 'light';
+  return {
+    tick: light ? '#52675A' : 'rgba(255,255,255,0.65)',
+    grid: light ? 'rgba(35,90,58,0.14)' : 'rgba(255,255,255,0.07)',
+    zero: light ? '#52675A' : 'rgba(185,205,195,0.65)'
+  };
 }
 
 function renderClassicosTable(data) {
@@ -2851,6 +2874,7 @@ function initEventHandlers() {
 }
 
 function initDashboard() {
+  applyDashboardTheme(document.documentElement.dataset.theme === 'light' ? 'light' : 'dark');
   initEventHandlers();
   initChartRecoveryHandlers();
   restoreFiltersFromUrl();
@@ -2866,3 +2890,46 @@ function renderDashboardVersion() {
   if (versionEl) versionEl.textContent = `v${DASHBOARD_VERSION}`;
 }
 document.addEventListener('DOMContentLoaded', initDashboard);
+
+// Tema visual: o padrão permanece escuro e a preferência é local ao navegador.
+function applyDashboardTheme(theme) {
+  const light = theme === 'light';
+  document.documentElement.dataset.theme = light ? 'light' : 'dark';
+  const button = document.getElementById('theme-toggle');
+  const label = document.getElementById('theme-toggle-label');
+  if (button) {
+    button.setAttribute('aria-pressed', String(light));
+    button.setAttribute('aria-label', light ? 'Ativar modo escuro' : 'Ativar modo claro');
+    button.title = light ? 'Ativar modo escuro' : 'Ativar modo claro';
+  }
+  if (label) label.textContent = light ? 'Escuro' : 'Claro';
+  try { localStorage.setItem('flu-dashboard-theme', light ? 'light' : 'dark'); } catch (_) {}
+  if (typeof Chart !== 'undefined') {
+    Chart.defaults.color = light ? '#4c6457' : '#A3B8B0';
+    Chart.defaults.borderColor = light ? 'rgba(35,90,58,.14)' : 'rgba(255,255,255,.07)';
+  }
+  if (typeof activeCharts !== 'undefined') {
+    Object.values(activeCharts).forEach(chart => {
+      if (!chart) return;
+      try {
+        chart.options.color = light ? '#4c6457' : '#A3B8B0';
+        const scales = chart.options.scales || {};
+        Object.values(scales).forEach(scale => {
+          if (scale.ticks) scale.ticks.color = light ? '#526d5b' : '#A3B8B0';
+          if (scale.grid && chart.canvas?.id !== 'chartEvolucaoClassicos') scale.grid.color = light ? 'rgba(35,90,58,.12)' : 'rgba(255,255,255,.07)';
+        });
+        if (chart.options.plugins && chart.options.plugins.legend && chart.options.plugins.legend.labels) {
+          chart.options.plugins.legend.labels.color = light ? '#334f3d' : '#A3B8B0';
+        }
+        chart.update('none');
+      } catch (error) { console.warn('Falha ao atualizar tema do gráfico:', error); }
+    });
+  }
+}
+document.addEventListener('DOMContentLoaded', () => {
+  const savedTheme = document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
+  applyDashboardTheme(savedTheme);
+  document.getElementById('theme-toggle')?.addEventListener('click', () => {
+    applyDashboardTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light');
+  });
+});

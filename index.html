@@ -11,6 +11,13 @@
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script src="https://unpkg.com/lucide@1.60.0/dist/umd/lucide.js"></script>
 
+  <script>
+    try {
+      if (localStorage.getItem('flu-dashboard-theme') === 'light') {
+        document.documentElement.dataset.theme = 'light';
+      }
+    } catch (_) {}
+  </script>
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body class="min-h-screen flex flex-col antialiased selection:bg-[#8A1538] selection:text-white">
@@ -47,14 +54,19 @@
       </div>
 
       <div class="flex items-center gap-2 flex-wrap mt-2 md:mt-0">
+        <button id="theme-toggle" type="button" aria-label="Ativar modo claro" aria-pressed="false" title="Alternar modo claro e escuro" class="theme-toggle" >
+          <i data-lucide="sun" class="w-4 h-4 theme-icon-light"></i>
+          <i data-lucide="moon" class="w-4 h-4 theme-icon-dark"></i>
+          <span id="theme-toggle-label">Claro</span>
+        </button>
         <div class="inline-flex p-1 rounded-lg bg-[#0B1512] border border-[#C5A059]/30">
-          <button data-action="switch-tab" data-tab="capa" id="tab-btn-capa" class="px-3 py-1.5 rounded-md text-xs font-bold transition bg-[#C5A059] text-[#0A120F]">
+          <button data-action="switch-tab" data-tab="capa" id="tab-btn-capa" data-active="true" aria-selected="true" class="px-3 py-1.5 rounded-md text-xs font-bold transition bg-[#C5A059] text-[#0A120F]">
             Início
           </button>
-          <button data-action="switch-tab" data-tab="estadio" id="tab-btn-estadio" class="px-3 py-1.5 rounded-md text-xs font-bold transition text-white/70 hover:text-white">
+          <button data-action="switch-tab" data-tab="estadio" id="tab-btn-estadio" data-active="false" aria-selected="false" class="px-3 py-1.5 rounded-md text-xs font-bold transition text-white/70 hover:text-white">
             Público e Desempenho
           </button>
-          <button data-action="switch-tab" data-tab="classicos" id="tab-btn-classicos" class="px-3 py-1.5 rounded-md text-xs font-bold transition text-white/70 hover:text-white">
+          <button data-action="switch-tab" data-tab="classicos" id="tab-btn-classicos" data-active="false" aria-selected="false" class="px-3 py-1.5 rounded-md text-xs font-bold transition text-white/70 hover:text-white">
             Clássicos
           </button>
         </div>
@@ -606,10 +618,10 @@
       <section class="glass-panel rounded-2xl p-6 shadow-2xl space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
           <div class="flex items-center gap-2 bg-[#0B1512] p-1 rounded-lg border border-[#C5A059]/30 overflow-x-auto">
-            <button data-action="switch-table-tab" data-tab="catalogo" id="tab-inner-catalogo" class="px-4 py-2 text-xs font-bold rounded-md bg-[#C5A059] text-[#0A120F] transition whitespace-nowrap">
+            <button data-action="switch-table-tab" data-tab="catalogo" id="tab-inner-catalogo" data-active="true" aria-selected="true" class="px-4 py-2 text-xs font-bold rounded-md bg-[#C5A059] text-[#0A120F] transition whitespace-nowrap">
               Catálogo de Partidas
             </button>
-            <button data-action="switch-table-tab" data-tab="estatisticas" id="tab-inner-estatisticas" class="px-4 py-2 text-xs font-bold text-white/70 hover:text-white rounded-md transition whitespace-nowrap hover:bg-white/5">
+            <button data-action="switch-table-tab" data-tab="estatisticas" id="tab-inner-estatisticas" data-active="false" aria-selected="false" class="px-4 py-2 text-xs font-bold text-white/70 hover:text-white rounded-md transition whitespace-nowrap hover:bg-white/5">
               Estatísticas por Adversário
             </button>
           </div>
@@ -907,10 +919,10 @@
       <section class="glass-panel rounded-2xl p-6 shadow-2xl space-y-4 relative z-30">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
           <div class="flex items-center gap-2 bg-[#0B1512] p-1 rounded-lg border border-[#C5A059]/30 overflow-x-auto">
-            <button data-action="switch-classicos-table-tab" data-tab="catalogo" id="tab-classicos-catalogo" class="px-4 py-2 text-xs font-bold rounded-md bg-[#C5A059] text-[#0A120F] transition whitespace-nowrap">
+            <button data-action="switch-classicos-table-tab" data-tab="catalogo" id="tab-classicos-catalogo" data-active="true" aria-selected="true" class="px-4 py-2 text-xs font-bold rounded-md bg-[#C5A059] text-[#0A120F] transition whitespace-nowrap">
               Catálogo de Partidas
             </button>
-            <button data-action="switch-classicos-table-tab" data-tab="estatisticas" id="tab-classicos-estatisticas" class="px-4 py-2 text-xs font-bold text-white/70 hover:text-white rounded-md transition whitespace-nowrap hover:bg-white/5">
+            <button data-action="switch-classicos-table-tab" data-tab="estatisticas" id="tab-classicos-estatisticas" data-active="false" aria-selected="false" class="px-4 py-2 text-xs font-bold text-white/70 hover:text-white rounded-md transition whitespace-nowrap hover:bg-white/5">
               Estatísticas por Adversário
             </button>
           </div>
@@ -969,7 +981,7 @@
     <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-center gap-2">
       <p>Grandes são os outros, o Fluminense é enorme</p>
       <span class="hidden sm:inline" aria-hidden="true">•</span>
-      <p>Fluminense FC • Dashboard Analítico • <strong id="dashboard-version" class="font-semibold text-emerald-100/70">v3.2.30</strong></p>
+      <p>Fluminense FC • Dashboard Analítico • <strong id="dashboard-version" class="font-semibold text-emerald-100/70">v3.2.39</strong></p>
     </div>
   </footer>
 

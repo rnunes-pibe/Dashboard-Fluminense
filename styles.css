@@ -800,3 +800,396 @@ body {
     animation: none !important;
   }
 }
+
+/* V3.2.33 — alternância de tema sem alteração de layout */
+.theme-toggle {
+  display:inline-flex; align-items:center; justify-content:center; gap:.45rem;
+  padding:.5rem .7rem; border-radius:.65rem; flex-shrink:0;
+  border:1px solid rgba(197,160,89,.55); background:#15271f;
+  color:#e8c46e; font-size:.75rem; font-weight:800;
+  transition:background .2s,border-color .2s;
+}
+.theme-toggle:hover { border-color:#e8c46e; background:#1c3b2d; }
+.theme-icon-dark { display:none; }
+html[data-theme="light"] .theme-icon-light { display:none; }
+html[data-theme="light"] .theme-icon-dark { display:block; }
+html[data-theme="light"] {
+  color-scheme:light;
+  --flu-dark:#f2f5f1;
+  --flu-card-bg:rgba(255,255,255,.95);
+}
+html[data-theme="light"] body {
+  color:#19382a;
+  background-color:#f2f5f1;
+  background-image:radial-gradient(circle at 10% 20%,rgba(25,119,80,.08),transparent 42%),
+    radial-gradient(circle at 90% 80%,rgba(138,21,56,.055),transparent 42%);
+}
+html[data-theme="light"] header {
+  background:rgba(250,252,249,.97) !important;
+  border-color:#d6e2d8 !important;
+}
+html[data-theme="light"] .glass-panel {
+  background:var(--flu-card-bg);
+  border-color:#d6e0d6;
+  box-shadow:0 4px 20px rgba(20,58,38,.06);
+}
+html[data-theme="light"] .glass-panel:hover { border-color:#b8a06b; box-shadow:0 8px 24px rgba(20,58,38,.09); }
+html[data-theme="light"] .theme-toggle { background:#fff9e8; color:#755616; }
+html[data-theme="light"] .ms-dropdown-menu { background:#fff; border-color:#cbdacf; box-shadow:0 12px 30px rgba(0,0,0,.13); }
+html[data-theme="light"] .ms-pill { background:#e9f4ec; color:#1c5a40; border-color:#a6d0b5; }
+html[data-theme="light"] .data-notice-toggle,
+html[data-theme="light"] .public-filters-toggle { background:#fff9e8; color:#795b1e; }
+html[data-theme="light"] .public-filters-active-count { color:#12613f; background:#e6f6ed; }
+html[data-theme="light"] .streak-matches { background:#f5f8f5; border-color:#d8e2da; }
+/* Neutral text adapts only inside light panels; brand buttons keep own contrast. */
+html[data-theme="light"] .glass-panel [class*="text-white/"],
+html[data-theme="light"] header [class*="text-white/"],
+html[data-theme="light"] .glass-panel [class*="text-slate-"],
+html[data-theme="light"] .glass-panel [class*="text-gray-"] { color:#53695b !important; }
+html[data-theme="light"] .glass-panel .text-white { color:#203d2c !important; }
+html[data-theme="light"] [class*="bg-white/5"],
+html[data-theme="light"] [class*="bg-white/10"] { background-color:rgba(19,77,48,.045) !important; }
+html[data-theme="light"] [class*="border-white/"] { border-color:rgba(30,87,52,.16) !important; }
+html[data-theme="light"] input:not([type="checkbox"]):not([type="range"]),
+html[data-theme="light"] select,
+html[data-theme="light"] textarea {
+  background-color:#fff; color:#1c3b2b; border-color:#cbdacf;
+}
+html[data-theme="light"] input::placeholder { color:#728879; }
+html[data-theme="light"] table { color:#213b2e; }
+html[data-theme="light"] thead { background:#e9f1eb; }
+html[data-theme="light"] .result-win,
+html[data-theme="light"] .result-draw,
+html[data-theme="light"] .result-loss { color:inherit; }
+html[data-theme="light"] .result-draw { color:#7b540c !important; }
+html[data-theme="light"] .recent-result-d,
+html[data-theme="light"] .recent-result-v { color:white !important; }
+html[data-theme="light"] .recent-result-e { color:#422006 !important; }
+html[data-theme="light"] ::-webkit-scrollbar-track { background:#e8eee8; }
+html[data-theme="light"] ::-webkit-scrollbar-thumb { background:#aac7b5; }
+
+/* V3.2.34 — light-theme contrast corrections only */
+html[data-theme="light"] #update-btn,
+html[data-theme="light"] #btn-update,
+html[data-theme="light"] button[data-action="update-data"],
+html[data-theme="light"] #update-btn *,
+html[data-theme="light"] #btn-update *,
+html[data-theme="light"] button[data-action="update-data"] * { color:#eaffff !important; }
+html[data-theme="light"] #view-capa button[class*="bg-gradient"],
+html[data-theme="light"] #view-capa button[class*="bg-gradient"] *,
+html[data-theme="light"] #view-capa a[class*="bg-gradient"],
+html[data-theme="light"] #view-capa a[class*="bg-gradient"] * { color:#fff !important; }
+html[data-theme="light"] .ms-dropdown-menu,
+html[data-theme="light"] .ms-dropdown-menu label { color:#294735 !important; }
+html[data-theme="light"] .ms-dropdown-menu [class*="text-white/"] { color:#53695b !important; }
+html[data-theme="light"] .ms-dropdown-menu button[data-select="true"] { color:#8a641c !important; }
+html[data-theme="light"] .ms-pill { background:#e6f2e9; color:#17553a; border-color:#a5c9b1; }
+html[data-theme="light"] button[id^="btn-"][class*="bg-"],
+html[data-theme="light"] button[id^="classicos-btn-"][class*="bg-"],
+html[data-theme="light"] .ms-trigger {
+ background:#fff !important; color:#254734 !important; border-color:#b6ccbc !important;
+}
+html[data-theme="light"] button[id^="btn-"][class*="bg-"] span,
+html[data-theme="light"] button[id^="classicos-btn-"][class*="bg-"] span,
+html[data-theme="light"] .ms-trigger span { color:#254734 !important; }
+html[data-theme="light"] .result-win { background:#0e6749 !important; border-color:#16845f !important; color:#fff !important; }
+html[data-theme="light"] .result-loss { background:#891a3c !important; border-color:#b22c53 !important; color:#fff !important; }
+html[data-theme="light"] .result-win *,
+html[data-theme="light"] .result-loss * { color:#fff !important; }
+html[data-theme="light"] .result-draw { background:#fff2c5 !important; border-color:#c79d36 !important; color:#6a4a0a !important; }
+html[data-theme="light"] .result-draw * { color:#6a4a0a !important; }
+html[data-theme="light"] [id*="filter-summary"],
+html[data-theme="light"] [id*="catalog-summary"] { background:#e8f2ea !important; color:#294a36 !important; }
+html[data-theme="light"] table tbody tr { border-color:#d9e4db !important; }
+html[data-theme="light"] table tbody tr:hover { background:#f1f7f2 !important; }
+html[data-theme="light"] table thead { background:#173c2c !important; }
+html[data-theme="light"] table thead th { color:#edc975 !important; }
+html[data-theme="light"] .glass-panel .result-win,
+html[data-theme="light"] .glass-panel .result-loss,
+html[data-theme="light"] .glass-panel .result-win *,
+html[data-theme="light"] .glass-panel .result-loss * { color:#fff !important; }
+html[data-theme="light"] .glass-panel .result-draw,
+html[data-theme="light"] .glass-panel .result-draw * { color:#6a4a0a !important; }
+html[data-theme="light"] .glass-panel [class*="bg-[#0E4735]"],
+html[data-theme="light"] .glass-panel [class*="bg-[#8A1538]"],
+html[data-theme="light"] .glass-panel [class*="bg-[#0E4735]"] *,
+html[data-theme="light"] .glass-panel [class*="bg-[#8A1538]"] * { color:#fff !important; }
+
+
+/* V3.2.35: scoped light-theme fixes, no changes to dark theme or dimensions. */
+html[data-theme="light"] #view-capa .text-emerald-300 { color:#14764e !important; }
+html[data-theme="light"] #view-capa .text-cyan-300 { color:#08718a !important; }
+/* Brand icon tiles retain original dark-green background and gold glyph. */
+html[data-theme="light"] .performance-insight-icon,
+html[data-theme="light"] .data-notice-header [class*="bg-[#0E4735]"],
+html[data-theme="light"] [class*="bg-[#0E4735]"]:has(> svg),
+html[data-theme="light"] [class*="bg-[#0E4735]"]:has(> i) {
+  background:#0E4735 !important; color:#E4B958 !important;
+}
+html[data-theme="light"] .performance-insight-icon svg,
+html[data-theme="light"] .performance-insight-icon i,
+html[data-theme="light"] [class*="bg-[#0E4735]"] > svg,
+html[data-theme="light"] [class*="bg-[#0E4735]"] > i {
+  color:#E4B958 !important; stroke:#E4B958 !important;
+}
+html[data-theme="light"] #view-capa button[class*="bg-gradient"] svg,
+html[data-theme="light"] #view-capa button[class*="bg-gradient"] i,
+html[data-theme="light"] #view-capa a[class*="bg-gradient"] svg,
+html[data-theme="light"] #view-capa a[class*="bg-gradient"] i {
+  color:#E4B958 !important; stroke:#E4B958 !important;
+}
+/* Filters: keep labels readable, controls light, icons gold. */
+html[data-theme="light"] label[class*="text-emerald-200"],
+html[data-theme="light"] label[class*="text-emerald-300"] { color:#176B4A !important; }
+html[data-theme="light"] label[class*="text-emerald-200"] svg,
+html[data-theme="light"] label[class*="text-emerald-200"] i { color:#C5A059 !important; }
+html[data-theme="light"] #view-estadio button[id^="trigger-"],
+html[data-theme="light"] #view-estadio button[id^="btn-"],
+html[data-theme="light"] #view-classicos button[id^="classicos-trigger-"],
+html[data-theme="light"] #view-classicos button[id^="classicos-btn-"] {
+  background:#fff !important; color:#294c37 !important; border-color:#b7d0bd !important;
+}
+html[data-theme="light"] #view-estadio button[id^="trigger-"] span,
+html[data-theme="light"] #view-classicos button[id^="classicos-trigger-"] span { color:#294c37 !important; }
+html[data-theme="light"] #view-estadio button[id^="trigger-"] svg,
+html[data-theme="light"] #view-classicos button[id^="classicos-trigger-"] svg { color:#C5A059 !important; }
+html[data-theme="light"] .text-emerald-200\/70 { color:#176B4A !important; }
+html[data-theme="light"] .text-emerald-200\/80 { color:#176B4A !important; }
+html[data-theme="light"] .text-emerald-300 { color:#176B4A !important; }
+/* Count chips in both Setor Sul sections: preserve petrol background. */
+html[data-theme="light"] #sul-recorded-count,
+html[data-theme="light"] #classicos-sul-recorded-count { color:#78edff !important; }
+html[data-theme="light"] #sul-recorded-count::selection,
+html[data-theme="light"] #classicos-sul-recorded-count::selection { background:#14536b; }
+html[data-theme="light"] #sul-recorded-count,
+html[data-theme="light"] #classicos-sul-recorded-count { font-weight:800; }
+html[data-theme="light"] div:has(> #sul-recorded-count),
+html[data-theme="light"] div:has(> #classicos-sul-recorded-count) {
+  background:#286a80 !important; color:#effcff !important;
+}
+html[data-theme="light"] div:has(> #sul-recorded-count) *,
+html[data-theme="light"] div:has(> #classicos-sul-recorded-count) * { color:#effcff !important; }
+html[data-theme="light"] div:has(> #sul-recorded-count) #sul-recorded-count,
+html[data-theme="light"] div:has(> #classicos-sul-recorded-count) #classicos-sul-recorded-count { color:#78edff !important; }
+/* Summary badge near filters. */
+html[data-theme="light"] #public-filter-count,
+html[data-theme="light"] #filtered-match-count { color:#176B4A !important; }
+html[data-theme="light"] .bg-emerald-900\/40 { background:#e4f2e9 !important; }
+html[data-theme="light"] .bg-emerald-900\/40.text-emerald-300 { color:#176B4A !important; }
+/* Recent form and historical streaks: restore invisible content. */
+html[data-theme="light"] .recent-form-metrics { border-color:#d7e2d9; }
+html[data-theme="light"] .recent-form-metrics > div,
+html[data-theme="light"] .streak-item:first-child { border-color:#d7e2d9; }
+html[data-theme="light"] .recent-form-metrics span,
+html[data-theme="light"] .streak-item > span { color:#52675a !important; }
+html[data-theme="light"] .recent-form-metrics strong { color:#203d2d; }
+html[data-theme="light"] .recent-form-metrics strong[id$="-rate"] { color:inherit; }
+html[data-theme="light"] .streak-item p,
+html[data-theme="light"] .streak-value-breakdown { color:#52675a !important; }
+html[data-theme="light"] .streak-value-breakdown { color:#203d2d !important; }
+html[data-theme="light"] .streak-item .text-emerald-400 { color:#148c60 !important; }
+html[data-theme="light"] .streak-item .text-\[\#F4C95D\] { color:#bd861c !important; }
+html[data-theme="light"] .recent-form-matches,
+html[data-theme="light"] .streak-matches { color:#274534; }
+html[data-theme="light"] .streak-matches [class*="text-white"] { color:#274534 !important; }
+/* Catalog tabs and filter summary. */
+html[data-theme="light"] #tab-inner-estatisticas,
+html[data-theme="light"] #tab-classicos-estatisticas,
+html[data-theme="light"] #tab-inner-catalogo,
+html[data-theme="light"] #tab-classicos-catalogo { color:#f7fbf8 !important; }
+html[data-theme="light"] #tab-inner-estatisticas.bg-\[\#C5A059\],
+html[data-theme="light"] #tab-classicos-estatisticas.bg-\[\#C5A059\],
+html[data-theme="light"] #tab-inner-catalogo.bg-\[\#C5A059\],
+html[data-theme="light"] #tab-classicos-catalogo.bg-\[\#C5A059\] { color:#1a2e20 !important; }
+html[data-theme="light"] .catalog-summary { background:#e8f2ea !important; border-color:#d4e4d8; }
+html[data-theme="light"] .catalog-summary-count { color:#294a36 !important; }
+html[data-theme="light"] .catalog-summary-count strong { color:#176b4a !important; }
+html[data-theme="light"] .catalog-summary-empty { color:#52675a !important; }
+html[data-theme="light"] .catalog-summary-filters > span:not(.catalog-summary-empty) {
+  background:#fff; color:#31513c; border-color:#c8dbce;
+}
+html[data-theme="light"] .catalog-summary-clear { color:#086e83; }
+/* All catalog score badges: foreground colors scoped to result. */
+html[data-theme="light"] .result-win,
+html[data-theme="light"] .result-loss { color:#fff !important; }
+html[data-theme="light"] .result-win > span,
+html[data-theme="light"] .result-loss > span { color:#fff !important; }
+html[data-theme="light"] .result-draw,
+html[data-theme="light"] .result-draw > span { color:#674b0f !important; }
+/* Footer keeps its original appearance, but text remains readable. */
+html[data-theme="light"] #dashboard-version { color:#a5dbc4 !important; }
+
+
+/* V3.2.36 — overrides for verified real DOM selectors. Light theme only. */
+/* Header, home hero, original gold brand elements */
+html[data-theme="light"] header h1,
+html[data-theme="light"] #view-capa h2 { color:#203d2d !important; }
+html[data-theme="light"] header #update-data-button,
+html[data-theme="light"] header #update-data-button #update-data-label {
+  color:#d6faff !important;
+}
+html[data-theme="light"] header #update-data-button svg { color:#67e8f9 !important; }
+html[data-theme="light"] header #last-update-time { color:#52675a !important; }
+html[data-theme="light"] header .inline-flex.p-1.rounded-lg {
+  background:#eef4ef !important; border-color:#d3dfd4 !important;
+}
+html[data-theme="light"] header [data-action="switch-tab"]:not(.bg-\[\#C5A059\]) { color:#254734 !important; }
+html[data-theme="light"] header [data-action="switch-tab"].bg-\[\#C5A059\] { color:#142d20 !important; }
+html[data-theme="light"] #view-capa > section:first-child p { color:#14704d !important; }
+html[data-theme="light"] #view-capa > section:first-child .bg-\[\#0E4735\] {
+  background:#0E4735 !important; color:#C5A059 !important;
+}
+html[data-theme="light"] #view-capa > section:first-child .bg-\[\#0E4735\] span { color:#C5A059 !important; }
+html[data-theme="light"] #view-capa > section:first-child button[data-action="switch-tab"] { color:#fff !important; }
+html[data-theme="light"] #view-capa > section:first-child button[data-action="switch-tab"] span { color:#fff !important; }
+html[data-theme="light"] #view-capa > section:first-child button[data-action="switch-tab"] svg { color:#C5A059 !important; stroke:#C5A059 !important; }
+html[data-theme="light"] #view-capa .grid.grid-cols-1.sm\:grid-cols-3 > .glass-panel:nth-child(1) > span { color:#bd9341 !important; }
+html[data-theme="light"] #view-capa .grid.grid-cols-1.sm\:grid-cols-3 > .glass-panel:nth-child(2) > span { color:#13794e !important; }
+html[data-theme="light"] #view-capa .grid.grid-cols-1.sm\:grid-cols-3 > .glass-panel:nth-child(3) > span { color:#08738a !important; }
+
+/* The actual filter controls use data-action, not the IDs assumed by prior releases. */
+html[data-theme="light"] button[data-action="toggle-dropdown"],
+html[data-theme="light"] button[data-action="toggle-classicos-dropdown"] {
+  background-color:#fff !important;
+  border-color:#b7d0bd !important;
+  color:#355546 !important;
+}
+html[data-theme="light"] button[data-action="toggle-dropdown"] span,
+html[data-theme="light"] button[data-action="toggle-classicos-dropdown"] span {
+  color:#355546 !important;
+}
+html[data-theme="light"] button[data-action="toggle-dropdown"] svg,
+html[data-theme="light"] button[data-action="toggle-classicos-dropdown"] svg {
+  color:#C5A059 !important; stroke:#C5A059 !important;
+}
+html[data-theme="light"] button[data-action="toggle-dropdown"]:focus-visible,
+html[data-theme="light"] button[data-action="toggle-classicos-dropdown"]:focus-visible {
+  outline:2px solid #b38a32; outline-offset:2px;
+}
+html[data-theme="light"] #btn-sem-rivais:not([aria-pressed="true"]) {
+  background:#fff !important; color:#355546 !important; border-color:#b7d0bd !important;
+}
+html[data-theme="light"] #btn-sem-rivais:not([aria-pressed="true"]) span { color:#355546 !important; }
+/* Preserve existing activated Sem Rivais state and its color cue. */
+
+/* Catalog score text: utility classes no longer override result contrast. */
+html[data-theme="light"] .result-win .result-score-text,
+html[data-theme="light"] .result-loss .result-score-text { color:#fff !important; }
+html[data-theme="light"] .result-draw .result-score-text { color:#674b0f !important; }
+html[data-theme="light"] .result-win > span:first-child { background:#18c58d !important; color:#073b2b !important; }
+html[data-theme="light"] .result-loss > span:first-child { background:#f43f69 !important; color:#fff !important; }
+html[data-theme="light"] .result-draw > span:first-child { background:#e9b83d !important; color:#513a0c !important; }
+
+/* Actual catalog tab IDs; preserve dark inactive / gold active. */
+html[data-theme="light"] #tab-inner-catalogo,
+html[data-theme="light"] #tab-inner-estatisticas,
+html[data-theme="light"] #tab-classicos-catalogo,
+html[data-theme="light"] #tab-classicos-estatisticas { color:#fff !important; }
+html[data-theme="light"] #tab-inner-catalogo.bg-\[\#C5A059\],
+html[data-theme="light"] #tab-inner-estatisticas.bg-\[\#C5A059\],
+html[data-theme="light"] #tab-classicos-catalogo.bg-\[\#C5A059\],
+html[data-theme="light"] #tab-classicos-estatisticas.bg-\[\#C5A059\] { color:#152d20 !important; }
+
+/* V3.2.37 — Institutional green applies only to light theme. */
+html[data-theme="light"] header #tab-btn-capa,
+html[data-theme="light"] header #tab-btn-estadio,
+html[data-theme="light"] header #tab-btn-classicos {
+  background:transparent !important; color:#294735 !important;
+}
+html[data-theme="light"] header #tab-btn-capa.bg-\\[\\#C5A059\\],
+html[data-theme="light"] header #tab-btn-estadio.bg-\\[\\#C5A059\\],
+html[data-theme="light"] header #tab-btn-classicos.bg-\\[\\#C5A059\\] {
+  background:#104C37 !important; color:#fff !important;
+  box-shadow:inset 0 -2px 0 #C5A059;
+}
+html[data-theme="light"] div:has(> #tab-inner-catalogo),
+html[data-theme="light"] div:has(> #tab-classicos-catalogo) {
+  background:#E8F1EB !important; border-color:#C9DCCF !important;
+}
+html[data-theme="light"] #tab-inner-catalogo,
+html[data-theme="light"] #tab-inner-estatisticas,
+html[data-theme="light"] #tab-classicos-catalogo,
+html[data-theme="light"] #tab-classicos-estatisticas {
+  background:transparent !important; color:#294735 !important;
+}
+html[data-theme="light"] #tab-inner-catalogo.bg-\\[\\#C5A059\\],
+html[data-theme="light"] #tab-inner-estatisticas.bg-\\[\\#C5A059\\],
+html[data-theme="light"] #tab-classicos-catalogo.bg-\\[\\#C5A059\\],
+html[data-theme="light"] #tab-classicos-estatisticas.bg-\\[\\#C5A059\\] {
+  background:#104C37 !important; color:#fff !important;
+}
+html[data-theme="light"] #content-catalogo thead,
+html[data-theme="light"] #content-classicos-catalogo thead {
+  background:#104C37 !important;
+}
+html[data-theme="light"] #content-catalogo thead th,
+html[data-theme="light"] #content-classicos-catalogo thead th,
+html[data-theme="light"] #content-catalogo thead button,
+html[data-theme="light"] #content-classicos-catalogo thead button,
+html[data-theme="light"] #content-catalogo thead .sort-indicator,
+html[data-theme="light"] #content-classicos-catalogo thead .sort-indicator {
+  color:#E6C06A !important;
+}
+/* Clássicos year-range filter — no change to slider geometry. */
+html[data-theme="light"] #classicos-ano-min,
+html[data-theme="light"] #classicos-ano-max { color:#C5A059; }
+html[data-theme="light"] .dual-slider-container { background:#E4D8B8 !important; }
+html[data-theme="light"] .dual-slider-container #classicos-slider-track { background:#C5A059 !important; }
+html[data-theme="light"] div:has(> label #classicos-slider-values) {
+  background:#fff !important; border-color:#B7D0BD !important;
+}
+html[data-theme="light"] #classicos-slider-values {
+  background:#F5F0E4 !important; color:#87651E !important; border-color:#E5D6B6 !important;
+}
+html[data-theme="light"] label:has(#classicos-slider-values) { color:#176B4A !important; }
+
+
+/* V3.2.38: explicit JS-managed selection state; light theme only.
+   Never depend on escaped Tailwind color class selectors for active state. */
+html[data-theme="light"] :is(#tab-btn-capa,#tab-btn-estadio,#tab-btn-classicos,
+ #tab-inner-catalogo,#tab-inner-estatisticas,
+ #tab-classicos-catalogo,#tab-classicos-estatisticas)[data-active="true"] {
+  background-color:#104C37 !important;
+  color:#FFFFFF !important;
+}
+html[data-theme="light"] :is(#tab-btn-capa,#tab-btn-estadio,#tab-btn-classicos)[data-active="true"] {
+  box-shadow:inset 0 -2px 0 #C5A059;
+}
+html[data-theme="light"] :is(#tab-btn-capa,#tab-btn-estadio,#tab-btn-classicos,
+ #tab-inner-catalogo,#tab-inner-estatisticas,
+ #tab-classicos-catalogo,#tab-classicos-estatisticas)[data-active="false"] {
+  background-color:transparent !important;
+  color:#294735 !important;
+}
+/* Four table headers: main/classics catalog + opponent statistics. */
+html[data-theme="light"] :is(#content-catalogo,#content-estatisticas,
+ #content-classicos-catalogo,#content-classicos-estatisticas) table thead {
+  background-color:#104C37 !important;
+  color:#E6C06A !important;
+}
+html[data-theme="light"] :is(#content-catalogo,#content-estatisticas,
+ #content-classicos-catalogo,#content-classicos-estatisticas) table thead :is(th,button,.sort-indicator,span,svg) {
+  color:#E6C06A !important;
+}
+html[data-theme="light"] :is(#content-catalogo,#content-estatisticas,
+ #content-classicos-catalogo,#content-classicos-estatisticas) table thead svg {
+  stroke:#E6C06A !important;
+}
+
+
+/* V3.2.39 — Correção específica dos dois Catálogos de Partidas.
+   O fundo escuro original estava aplicado em cada TH fixo, não no THEAD.
+   Alterar somente o modo claro preserva integralmente o modo escuro. */
+html[data-theme="light"] #content-catalogo .catalog-sticky-head th,
+html[data-theme="light"] #content-classicos-catalogo .catalog-sticky-head th {
+  background: #104C37 !important;
+  background-color: #104C37 !important;
+  color: #E6C06A !important;
+  box-shadow: 0 1px 0 rgba(197,160,89,.25);
+}
+html[data-theme="light"] #content-catalogo .catalog-sticky-head th .table-sort-button,
+html[data-theme="light"] #content-classicos-catalogo .catalog-sticky-head th .table-sort-button,
+html[data-theme="light"] #content-catalogo .catalog-sticky-head th .sort-indicator,
+html[data-theme="light"] #content-classicos-catalogo .catalog-sticky-head th .sort-indicator {
+  color: #E6C06A !important;
+}

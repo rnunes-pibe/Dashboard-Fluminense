@@ -1,4 +1,4 @@
-const DASHBOARD_VERSION = '3.2.50';
+const DASHBOARD_VERSION = '3.2.52';
 
 const CONFIG = Object.freeze({
   googleSheetsCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVyyhMTbQRPjb1lXdljnsi6kjWt7mU5xKEeZRB24-Ic5hZKzkZCG9gIYvlN81CXVpd0SGc6e0XW18b/pub?gid=1810912358&single=true&output=csv",
@@ -2378,7 +2378,7 @@ function updateClassicosLabels() {
 }
 
 
-// V3.2.50 — Comparativo calculado somente com os clássicos filtrados.
+// V3.2.52 — Comparativo calculado somente com os clássicos filtrados.
 function renderClassicosComparison(statsByOpponent) {
  const container=document.getElementById('classicos-comparison-bars');
  if(!container)return;
@@ -2770,8 +2770,8 @@ function updateClassicosChart(data) {
       datasets.push({ 
           label: 'Botafogo', 
           data: dBot, 
-          borderColor: '#ffffff', 
-          backgroundColor: '#ffffff', 
+          borderColor: document.documentElement.dataset.theme === 'light' ? '#171717' : '#ffffff', 
+          backgroundColor: document.documentElement.dataset.theme === 'light' ? '#171717' : '#ffffff', 
           borderWidth: isSingleRival ? 2.5 : 1.5, 
           tension: 0, 
           pointRadius: 0, 
@@ -3006,6 +3006,10 @@ function applyDashboardTheme(theme) {
       } catch (error) { console.warn('Falha ao atualizar tema do gráfico:', error); }
     });
   }
+  // V3.2.52: rebuild the classics saldo datasets on theme changes.
+  if (lastClassicosSaldoData && document.getElementById('chartEvolucaoClassicos')) {
+    updateClassicosChart(lastClassicosSaldoData);
+  }
 }
 document.addEventListener('DOMContentLoaded', () => {
   const savedTheme = document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
@@ -3035,7 +3039,7 @@ function renderRivals(){
  const bars=document.getElementById('rivals-bars');if(!bars)return;bars.replaceChildren();
  Object.entries(RIVALS_DATA).forEach(([key,d])=>{
   const filtered=rivalsFilteredRows(d),s=rivalsStatsFiltered(d,filtered),total=filtered.length,row=document.createElement('div');row.className='rivals-bar-row';
-  const label=document.createElement('div');label.className='rivals-bar-label';label.textContent=d.a+' × '+d.b;
+  const label=document.createElement('div');label.className='rivals-bar-label';label.textContent=d.a+' × '+d.b+' ('+((s.wins[d.a]-s.wins[d.b])>0?'+':'')+(s.wins[d.a]-s.wins[d.b])+')';
   const bar=document.createElement('div');bar.className='rivals-bar';
   [[d.a,s.wins[d.a]],['Empates',s.draws],[d.b,s.wins[d.b]]].forEach(([name,n])=>{
    const seg=document.createElement('div');seg.className='rivals-bar-segment';seg.style.background=RIVALS_COLORS[name];seg.style.width=(total?n/total*100:0)+'%';seg.textContent=n||'';seg.title=name+': '+n+' ('+(total?n/total*100:0).toFixed(1)+'%)';bar.append(seg);
@@ -3138,11 +3142,21 @@ function setSaldoMode(view,mode) {
 document.addEventListener('click',event=>{const wrap=document.getElementById('rivals-menu-wrap');if(wrap&&!wrap.contains(event.target))document.getElementById('rivals-menu')?.classList.add('hidden');if(event.target.closest('#theme-toggle')&&!document.getElementById('view-rivais')?.classList.contains('hidden'))requestAnimationFrame(renderRivalsChart);});
 
 // V3.2.42 — Filtros gerais e cards de desempenho dos rivais.
-const rivalsFilterState={competition:'',minYear:null,maxYear:null,team:'Flamengo',opponents:['Vasco','Botafogo','Fluminense']};
+const rivalsFilterState={competitions:null,minYear:null,maxYear:null,team:'Flamengo',opponents:['Vasco','Botafogo','Fluminense']};
 const rivalsInsightOpen={recent:false,wins:false,unbeaten:false};
 let rivalsInsightLists={recent:[],wins:[],unbeaten:[]};
+function normalizeRivalsCompetition(value){
+ return normalizeText(value).replace(/[\u200B-\u200D\u2060\uFEFF\u00AD]/g,'').replace(/[\u2010-\u2015]/g,'-').normalize('NFKC').replace(/\s+/g,' ').trim();
+}
+function rivalsCompetitionKey(value){
+ return normalizeComparable(normalizeRivalsCompetition(value));
+}
+function rivalsCompetitionSelected(value){
+ const chosen=rivalsFilterState.competitions;
+ return chosen===null || chosen.includes(rivalsCompetitionKey(value));
+}
 function rivalsFilteredRows(d){
- return d.rows.filter(r=>(!rivalsFilterState.competition||normalizeComparable(r[4])===normalizeComparable(rivalsFilterState.competition)) &&
+ return d.rows.filter(r=>rivalsCompetitionSelected(r[4]) &&
  (rivalsFilterState.minYear===null||r[1]>=rivalsFilterState.minYear)&&
  (rivalsFilterState.maxYear===null||r[1]<=rivalsFilterState.maxYear));
 }
@@ -3156,10 +3170,46 @@ function initRivalsFilters(){
  const all=Object.values(RIVALS_DATA).flatMap(d=>d.rows);
  const years=all.map(r=>r[1]).filter(Number.isFinite),min=Math.min(...years),max=Math.max(...years);
  rivalsFilterState.minYear=min;rivalsFilterState.maxYear=max;
- const competitions=[...new Set(all.map(r=>r[4]).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
- competitions.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;select.append(o);});
- select.dataset.initialized='true';
- select.addEventListener('change',()=>{rivalsFilterState.competition=select.value;renderRivals();});
+ const competitionLabels=new Map();
+ all.map(r=>r[4]).filter(Boolean).forEach(value=>{
+  const key=rivalsCompetitionKey(value);
+  if(!competitionLabels.has(key))competitionLabels.set(key,normalizeRivalsCompetition(value));
+ });
+ const competitions=[...competitionLabels.entries()].sort((a,b)=>a[1].localeCompare(b[1],'pt-BR'));
+ const trigger=document.createElement('button');trigger.type='button';trigger.className='rivals-competition-trigger';
+ trigger.setAttribute('aria-expanded','false');trigger.setAttribute('aria-haspopup','true');
+ const panel=document.createElement('div');panel.className='rivals-competition-panel';panel.hidden=true;
+ const refresh=()=>{
+  const chosen=rivalsFilterState.competitions;
+  trigger.textContent=chosen===null?'Todas':chosen.length===0?'Nenhuma competição':chosen.length===1?(competitionLabels.get(chosen[0])||'1 competição'):chosen.length+' competições selecionadas';
+  panel.querySelectorAll('input').forEach(input=>{
+   input.checked=input.value==='__all__'?chosen===null:chosen===null||chosen.includes(input.value);
+  });
+ };
+ const addOption=(key,label)=>{
+  const row=document.createElement('label'),checkbox=document.createElement('input');
+  checkbox.type='checkbox';checkbox.value=key;checkbox.checked=true;
+  row.append(checkbox,document.createTextNode(label));
+  checkbox.addEventListener('change',()=>{
+   if(key==='__all__')rivalsFilterState.competitions=checkbox.checked?null:[];
+   else{
+    const current=rivalsFilterState.competitions===null?competitions.map(([k])=>k):rivalsFilterState.competitions.slice();
+    const next=checkbox.checked?[...new Set([...current,key])]:current.filter(k=>k!==key);
+    rivalsFilterState.competitions=next.length===competitions.length?null:next;
+   }
+   refresh();renderRivals();
+  });
+  panel.append(row);
+ };
+ addOption('__all__','Todas');
+ competitions.forEach(([key,label])=>addOption(key,label));
+ trigger.addEventListener('click',()=>{
+  panel.hidden=!panel.hidden;trigger.setAttribute('aria-expanded',String(!panel.hidden));
+ });
+ select.replaceChildren(trigger,panel);refresh();
+ document.addEventListener('click',event=>{
+  if(!select.contains(event.target)){panel.hidden=true;trigger.setAttribute('aria-expanded','false');}
+ });
  ['min','max'].forEach(side=>{
   const input=document.getElementById('rivals-year-'+side);input.min=min;input.max=max;input.value=side==='min'?min:max;
   input.addEventListener('input',()=>{
@@ -3218,7 +3268,7 @@ function rivalsInsightMatches(){
    if(other!==normalizeComparable(team)||!Number.isFinite(m.gf)||!Number.isFinite(m.ga))return;
    if(rivalsFilterState.minYear!==null&&m.ano<rivalsFilterState.minYear)return;
    if(rivalsFilterState.maxYear!==null&&m.ano>rivalsFilterState.maxYear)return;
-   if(rivalsFilterState.competition&&normalizeComparable(m.torneio)!==normalizeComparable(rivalsFilterState.competition))return;
+   if(!rivalsCompetitionSelected(m.torneio))return;
    const time=m.timestamp||computeTimestamp(m.data);
    items.push({date:m.data,year:m.ano,time,gf:m.ga,ga:m.gf,opp:'Fluminense',competition:m.torneio,result:m.ga>m.gf?'V':m.ga<m.gf?'D':'E',key:'flu-'+i});
   });

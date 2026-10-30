@@ -1488,3 +1488,75 @@ html[data-theme="light"] .glass-panel:has(#classicos-kpi-gc) { border-left-color
 html[data-theme="light"] .glass-panel:has(#classicos-kpi-aproveitamento) { border-left-color:#A57A2D!important; }
 html[data-theme="light"] .glass-panel:has(#classicos-kpi-media-sul) { border-left-color:#168DA5!important; }
 html[data-theme="light"] .glass-panel:has(#classicos-kpi-taxa-sul) { border-left-color:#B78A16!important; }
+
+
+/* V3.2.50 — Form recent: the toggle is adjacent to the fifth result, not in heading. */
+.recent-results-with-toggle{display:flex;align-items:center;gap:12px;min-width:0;margin:.55rem 0 .45rem}
+.recent-results-with-toggle .recent-form-results{margin:0;min-height:0;flex:0 0 auto}
+.recent-results-with-toggle .recent-form-toggle{margin:0;flex:0 0 auto;font-size:11px;white-space:nowrap}
+.rivals-results-with-toggle{margin:0 0 12px}
+.rivals-results-with-toggle .rivals-recent-circles{min-height:57px;flex:0 0 auto}
+.rivals-results-with-toggle .rivals-link{margin-left:0;white-space:nowrap}
+@media(max-width:600px){
+ .recent-results-with-toggle{gap:8px}
+ .recent-results-with-toggle .recent-form-results{gap:.45rem}
+ .recent-results-with-toggle .recent-form-toggle,.rivals-results-with-toggle .rivals-link{font-size:10px}
+ .rivals-results-with-toggle{gap:7px}
+ .rivals-results-with-toggle .rivals-recent-circles{gap:6px}
+ .rivals-results-with-toggle .rivals-result{width:clamp(29px,8vw,40px);height:clamp(29px,8vw,40px)}
+}
+/* Desktop: historical toggle remains alongside counts. */
+.streak-period-actions{display:contents}
+.streak-value-row{position:relative}
+.streak-value-row .streak-toggle{order:3}
+.streak-period-actions p{margin-top:.55rem}
+/* Historical mobile: vertically stacked sections and same-line period/toggle. */
+@media(max-width:767px){
+ .streak-grid,.rivals-streak-grid{display:flex!important;flex-direction:column!important;gap:0!important}
+ .streak-item,.streak-item:first-child,.rivals-streak-grid>div{padding:12px 0!important;border-right:0!important;border-left:0!important;min-width:0}
+ .streak-item+ .streak-item,.rivals-streak-grid>div+div{border-top:1px solid rgba(128,154,138,.30)!important;padding:12px 0!important}
+ .streak-period-actions{display:flex!important;align-items:baseline;gap:12px;min-width:0;margin-top:7px;white-space:nowrap}
+ .streak-period-actions p,.streak-item .streak-period-actions p,.rivals-streak-grid .streak-period-actions p{margin:0!important;white-space:nowrap;font-size:clamp(9px,2.65vw,12px)!important;opacity:.85}
+ .streak-period-actions button,.streak-period-actions .rivals-link{white-space:nowrap!important;flex-shrink:0;margin:0!important;font-size:clamp(10px,2.7vw,12px)!important}
+ .streak-value-row{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+ .streak-value-row .streak-toggle{display:none!important}
+ .streak-period-actions .streak-toggle{display:inline-block!important}
+ .rivals-streak-grid .rivals-streak-number button{display:none!important}
+ .rivals-streak-grid .streak-period-actions button{display:inline-block!important}
+ .rivals-streak-grid p{margin:0}
+}
+/* Comparativo de clássicos: full width, no changes to rival's existing chart. */
+.classicos-comparison-bars{display:grid;gap:13px;margin:22px 0 15px}
+.classicos-comparison-row{display:grid;grid-template-columns:minmax(190px,240px) minmax(0,1fr);gap:14px;align-items:center}
+.classicos-comparison-label{font-size:13px;font-weight:750;white-space:nowrap;color:#dbe9df}
+.classicos-comparison-bar{display:flex;overflow:hidden;height:31px;border-radius:7px;background:rgba(128,154,138,.16);min-width:0}
+.classicos-comparison-segment{display:flex;align-items:center;justify-content:center;min-width:0;font-size:12px;font-weight:800;color:white;overflow:hidden;white-space:nowrap}
+.classicos-comparison-win{background:#116747}.classicos-comparison-draw{background:#b3bec5;color:#19332d}.classicos-comparison-loss{background:#850e32}
+.classicos-comparison-empty{font-size:11px;margin:auto;color:#7f9a8a}
+.classicos-comparison-legend{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;font-size:12px}
+.classicos-comparison-legend>span{display:flex;gap:6px;align-items:center}
+.comparison-key{display:inline-block;width:12px;height:12px;border-radius:3px}
+.comparison-key-win{background:#116747}.comparison-key-draw{background:#b3bec5}.comparison-key-loss{background:#850e32}
+html[data-theme="light"] .classicos-comparison-label{color:#1b4030}
+html[data-theme="light"] .classicos-comparison-legend{color:#254938}
+@media(max-width:600px){
+ .classicos-comparison-row{grid-template-columns:1fr;gap:5px}
+ .classicos-comparison-bars{gap:15px}
+ .classicos-comparison-label{font-size:12px}
+ .classicos-comparison-bar{height:28px}
+}
+
+@media(min-width:768px){
+ .streak-item{display:grid;grid-template-columns:auto 1fr;align-content:start}
+ .streak-item>span{grid-column:1/-1}
+ .streak-item>.streak-value-row{grid-column:1;grid-row:2}
+ .streak-item>.streak-period-actions{display:contents}
+ .streak-item>.streak-period-actions>button{grid-column:2;grid-row:2;align-self:end;justify-self:start;margin-left:10px;margin-bottom:3px;white-space:nowrap}
+ .streak-item>.streak-period-actions>p{grid-column:1/-1;grid-row:3}
+ .rivals-streak-grid>div{display:grid;grid-template-columns:auto 1fr;align-content:start}
+ .rivals-streak-grid>div>small{grid-column:1/-1}
+ .rivals-streak-grid .rivals-streak-number{grid-column:1;grid-row:2}
+ .rivals-streak-grid .streak-period-actions{display:contents}
+ .rivals-streak-grid .streak-period-actions button{grid-column:2;grid-row:2;align-self:center;justify-self:start;white-space:nowrap}
+ .rivals-streak-grid .streak-period-actions p{grid-column:1/-1;grid-row:3}
+}

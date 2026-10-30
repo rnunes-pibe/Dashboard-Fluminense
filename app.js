@@ -1,4 +1,4 @@
-const DASHBOARD_VERSION = '3.2.49';
+const DASHBOARD_VERSION = '3.2.50';
 
 const CONFIG = Object.freeze({
   googleSheetsCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVyyhMTbQRPjb1lXdljnsi6kjWt7mU5xKEeZRB24-Ic5hZKzkZCG9gIYvlN81CXVpd0SGc6e0XW18b/pub?gid=1810912358&single=true&output=csv",
@@ -2377,6 +2377,38 @@ function updateClassicosLabels() {
   });
 }
 
+
+// V3.2.50 — Comparativo calculado somente com os clássicos filtrados.
+function renderClassicosComparison(statsByOpponent) {
+ const container=document.getElementById('classicos-comparison-bars');
+ if(!container)return;
+ const rivals=[['Flamengo','flamengo'],['Vasco','vasco'],['Botafogo','botafogo']];
+ container.replaceChildren();
+ rivals.forEach(([name,key])=>{
+  const stats={v:0,e:0,d:0};
+  Object.entries(statsByOpponent).forEach(([opponent,values])=>{
+   if(normalizeComparable(opponent).includes(key)){
+    stats.v+=values.v||0;stats.e+=values.e||0;stats.d+=values.d||0;
+   }
+  });
+  const total=stats.v+stats.e+stats.d, saldo=stats.v-stats.d;
+  const row=document.createElement('div');row.className='classicos-comparison-row';
+  const label=document.createElement('div');label.className='classicos-comparison-label';
+  label.textContent=`Fluminense × ${name} (${saldo>0?'+':''}${saldo})`;
+  const bar=document.createElement('div');bar.className='classicos-comparison-bar';
+  bar.setAttribute('role','img');bar.setAttribute('aria-label',`${name}: ${stats.v} vitórias do Fluminense, ${stats.e} empates, ${stats.d} derrotas. Saldo ${saldo}`);
+  if(!total){const empty=document.createElement('span');empty.className='classicos-comparison-empty';empty.textContent='Sem partidas no recorte';bar.append(empty)}
+  else [['win',stats.v,'Vitórias'],['draw',stats.e,'Empates'],['loss',stats.d,'Derrotas']].forEach(([kind,value,title])=>{
+   if(!value)return;
+   const segment=document.createElement('span');segment.className='classicos-comparison-segment classicos-comparison-'+kind;
+   segment.style.width=(value/total*100)+'%';segment.textContent=value.toLocaleString('pt-BR');
+   segment.title=`${title}: ${value} (${(value/total*100).toFixed(1)}%)`;
+   bar.append(segment);
+  });
+  row.append(label,bar);container.append(row);
+ });
+}
+
 function resetClassicosFilters() {
   classicosState.competicao = [];
   classicosState.adversario = [];
@@ -2442,6 +2474,8 @@ function applyClassicosFilters() {
        if (res === 'V') st.v++; else if (res === 'E') st.e++; else st.d++;
     }
   });
+
+  renderClassicosComparison(advStatsClassicos);
 
   const total = filteredClassicos.length;
   const ptsPossiveis = total * 3;
@@ -2658,7 +2692,7 @@ function updateClassicosPerformanceInsights() {
   syncClassicosRecentFormExpansion();
 }
 
-let classicosSaldoMode = 'partidas';
+let classicosSaldoMode = 'anos';
 let rivalsSaldoMode = 'anos';
 let lastClassicosSaldoData = null;
 function updateClassicosChart(data) {

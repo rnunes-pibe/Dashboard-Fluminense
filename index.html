@@ -418,11 +418,11 @@
           <div class="performance-insight-heading">
             <div class="performance-insight-icon"><i data-lucide="chart-no-axes-column-increasing" class="w-5 h-5"></i></div>
             <div>
-              <div class="recent-form-title-row"><h3 class="text-sm sm:text-base font-black uppercase tracking-wide text-white">Forma Recente <span class="text-white/45">· Últimos 5 jogos</span></h3><button type="button" class="streak-toggle recent-form-toggle" data-action="toggle-recent-form-matches" aria-expanded="false">Ver partidas <span aria-hidden="true">›</span></button></div>
+              <div class="recent-form-title-row"><h3 class="text-sm sm:text-base font-black uppercase tracking-wide text-white">Forma Recente <span class="text-white/45">· Últimos 5 jogos</span></h3></div>
               <p class="text-xs text-white/50 mt-1">Últimos 5 jogos do recorte selecionado · Responde aos filtros aplicados</p>
             </div>
           </div>
-          <div id="recent-form-results" class="recent-form-results" aria-label="Forma recente"></div>
+          <div class="recent-results-with-toggle"><div id="recent-form-results" class="recent-form-results" aria-label="Forma recente"></div><button type="button" class="streak-toggle recent-form-toggle" data-action="toggle-recent-form-matches" aria-expanded="false">Ver partidas <span aria-hidden="true">›</span></button></div>
           <div class="recent-form-metrics">
             <div><span>Aproveitamento</span><strong id="recent-form-rate" class="text-emerald-400">-</strong></div>
             <div><span>Gols marcados</span><strong id="recent-form-gf">-</strong></div>
@@ -444,9 +444,9 @@
               <span>Maior sequência de vitórias</span>
               <div class="streak-value-row">
                 <strong class="text-emerald-400"><b id="streak-wins-count">-</b> <small>jogos</small></strong>
-                <button type="button" class="streak-toggle" data-action="toggle-streak-matches" data-streak="wins" aria-expanded="false">Ver partidas <span aria-hidden="true">›</span></button>
+                
               </div>
-              <p id="streak-wins-period">-</p>
+              <div class="streak-period-actions"><p id="streak-wins-period">-</p><button type="button" class="streak-toggle" data-action="toggle-streak-matches" data-streak="wins" aria-expanded="false">Ver partidas <span aria-hidden="true">›</span></button></div>
               
             </div>
             <div class="streak-item">
@@ -454,9 +454,9 @@
               <div class="streak-value-row">
                 <strong class="text-[#F4C95D]"><b id="streak-unbeaten-count">-</b> <small>jogos</small></strong>
                 <strong id="streak-unbeaten-breakdown" class="streak-value-breakdown"></strong>
-                <button type="button" class="streak-toggle" data-action="toggle-streak-matches" data-streak="unbeaten" aria-expanded="false">Ver partidas <span aria-hidden="true">›</span></button>
+                
               </div>
-              <p id="streak-unbeaten-period">-</p>
+              <div class="streak-period-actions"><p id="streak-unbeaten-period">-</p><button type="button" class="streak-toggle" data-action="toggle-streak-matches" data-streak="unbeaten" aria-expanded="false">Ver partidas <span aria-hidden="true">›</span></button></div>
               
             </div>
           </div>
@@ -834,11 +834,11 @@
           <div class="performance-insight-heading">
             <div class="performance-insight-icon"><i data-lucide="chart-no-axes-column-increasing" class="w-5 h-5"></i></div>
             <div>
-              <div class="recent-form-title-row"><h3 class="text-sm sm:text-base font-black uppercase tracking-wide text-white">Forma Recente <span class="text-white/45">· Últimos 5 jogos</span></h3><button type="button" class="streak-toggle recent-form-toggle" data-action="toggle-classicos-recent-form-matches" aria-expanded="false">Ver partidas <span aria-hidden="true">›</span></button></div>
+              <div class="recent-form-title-row"><h3 class="text-sm sm:text-base font-black uppercase tracking-wide text-white">Forma Recente <span class="text-white/45">· Últimos 5 jogos</span></h3></div>
               <p class="text-xs text-white/50 mt-1">Últimos 5 clássicos do recorte selecionado · Responde aos filtros aplicados</p>
             </div>
           </div>
-          <div id="classicos-recent-form-results" class="recent-form-results" aria-label="Forma recente nos clássicos"></div>
+          <div class="recent-results-with-toggle"><div id="classicos-recent-form-results" class="recent-form-results" aria-label="Forma recente nos clássicos"></div><button type="button" class="streak-toggle recent-form-toggle" data-action="toggle-classicos-recent-form-matches" aria-expanded="false">Ver partidas <span aria-hidden="true">›</span></button></div>
           <div class="recent-form-metrics">
             <div><span>Aproveitamento</span><strong id="classicos-recent-form-rate">-</strong></div>
             <div><span>Gols marcados</span><strong id="classicos-recent-form-gf">-</strong></div>
@@ -857,17 +857,24 @@
           <div class="streak-grid">
             <div class="streak-item">
               <span>Maior sequência de vitórias</span>
-              <div class="streak-value-row"><strong class="text-emerald-400"><b id="classicos-streak-wins-count">-</b> <small>jogos</small></strong><button type="button" class="streak-toggle" data-action="toggle-classicos-streak-matches" data-streak="wins" aria-expanded="false">Ver partidas <span aria-hidden="true">›</span></button></div>
-              <p id="classicos-streak-wins-period">-</p>
+              <div class="streak-value-row"><strong class="text-emerald-400"><b id="classicos-streak-wins-count">-</b> <small>jogos</small></strong></div>
+              <div class="streak-period-actions"><p id="classicos-streak-wins-period">-</p><button type="button" class="streak-toggle" data-action="toggle-classicos-streak-matches" data-streak="wins" aria-expanded="false">Ver partidas <span aria-hidden="true">›</span></button></div>
             </div>
             <div class="streak-item">
               <span>Maior sequência invicta</span>
-              <div class="streak-value-row"><strong class="text-[#F4C95D]"><b id="classicos-streak-unbeaten-count">-</b> <small>jogos</small></strong><strong id="classicos-streak-unbeaten-breakdown" class="streak-value-breakdown"></strong><button type="button" class="streak-toggle" data-action="toggle-classicos-streak-matches" data-streak="unbeaten" aria-expanded="false">Ver partidas <span aria-hidden="true">›</span></button></div>
-              <p id="classicos-streak-unbeaten-period">-</p>
+              <div class="streak-value-row"><strong class="text-[#F4C95D]"><b id="classicos-streak-unbeaten-count">-</b> <small>jogos</small></strong><strong id="classicos-streak-unbeaten-breakdown" class="streak-value-breakdown"></strong></div>
+              <div class="streak-period-actions"><p id="classicos-streak-unbeaten-period">-</p><button type="button" class="streak-toggle" data-action="toggle-classicos-streak-matches" data-streak="unbeaten" aria-expanded="false">Ver partidas <span aria-hidden="true">›</span></button></div>
             </div>
           </div>
           <div class="shared-streak-details"><div id="classicos-streak-wins-matches" class="streak-matches" hidden></div><div id="classicos-streak-unbeaten-matches" class="streak-matches" hidden></div></div>
         </div>
+      </section>
+
+      <section id="classicos-comparison-card" class="glass-panel classicos-comparison-card rounded-2xl p-5 sm:p-6 shadow-xl" aria-labelledby="classicos-comparison-title">
+        <h3 id="classicos-comparison-title" class="text-base font-bold text-white">⚔ Desempenho do Fluminense nos Clássicos</h3>
+        <p class="text-xs text-white/50 mt-1">Vitórias do Fluminense, empates e vitórias dos adversários · Responde aos filtros aplicados</p>
+        <div id="classicos-comparison-bars" class="classicos-comparison-bars" aria-live="polite"></div>
+        <div class="classicos-comparison-legend" aria-label="Legenda"><span><i class="comparison-key comparison-key-win"></i>Fluminense</span><span><i class="comparison-key comparison-key-draw"></i>Empates</span><span><i class="comparison-key comparison-key-loss"></i>Adversário</span></div>
       </section>
 
       <section class="glass-panel rounded-2xl p-6 shadow-2xl space-y-4">
@@ -880,8 +887,8 @@
             <p class="text-xs text-white/50">Histórico cumulativo de vitórias menos derrotas ao longo do tempo (respeita filtros ativos)</p>
           </div>
           <div class="saldo-mode-switch" role="group" aria-label="Escala temporal do saldo em Clássicos">
-            <button type="button" class="is-active" data-action="saldo-mode" data-saldo-view="classicos" data-saldo-mode="partidas" aria-pressed="true">Partida a partida</button>
-            <button type="button" data-action="saldo-mode" data-saldo-view="classicos" data-saldo-mode="anos" aria-pressed="false">Ano a ano</button>
+            <button type="button" data-action="saldo-mode" data-saldo-view="classicos" data-saldo-mode="partidas" aria-pressed="false">Partida a partida</button>
+            <button type="button" class="is-active" data-action="saldo-mode" data-saldo-view="classicos" data-saldo-mode="anos" aria-pressed="true">Ano a ano</button>
           </div>
         </div>
         <div class="relative w-full h-[400px]">
@@ -1004,9 +1011,9 @@
     </section>
     <div class="rivals-performance-grid">
       <section class="rivals-card rivals-insight-card">
-        <h2>▥ FORMA RECENTE · ÚLTIMOS 5 JOGOS <button class="rivals-link" data-action="rivals-toggle-recent" id="rivals-recent-toggle">Ver partidas ›</button></h2>
+        <h2>▥ FORMA RECENTE · ÚLTIMOS 5 JOGOS </h2>
         <p class="rivals-help">Últimos clássicos do recorte selecionado</p>
-        <div id="rivals-recent-circles" class="rivals-recent-circles"></div>
+        <div class="recent-results-with-toggle rivals-results-with-toggle"><div id="rivals-recent-circles" class="rivals-recent-circles"></div><button class="rivals-link" data-action="rivals-toggle-recent" id="rivals-recent-toggle">Ver partidas ›</button></div>
         <div class="rivals-recent-kpis">
           <div><small>APROVEITAMENTO</small><strong id="rivals-recent-rate">—</strong></div>
           <div><small>GOLS MARCADOS</small><strong id="rivals-recent-gf">—</strong></div>
@@ -1018,8 +1025,8 @@
         <h2>🏆 SEQUÊNCIAS HISTÓRICAS</h2>
         <p class="rivals-help">Maiores sequências nos clássicos do recorte selecionado</p>
         <div class="rivals-streak-grid">
-          <div><small>MAIOR SEQUÊNCIA DE VITÓRIAS</small><div class="rivals-streak-number"><strong id="rivals-wins-count">—</strong> jogos <button class="rivals-link" data-action="rivals-toggle-wins" id="rivals-wins-toggle">Ver partidas ›</button></div><p id="rivals-wins-period"></p></div>
-          <div><small>MAIOR SEQUÊNCIA INVICTA</small><div class="rivals-streak-number"><strong id="rivals-unbeaten-count">—</strong> jogos <span id="rivals-unbeaten-breakdown"></span><button class="rivals-link" data-action="rivals-toggle-unbeaten" id="rivals-unbeaten-toggle">Ver partidas ›</button></div><p id="rivals-unbeaten-period"></p></div>
+          <div><small>MAIOR SEQUÊNCIA DE VITÓRIAS</small><div class="rivals-streak-number"><strong id="rivals-wins-count">—</strong> jogos </div><div class="streak-period-actions"><p id="rivals-wins-period"></p><button class="rivals-link" data-action="rivals-toggle-wins" id="rivals-wins-toggle">Ver partidas ›</button></div></div>
+          <div><small>MAIOR SEQUÊNCIA INVICTA</small><div class="rivals-streak-number"><strong id="rivals-unbeaten-count">—</strong> jogos <span id="rivals-unbeaten-breakdown"></span></div><div class="streak-period-actions"><p id="rivals-unbeaten-period"></p><button class="rivals-link" data-action="rivals-toggle-unbeaten" id="rivals-unbeaten-toggle">Ver partidas ›</button></div></div>
         </div>
         <div class="shared-streak-details"><div id="rivals-wins-list" class="rivals-insight-list" hidden></div><div id="rivals-unbeaten-list" class="rivals-insight-list" hidden></div></div>
       </section>
@@ -1033,7 +1040,7 @@
     <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-center gap-2">
       <p>Grandes são os outros, o Fluminense é enorme</p>
       <span class="hidden sm:inline" aria-hidden="true">•</span>
-      <p>Fluminense FC • Dashboard Analítico • <strong id="dashboard-version" class="font-semibold text-emerald-100/70">v3.2.49</strong></p>
+      <p>Fluminense FC • Dashboard Analítico • <strong id="dashboard-version" class="font-semibold text-emerald-100/70">v3.2.50</strong></p>
     </div>
   </footer>
 

@@ -1,4 +1,4 @@
-const DASHBOARD_VERSION = '3.2.52';
+const DASHBOARD_VERSION = '3.2.56';
 
 const CONFIG = Object.freeze({
   googleSheetsCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVyyhMTbQRPjb1lXdljnsi6kjWt7mU5xKEeZRB24-Ic5hZKzkZCG9gIYvlN81CXVpd0SGc6e0XW18b/pub?gid=1810912358&single=true&output=csv",
@@ -935,7 +935,7 @@ function makeValueLabelsPlugin(id, { decimals = 0, horizontal = false, fontSize 
           if (horizontal) {
             const isMobile = window.matchMedia('(max-width: 767px)').matches;
             const rightReserve = fullValue ? 50 : 34;
-            const x = (mobileOutside && isMobile) ? element.x + 8 : Math.min(element.x + 6, chartArea.right - rightReserve);
+            const x = id === 'topVisitanteLabels' ? Math.min(element.x + 8, chart.width - rightReserve) : ((mobileOutside && isMobile) ? element.x + 8 : Math.min(element.x + 6, chartArea.right - rightReserve));
             ctx.fillText(useFullValue ? formatFull(value) : formatK(value, decimals), x, element.y);
           }
           else ctx.fillText(useFullValue ? formatFull(value) : formatK(value, decimals), element.x, Math.max(chartArea.top + 12, element.y - 6));
@@ -1819,7 +1819,7 @@ function updateCharts() {
         activeCharts["chartTopVisitante"] = new Chart(getChartCanvas("chartTopVisitante"), {
           type: 'bar', data: { labels: topEstadios.map(e => e.est), datasets: [{ label: 'Média de Público', data: topEstadios.map(e => e.avg), backgroundColor: '#870A28', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: topEstadios.map(e => e.count) }] },
           plugins: [makeValueLabelsPlugin('topVisitanteLabels', { horizontal: true, mobileOutside: true, fullValue: true })],
-          options: { indexAxis: 'y', layout: { padding: { right: chartsMobile ? 46 : 58 } }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` Média: ${ctx.parsed.x.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { x: { display: !chartsMobile, beginAtZero: true, grace: chartsMobile ? '5%' : 0, ticks: { display: false, callback: v => v.toLocaleString('pt-BR') } }, y: { ticks: { display: true, padding: chartsMobile ? 2 : 6 } } } }
+          options: { indexAxis: 'y', layout: { padding: { right: chartsMobile ? 54 : 60, top: 6, bottom: 4 } }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` Média: ${ctx.parsed.x.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { x: { display: !chartsMobile, beginAtZero: true, grace: '15%', grid: { display: false }, border: { display: false }, ticks: { display: false, callback: v => v.toLocaleString('pt-BR') } }, y: { grid: { display: false }, border: { display: false }, ticks: { display: true, padding: chartsMobile ? 2 : 6 } } } }
         });
       } else {
         const ctx = getChartCanvas("chartTopVisitante"); ctx.font = "12px 'Plus Jakarta Sans', sans-serif"; ctx.fillStyle = "rgba(255,255,255,0.4)"; ctx.textAlign = "center"; ctx.fillText("Nenhum dado de público visitante para os filtros atuais.", ctx.canvas.width / 2, 50);
@@ -2378,26 +2378,30 @@ function updateClassicosLabels() {
 }
 
 
-// V3.2.52 — Comparativo calculado somente com os clássicos filtrados.
+// V3.2.54 — Comparativo calculado somente com os clássicos filtrados.
 function renderClassicosComparison(statsByOpponent) {
  const container=document.getElementById('classicos-comparison-bars');
  if(!container)return;
  const rivals=[['Flamengo','flamengo'],['Vasco','vasco'],['Botafogo','botafogo']];
  container.replaceChildren();
  rivals.forEach(([name,key])=>{
-  const stats={v:0,e:0,d:0};
+  const stats={v:0,e:0,d:0,gp:0,gc:0};
   Object.entries(statsByOpponent).forEach(([opponent,values])=>{
    if(normalizeComparable(opponent).includes(key)){
-    stats.v+=values.v||0;stats.e+=values.e||0;stats.d+=values.d||0;
+    ['v','e','d','gp','gc'].forEach(k=>stats[k]+=values[k]||0);
    }
   });
-  const total=stats.v+stats.e+stats.d, saldo=stats.v-stats.d;
+  const total=stats.v+stats.e+stats.d,saldo=stats.v-stats.d;
   const row=document.createElement('div');row.className='classicos-comparison-row';
+  const header=document.createElement('div');header.className='classicos-comparison-header';
   const label=document.createElement('div');label.className='classicos-comparison-label';
-  label.textContent=`Fluminense × ${name} (${saldo>0?'+':''}${saldo})`;
+  label.textContent=`Fluminense × ${name}`;
+  const count=document.createElement('span');count.className='classicos-comparison-total';
+  count.textContent=total.toLocaleString('pt-BR')+' jogos';
+  header.append(label);
   const bar=document.createElement('div');bar.className='classicos-comparison-bar';
   bar.setAttribute('role','img');bar.setAttribute('aria-label',`${name}: ${stats.v} vitórias do Fluminense, ${stats.e} empates, ${stats.d} derrotas. Saldo ${saldo}`);
-  if(!total){const empty=document.createElement('span');empty.className='classicos-comparison-empty';empty.textContent='Sem partidas no recorte';bar.append(empty)}
+  if(!total){const empty=document.createElement('span');empty.className='classicos-comparison-empty';empty.textContent='Sem partidas no recorte';bar.append(empty);}
   else [['win',stats.v,'Vitórias'],['draw',stats.e,'Empates'],['loss',stats.d,'Derrotas']].forEach(([kind,value,title])=>{
    if(!value)return;
    const segment=document.createElement('span');segment.className='classicos-comparison-segment classicos-comparison-'+kind;
@@ -2405,7 +2409,20 @@ function renderClassicosComparison(statsByOpponent) {
    segment.title=`${title}: ${value} (${(value/total*100).toFixed(1)}%)`;
    bar.append(segment);
   });
-  row.append(label,bar);container.append(row);
+  const metrics=document.createElement('div');metrics.className='classicos-comparison-metrics';
+  const rate=total?(stats.v*3+stats.e)/(total*3)*100:0;
+  [['Aproveitamento',total?rate.toFixed(1).replace('.',',')+'%':'—'],['Gols pró',stats.gp.toLocaleString('pt-BR')],['Gols contra',stats.gc.toLocaleString('pt-BR')],['Saldo (V-D)',total?(saldo>0?'+':'')+saldo:'—']].forEach(([title,value],i)=>{
+   const metric=document.createElement('div');metric.className='classicos-comparison-metric';
+   const heading=document.createElement('small');heading.textContent=title;
+   const number=document.createElement('strong');number.textContent=value;
+   if(i===0&&total)number.style.color=recentRateColor(rate);
+   if(i===3&&total)number.classList.add(saldo>0?'saldo-positive':saldo<0?'saldo-negative':'saldo-neutral');
+   metric.append(heading,number);metrics.append(metric);
+  });
+  const results=document.createElement('div');results.className='classicos-comparison-results';
+  header.append(count);
+  results.append(bar);
+  row.append(header,results,metrics);container.append(row);
  });
 }
 
@@ -2906,6 +2923,7 @@ function handleDelegatedClick(event) {
     'reset-filters': () => resetFilters(),
     'toggle-sem-rivais': () => toggleSemRivais(),
     'reset-classicos-filters': () => resetClassicosFilters(),
+    'reset-rivals-filters': () => resetRivalsFilters(),
     'copy-filtered-url': () => copyFilteredUrl(),
     'export-filtered-csv': () => exportFilteredCsv(),
     'export-classicos-csv': () => exportClassicosFilteredCsv(),
@@ -3006,7 +3024,7 @@ function applyDashboardTheme(theme) {
       } catch (error) { console.warn('Falha ao atualizar tema do gráfico:', error); }
     });
   }
-  // V3.2.52: rebuild the classics saldo datasets on theme changes.
+  // V3.2.54: rebuild the classics saldo datasets on theme changes.
   if (lastClassicosSaldoData && document.getElementById('chartEvolucaoClassicos')) {
     updateClassicosChart(lastClassicosSaldoData);
   }
@@ -3035,20 +3053,61 @@ function openRivalsView(){
  document.getElementById('rivals-menu-button').setAttribute('aria-expanded','false');
  markActiveTabs(['tab-btn-capa','tab-btn-estadio','tab-btn-classicos'],'');initRivalsFilters();renderRivals();window.scrollTo({top:0,behavior:'smooth'});
 }
-function renderRivals(){
+// V3.2.56 — Perspectiva independente por confronto, sem alterar os filtros gerais.
+const rivalsCardPerspective = {};
+function renderRivalsBarsOnly(){
  const bars=document.getElementById('rivals-bars');if(!bars)return;bars.replaceChildren();
  Object.entries(RIVALS_DATA).forEach(([key,d])=>{
-  const filtered=rivalsFilteredRows(d),s=rivalsStatsFiltered(d,filtered),total=filtered.length,row=document.createElement('div');row.className='rivals-bar-row';
-  const label=document.createElement('div');label.className='rivals-bar-label';label.textContent=d.a+' × '+d.b+' ('+((s.wins[d.a]-s.wins[d.b])>0?'+':'')+(s.wins[d.a]-s.wins[d.b])+')';
-  const bar=document.createElement('div');bar.className='rivals-bar';
-  [[d.a,s.wins[d.a]],['Empates',s.draws],[d.b,s.wins[d.b]]].forEach(([name,n])=>{
-   const seg=document.createElement('div');seg.className='rivals-bar-segment';seg.style.background=RIVALS_COLORS[name];seg.style.width=(total?n/total*100:0)+'%';seg.textContent=n||'';seg.title=name+': '+n+' ('+(total?n/total*100:0).toFixed(1)+'%)';bar.append(seg);
-  });row.append(label,bar);bars.append(row);
+  const filtered=rivalsFilteredRows(d),s=rivalsStatsFiltered(d,filtered),total=filtered.length;
+  const selected=rivalsCardPerspective[key]===d.b?d.b:d.a;
+  const other=selected===d.a?d.b:d.a;
+  const wins=s.wins[selected],losses=s.wins[other],saldo=wins-losses;
+  const goalsA=filtered.reduce((sum,r)=>sum+(Number(r[2])||0),0);
+  const goalsB=filtered.reduce((sum,r)=>sum+(Number(r[3])||0),0);
+  const goalsFor=selected===d.a?goalsA:goalsB,goalsAgainst=selected===d.a?goalsB:goalsA;
+  const rate=total?(3*wins+s.draws)/(3*total)*100:0;
+  const row=document.createElement('div');row.className='rivals-comparison-row';
+  const header=document.createElement('div');header.className='rivals-comparison-header';
+  const title=document.createElement('div');title.className='rivals-comparison-title';
+  [d.a,d.b].forEach((name,i)=>{
+   if(i){const cross=document.createElement('span');cross.textContent=' × ';cross.className='rivals-comparison-cross';title.append(cross);}
+   const button=document.createElement('button');button.type='button';button.className='rivals-team-choice';
+   button.textContent=name;button.dataset.team=name;button.setAttribute('aria-pressed',String(name===selected));
+   button.title='Ver estatísticas do '+name;
+   button.addEventListener('click',()=>{rivalsCardPerspective[key]=name;renderRivalsBarsOnly();});
+   title.append(button);
+  });
+  const count=document.createElement('span');count.className='rivals-comparison-total';count.textContent=total.toLocaleString('pt-BR')+' jogos';
+  header.append(title,count);
+  const bar=document.createElement('div');bar.className='rivals-bar rivals-comparison-bar';
+  bar.setAttribute('role','img');bar.setAttribute('aria-label',`${selected}: ${wins} vitórias, ${s.draws} empates, ${losses} derrotas`);
+  [[selected,wins],['Empates',s.draws],[other,losses]].forEach(([name,n])=>{
+   if(!n)return;
+   const seg=document.createElement('span');seg.className='rivals-bar-segment';seg.style.background=RIVALS_COLORS[name];
+   seg.style.width=(total?n/total*100:0)+'%';seg.textContent=n.toLocaleString('pt-BR');
+   if(name==='Empates')seg.classList.add('rivals-segment-draw');
+   seg.title=name+': '+n+' ('+(total?n/total*100:0).toFixed(1)+'%)';bar.append(seg);
+  });
+  if(!total){bar.textContent='Sem jogos no período';bar.classList.add('rivals-bar-empty');}
+  const metrics=document.createElement('div');metrics.className='rivals-comparison-metrics';
+  [['Aproveitamento',total?rate.toFixed(1).replace('.',',')+'%':'—'],['Gols pró',total?goalsFor.toLocaleString('pt-BR'):'—'],['Gols contra',total?goalsAgainst.toLocaleString('pt-BR'):'—'],['Saldo (V-D)',total?(saldo>0?'+':'')+saldo:'—']].forEach(([label,value],i)=>{
+   const metric=document.createElement('div');metric.className='rivals-comparison-metric';
+   const name=document.createElement('small');name.textContent=label;
+   const val=document.createElement('strong');val.textContent=value;
+   if(i===0&&total)val.style.color=recentRateColor(rate);
+   if(i===3&&total)val.classList.add(saldo>0?'saldo-positive':saldo<0?'saldo-negative':'saldo-neutral');
+   metric.append(name,val);metrics.append(metric);
+  });
+  row.append(header,bar,metrics);bars.append(row);
  });
+}
+function renderRivals(){
+ renderRivalsBarsOnly();
  const legend=document.getElementById('rivals-legend');legend.replaceChildren();
  ['Flamengo','Vasco','Botafogo','Empates'].forEach(name=>{const item=document.createElement('span'),dot=document.createElement('i');dot.style.background=RIVALS_COLORS[name];item.append(dot,document.createTextNode(name));legend.append(item);});
  setRivalsTab(rivalsActiveTab);renderRivalsChart();renderRivalsInsights();
 }
+
 function setRivalsTab(key){
  const d=RIVALS_DATA[key];if(!d)return;rivalsActiveTab=key;
  document.querySelectorAll('[data-rivals-tab]').forEach(b=>b.classList.toggle('is-active',b.dataset.rivalsTab===key));
@@ -3291,6 +3350,22 @@ function renderRivalsInsightList(kind){
  if(btn){btn.textContent=rivalsInsightOpen[kind]?'Ocultar partidas ⌃':'Ver partidas ›';btn.disabled=!(rivalsInsightLists[kind]||[]).length;}
 }
 function toggleRivalsInsight(kind){rivalsInsightOpen[kind]=!rivalsInsightOpen[kind];renderRivalsInsightList(kind);}
+function resetRivalsFilters(){
+ rivalsFilterState.competitions=null;
+ const all=document.querySelector('#rivals-competition input[value="__all__"]');
+ if(all){all.checked=true;all.dispatchEvent(new Event('change',{bubbles:true}));}
+ const left=document.getElementById('rivals-year-min'),right=document.getElementById('rivals-year-max');
+ if(left&&right){
+  left.value=left.min;right.value=right.max;
+  rivalsFilterState.minYear=+left.value;rivalsFilterState.maxYear=+right.value;
+  const output=document.getElementById('rivals-years-value');
+  if(output)output.textContent=left.value+' – '+right.value;
+ }
+ rivalsFilterState.team='Flamengo';
+ const team=document.getElementById('rivals-team');if(team)team.value='Flamengo';
+ refreshRivalsOpponents();
+ renderRivals();
+}
 function renderRivalsInsights(){
  const team=rivalsFilterState.team,selected=rivalsFilterState.opponents;
  const others=['Flamengo','Vasco','Botafogo','Fluminense'].filter(t=>t!==team);
@@ -3301,7 +3376,10 @@ function renderRivalsInsights(){
  const circles=document.getElementById('rivals-recent-circles');if(circles){circles.replaceChildren();recent.forEach(m=>{const el=document.createElement('span');el.className='rivals-result rivals-result-'+m.result;el.textContent=m.result;el.title=m.date+' · '+m.opp+' · '+m.gf+' × '+m.ga;circles.append(el);});if(!recent.length)circles.textContent='Sem partidas no recorte.';}
  const points=recent.reduce((n,m)=>n+(m.result==='V'?3:m.result==='E'?1:0),0);
  const put=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value;};
- put('rivals-recent-rate',recent.length?Math.round(points/(recent.length*3)*100)+'%':'—');
+ const rivalRate=recent.length?Math.round(points/(recent.length*3)*100):null;
+ put('rivals-recent-rate',rivalRate!==null?rivalRate+'%':'—');
+ const rivalRateEl=document.getElementById('rivals-recent-rate');
+ if(rivalRateEl)rivalRateEl.style.color=rivalRate!==null?recentRateColor(rivalRate):'';
  put('rivals-recent-gf',recent.length?recent.reduce((n,m)=>n+m.gf,0):'—');
  put('rivals-recent-ga',recent.length?recent.reduce((n,m)=>n+m.ga,0):'—');
  put('rivals-wins-count',wins.length);put('rivals-unbeaten-count',unbeaten.length);

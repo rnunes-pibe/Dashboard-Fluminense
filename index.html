@@ -512,7 +512,7 @@
               </p>
             </div>
           </div>
-          <div class="relative w-full h-[280px]">
+          <div class="relative w-full top-visitante-chart-wrap">
             <canvas id="chartTopVisitante"></canvas>
           </div>
         </section>
@@ -747,16 +747,16 @@
             <button type="button" data-action="toggle-classicos-dropdown" data-filter="presente" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="classicos-label-presente">Todos</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
             <div id="classicos-panel-presente" class="ms-dropdown-menu hidden absolute top-full right-0 w-56 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><div class="flex items-center justify-between text-[11px] pb-1.5 border-b border-white/10"><button data-action="select-classicos-all" data-filter="presente" data-select="true" class="text-[#C5A059] hover:underline font-medium">Todos</button><button data-action="select-classicos-all" data-filter="presente" data-select="false" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-48" id="classicos-list-presente"></div></div>
           </div>
-          <div class="col-span-1 rounded-xl p-2 bg-[#12201A] border border-[#C5A059]/30 flex flex-col justify-center relative">
-            <label class="text-xs font-semibold text-emerald-200/80 flex items-center justify-between w-full mb-2 px-1">
-              <span class="flex items-center gap-1.5"><i data-lucide="calendar-range" class="w-3.5 h-3.5 text-[#C5A059]"></i> Período (Ano)</span>
-              <span id="classicos-slider-values" class="text-[#C5A059] font-mono text-[10px] bg-black/50 border border-white/10 px-1.5 py-0.5 rounded shadow-inner">-- / --</span>
-            </label>
-            <div class="relative w-full h-1 bg-black/60 rounded-full mx-1 dual-slider-container" style="width: calc(100% - 8px);">
-              <div id="classicos-slider-track" class="absolute h-full bg-[#C5A059]/80 rounded-full z-0 pointer-events-none"></div>
-              <input type="range" id="classicos-ano-min" min="1900" max="2026" value="1900" step="1" data-input-action="classicos-slider-ui" data-change-action="apply-classicos-filters" class="absolute w-full top-1/2 -translate-y-1/2 m-0 h-1">
-              <input type="range" id="classicos-ano-max" min="1900" max="2026" value="2026" step="1" data-input-action="classicos-slider-ui" data-change-action="apply-classicos-filters" class="absolute w-full top-1/2 -translate-y-1/2 m-0 h-1">
+          <div class="classicos-years rivals-years">
+            <div class="rivals-years-title">
+              <span>▦ Período (Ano)</span>
+              <output id="classicos-slider-values">-- / --</output>
             </div>
+            <div class="rivals-year-sliders">
+              <input type="range" id="classicos-ano-min" min="1900" max="2026" value="1900" step="1" aria-label="Ano inicial dos clássicos" data-input-action="classicos-slider-ui" data-change-action="apply-classicos-filters">
+              <input type="range" id="classicos-ano-max" min="1900" max="2026" value="2026" step="1" aria-label="Ano final dos clássicos" data-input-action="classicos-slider-ui" data-change-action="apply-classicos-filters">
+            </div>
+            <div id="classicos-slider-track" hidden></div>
           </div>
         </div>
       </section>
@@ -871,8 +871,8 @@
       </section>
 
       <section id="classicos-comparison-card" class="glass-panel classicos-comparison-card rounded-2xl p-5 sm:p-6 shadow-xl" aria-labelledby="classicos-comparison-title">
-        <h3 id="classicos-comparison-title" class="text-base font-bold text-white">⚔ Desempenho do Fluminense nos Clássicos</h3>
-        <p class="text-xs text-white/50 mt-1">Vitórias do Fluminense, empates e vitórias dos adversários · Responde aos filtros aplicados</p>
+        <h3 id="classicos-comparison-title" class="text-base font-bold text-white">📊 Retrospecto dos Clássicos</h3>
+        <p class="text-xs text-white/50 mt-1">Resultados e estatísticas por adversário · Responde aos filtros aplicados</p>
         <div id="classicos-comparison-bars" class="classicos-comparison-bars" aria-live="polite"></div>
         <div class="classicos-comparison-legend" aria-label="Legenda"><span><i class="comparison-key comparison-key-win"></i>Fluminense</span><span><i class="comparison-key comparison-key-draw"></i>Empates</span><span><i class="comparison-key comparison-key-loss"></i>Adversário</span></div>
       </section>
@@ -992,10 +992,16 @@
 
   <div id="view-rivais" class="hidden space-y-6">
     <div class="rivals-intro"><h1>⚔ Clássicos dos Rivais</h1><p>Histórico dos confrontos entre Flamengo, Vasco e Botafogo</p></div>
-    <section class="rivals-filter-card" aria-label="Filtros gerais dos rivais">
-      <div class="rivals-competition-field"><span class="rivals-competition-label">🏆 Competição</span><div id="rivals-competition" class="rivals-competition-multi"></div></div>
-      <div class="rivals-years"><div class="rivals-years-title"><span>▦ Período (Ano)</span><output id="rivals-years-value">—</output></div>
-        <div class="rivals-year-sliders"><input type="range" id="rivals-year-min" aria-label="Ano inicial"><input type="range" id="rivals-year-max" aria-label="Ano final"></div>
+    <section class="rivals-filter-shell" aria-label="Filtros gerais dos rivais">
+      <div class="rivals-filter-heading">
+        <div class="rivals-filter-heading-copy"><strong>⚔ FILTROS DOS RIVAIS</strong><small>Selecione competição e período</small></div>
+        <button type="button" id="rivals-reset" class="rivals-reset-button" data-action="reset-rivals-filters">↶ Restaurar padrão</button>
+      </div>
+      <div class="rivals-filter-card">
+        <div class="rivals-competition-field"><span class="rivals-competition-label">🏆 Competição</span><div id="rivals-competition" class="rivals-competition-multi"></div></div>
+        <div class="rivals-years"><div class="rivals-years-title"><span>▦ Período (Ano)</span><output id="rivals-years-value">—</output></div>
+          <div class="rivals-year-sliders"><input type="range" id="rivals-year-min" aria-label="Ano inicial"><input type="range" id="rivals-year-max" aria-label="Ano final"></div>
+        </div>
       </div>
     </section>
     <section class="rivals-card"><h2>Confrontos entre os rivais</h2><div id="rivals-bars"></div><div id="rivals-legend" class="rivals-legend"></div></section>
@@ -1040,7 +1046,7 @@
     <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-center gap-2">
       <p>Grandes são os outros, o Fluminense é enorme</p>
       <span class="hidden sm:inline" aria-hidden="true">•</span>
-      <p>Fluminense FC • Dashboard Analítico • <strong id="dashboard-version" class="font-semibold text-emerald-100/70">v3.2.52</strong></p>
+      <p>Fluminense FC • Dashboard Analítico • <strong id="dashboard-version" class="font-semibold text-emerald-100/70">v3.2.56</strong></p>
     </div>
   </footer>
 

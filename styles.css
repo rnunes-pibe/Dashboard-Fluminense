@@ -1601,3 +1601,167 @@ html[data-theme="light"] .rivals-competition-panel{
 }
 .rivals-bar-label{white-space:nowrap}
 @media(max-width:640px){.rivals-bar-label{white-space:normal}}
+
+/* V3.2.53 — rival-style period filter in Clássicos */
+.classicos-years.rivals-years{min-width:0;padding:10px 12px}
+.classicos-years .rivals-year-sliders{margin-top:5px}
+.classicos-years .rivals-year-sliders input{min-width:0}
+.rivals-filter-reset{grid-column:1/-1;display:flex;justify-content:flex-end;order:3}
+.rivals-filter-reset button{padding:9px 16px;border:1px solid rgba(197,160,89,.45);border-radius:9px;color:#e5c078;background:rgba(197,160,89,.08);font-size:13px;font-weight:700}
+.rivals-filter-reset button:hover{background:rgba(197,160,89,.18)}
+html[data-theme="light"] .rivals-filter-reset button{background:#fff;color:#176045;border-color:#bdd5c4}
+/* Unified rival retrospective */
+.classicos-comparison-header{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.classicos-comparison-total{font-size:12px;opacity:.7;white-space:nowrap}
+.classicos-comparison-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:9px}
+.classicos-comparison-metric{display:flex;flex-direction:column;gap:3px;min-width:0}
+.classicos-comparison-metric+ .classicos-comparison-metric{border-left:1px solid rgba(128,154,138,.25);padding-left:9px}
+.classicos-comparison-metric small{font-size:10px;opacity:.72}
+.classicos-comparison-metric strong{font-size:16px;font-weight:800}
+@media(min-width:850px){.classicos-comparison-bars{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.classicos-comparison-row{min-width:0}}
+@media(max-width:640px){.classicos-comparison-header{flex-wrap:wrap}.rivals-filter-reset{justify-content:stretch}.rivals-filter-reset button{width:100%}}
+
+/* V3.2.54 — compact filters and full-width retrospective bars */
+/* Clássicos: period selector shares the same visual rhythm as its adjacent filters. */
+#view-classicos .classicos-years.rivals-years{
+  display:flex;flex-direction:column;justify-content:flex-start;
+  gap:6px;min-width:0;min-height:0;padding:0;
+  border:0;border-radius:0;background:transparent;box-shadow:none;
+  color:#a7d6c4;font-size:12px;font-weight:600;
+}
+#view-classicos .classicos-years .rivals-years-title{min-height:18px;align-items:center;gap:5px;line-height:1.25}
+#view-classicos .classicos-years .rivals-years-title output{font-size:11px;padding:1px 5px;white-space:nowrap}
+#view-classicos .classicos-years .rivals-year-sliders{
+  display:flex;align-items:center;gap:8px;min-height:35px;margin-top:0;
+  padding:5px 9px;background:#12201a;border:1px solid rgba(197,160,89,.3);border-radius:12px;
+}
+#view-classicos .classicos-years .rivals-year-sliders input{flex:1 1 0;width:0;min-width:0;margin:0}
+html[data-theme="light"] #view-classicos .classicos-years.rivals-years{color:#176045}
+html[data-theme="light"] #view-classicos .classicos-years .rivals-year-sliders{background:#fff;border-color:#bdd5c4}
+/* Rivais: no tall boxed controls, preserve all interactions. */
+#view-rivais .rivals-filter-card{gap:10px 14px;align-items:end}
+#view-rivais .rivals-filter-card>label,#view-rivais .rivals-years,
+#view-rivais .rivals-competition-field{min-width:0;min-height:0;padding:10px 12px;gap:6px;border-radius:11px}
+#view-rivais .rivals-years-title{align-items:center;font-size:12px;line-height:1.3}
+#view-rivais .rivals-year-sliders{align-items:center;min-height:25px;gap:9px}
+#view-rivais .rivals-year-sliders input{min-width:0;flex:1 1 0;width:0;margin:0}
+#view-rivais .rivals-filter-reset{grid-column:1/-1;justify-content:flex-end;order:initial}
+#view-rivais .rivals-filter-reset button{padding:6px 12px;font-size:12px}
+/* Retrospecto: opponent on first line, match count and maximized bar on second, metrics on third. */
+#view-classicos .classicos-comparison-bars{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0 14px}
+#view-classicos .classicos-comparison-row{display:flex;flex-direction:column;align-items:stretch;gap:9px;min-width:0}
+#view-classicos .classicos-comparison-header{display:flex;min-width:0;justify-content:flex-start}
+#view-classicos .classicos-comparison-label{white-space:normal;line-height:1.35}
+#view-classicos .classicos-comparison-results{display:flex;align-items:center;gap:9px;width:100%;min-width:0}
+#view-classicos .classicos-comparison-total{flex:0 0 auto;white-space:nowrap;font-size:11px}
+#view-classicos .classicos-comparison-bar{flex:1 1 0;width:auto;min-width:0;height:31px}
+#view-classicos .classicos-comparison-metrics{width:100%;margin-top:2px}
+@media(max-width:850px){#view-classicos .classicos-comparison-bars{grid-template-columns:1fr;gap:17px}}
+@media(max-width:600px){
+ #view-rivais .rivals-filter-card{grid-template-columns:1fr;gap:10px}
+ #view-rivais .rivals-filter-reset{justify-content:stretch}
+ #view-rivais .rivals-filter-reset button{width:100%}
+ #view-classicos .classicos-comparison-results{gap:8px}
+ #view-classicos .classicos-comparison-bar{height:29px}
+}
+
+
+/* V3.2.55 — Filtros dos Rivais: mesmo padrão compacto das outras abas. */
+#view-rivais .rivals-filter-shell{
+  border:1px solid rgba(197,160,89,.23);border-radius:14px;
+  padding:14px 16px 15px;margin-bottom:14px;
+  background:rgba(18,32,26,.72);
+}
+#view-rivais .rivals-filter-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:13px;padding-bottom:10px;border-bottom:1px solid rgba(197,160,89,.18)}
+#view-rivais .rivals-filter-heading-copy{display:flex;flex-direction:column;gap:2px;min-width:0}
+#view-rivais .rivals-filter-heading-copy strong{font-size:12px;font-weight:800;color:#c5a059;letter-spacing:.02em}
+#view-rivais .rivals-filter-heading-copy small{font-size:11px;font-weight:400;color:#a4b6aa}
+#view-rivais .rivals-reset-button{flex:0 0 auto;border:1px solid rgba(197,160,89,.32);background:rgba(255,255,255,.04);color:#c5a059;border-radius:10px;padding:7px 11px;font-size:11px;font-weight:700;cursor:pointer}
+#view-rivais .rivals-reset-button:hover{background:rgba(197,160,89,.14)}
+#view-rivais .rivals-filter-card{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start;margin:0}
+#view-rivais .rivals-competition-field,#view-rivais .rivals-years{
+  display:flex;flex-direction:column;gap:6px;min-width:0;min-height:0;
+  border:0;border-radius:0;background:transparent;padding:0;
+  font-size:12px;font-weight:650;color:#d1dfd5;
+}
+#view-rivais .rivals-competition-label,#view-rivais .rivals-years-title{font-size:12px;font-weight:650;min-height:18px;line-height:18px}
+#view-rivais .rivals-years-title{display:flex;align-items:center;justify-content:space-between;gap:5px}
+#view-rivais .rivals-years-title output{font-size:11px;line-height:16px;padding:2px 6px;white-space:nowrap}
+#view-rivais .rivals-competition-trigger{min-height:35px;height:35px;border-radius:10px;padding:7px 30px 7px 11px;font-size:12px;font-weight:500}
+#view-rivais .rivals-year-sliders{display:flex;gap:10px;align-items:center;height:35px;min-height:35px;padding:0 5px}
+#view-rivais .rivals-year-sliders input{width:0;min-width:0;flex:1 1 0;margin:0}
+html[data-theme="light"] #view-rivais .rivals-filter-shell{background:#fff;border-color:#d8e4da}
+html[data-theme="light"] #view-rivais .rivals-filter-heading{border-color:#e0e8e1}
+html[data-theme="light"] #view-rivais .rivals-filter-heading-copy strong{color:#176045}
+html[data-theme="light"] #view-rivais .rivals-filter-heading-copy small{color:#71867b}
+html[data-theme="light"] #view-rivais .rivals-reset-button{background:#fff;color:#176045;border-color:#c9dccf}
+html[data-theme="light"] #view-rivais .rivals-competition-field,html[data-theme="light"] #view-rivais .rivals-years{background:transparent;color:#176045;border:0}
+@media(max-width:640px){
+ #view-rivais .rivals-filter-shell{padding:12px}
+ #view-rivais .rivals-filter-heading{align-items:flex-start;gap:8px}
+ #view-rivais .rivals-reset-button{font-size:10px;padding:7px 8px}
+ #view-rivais .rivals-filter-card{grid-template-columns:1fr;gap:13px}
+}
+
+/* V3.2.55 — Retrospecto: título centralizado, barra 10% menor, divisórias. */
+#view-classicos .classicos-comparison-bars{gap:0}
+#view-classicos .classicos-comparison-row{padding:0 16px;min-width:0}
+#view-classicos .classicos-comparison-row:first-child{padding-left:0}
+#view-classicos .classicos-comparison-row:last-child{padding-right:0}
+#view-classicos .classicos-comparison-row:not(:last-child){border-right:1px solid rgba(128,154,138,.3)}
+#view-classicos .classicos-comparison-header{justify-content:center;text-align:center;width:100%}
+#view-classicos .classicos-comparison-label{text-align:center}
+#view-classicos .classicos-comparison-results{width:90%;align-self:center}
+@media(max-width:850px){
+ #view-classicos .classicos-comparison-row,#view-classicos .classicos-comparison-row:first-child,#view-classicos .classicos-comparison-row:last-child{padding:0 0 18px}
+ #view-classicos .classicos-comparison-row:not(:last-child){border-right:0;border-bottom:1px solid rgba(128,154,138,.35);margin-bottom:18px}
+ #view-classicos .classicos-comparison-row:last-child{padding-bottom:0}
+ #view-classicos .classicos-comparison-results{width:90%}
+}
+
+/* V3.2.56 — Período dos Rivais: contorno idêntico ao filtro dos Clássicos */
+#view-rivais .rivals-year-sliders{
+  border:1px solid rgba(197,160,89,.3);border-radius:12px;
+  background:#12201a;padding:5px 9px;min-height:35px;height:35px;
+}
+html[data-theme="light"] #view-rivais .rivals-year-sliders{background:#fff;border-color:#bdd5c4}
+/* Retrospecto: título sem saldo repetido; quatro indicadores, jogos em selo. */
+#view-classicos .classicos-comparison-header{justify-content:space-between;text-align:left;gap:6px}
+#view-classicos .classicos-comparison-label{text-align:left;font-size:12px}
+#view-classicos .classicos-comparison-total{padding:3px 7px;border-radius:9px;background:rgba(197,160,89,.13);font-size:10px}
+#view-classicos .classicos-comparison-results{width:100%}
+#view-classicos .classicos-comparison-metrics{grid-template-columns:repeat(4,minmax(0,1fr));gap:3px}
+#view-classicos .classicos-comparison-metric small{font-size:9px;white-space:normal}
+#view-classicos .classicos-comparison-metric strong{font-size:15px}
+#view-classicos .classicos-comparison-metric+.classicos-comparison-metric{padding-left:6px}
+.saldo-positive{color:#18804b!important}.saldo-negative{color:#dc3434!important}.saldo-neutral{color:inherit}
+/* Rivais: card compacto, 3 colunas e seleção direta nos nomes dos clubes. */
+#view-rivais #rivals-bars{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;margin-top:15px}
+#view-rivais .rivals-comparison-row{min-width:0;padding:0 14px;display:flex;flex-direction:column;gap:12px}
+#view-rivais .rivals-comparison-row:first-child{padding-left:0}
+#view-rivais .rivals-comparison-row:last-child{padding-right:0}
+#view-rivais .rivals-comparison-row:not(:last-child){border-right:1px solid rgba(128,154,138,.3)}
+#view-rivais .rivals-comparison-header{display:flex;align-items:center;justify-content:space-between;gap:6px;min-width:0}
+#view-rivais .rivals-comparison-title{display:flex;align-items:center;gap:2px;flex-wrap:wrap;min-width:0;font-size:12px;font-weight:800}
+#view-rivais .rivals-team-choice{padding:2px 1px;border:0;background:transparent;color:inherit;font-weight:750;cursor:pointer;border-bottom:2px solid transparent}
+#view-rivais .rivals-team-choice[aria-pressed="true"]{border-bottom-color:#c5a059;color:#c5a059}
+#view-rivais .rivals-team-choice:hover{opacity:.7}
+#view-rivais .rivals-comparison-cross{opacity:.6}
+#view-rivais .rivals-comparison-total{font-size:10px;white-space:nowrap;border-radius:10px;background:rgba(197,160,89,.13);padding:3px 7px}
+#view-rivais .rivals-comparison-bar{height:30px;width:100%;margin:0;border-radius:6px}
+#view-rivais .rivals-bar-segment{font-size:11px;border:0}
+#view-rivais .rivals-segment-draw{color:#183b30}
+#view-rivais .rivals-bar-empty{font-size:11px;align-items:center;justify-content:center}
+#view-rivais .rivals-comparison-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px}
+#view-rivais .rivals-comparison-metric{display:flex;flex-direction:column;gap:4px;min-width:0}
+#view-rivais .rivals-comparison-metric+.rivals-comparison-metric{border-left:1px solid rgba(128,154,138,.25);padding-left:6px}
+#view-rivais .rivals-comparison-metric small{font-size:9px;opacity:.7;line-height:1.3}
+#view-rivais .rivals-comparison-metric strong{font-size:15px;font-weight:800}
+html[data-theme="light"] #view-rivais .rivals-team-choice[aria-pressed="true"]{color:#176045;border-bottom-color:#176045}
+/* Top 10 visitante: altura total do card e margem à direita para rótulos externos. */
+#section-top-visitante{display:flex;flex-direction:column;min-width:0}
+#section-top-visitante.hidden{display:none}
+#section-top-visitante .top-visitante-chart-wrap{position:relative;flex:1 1 auto;min-height:350px;height:100%;width:100%}
+@media(min-width:1024px){.charts-estadios-distribuicao{align-items:stretch}#section-top-visitante .top-visitante-chart-wrap{min-height:365px}}
+@media(max-width:850px){#view-rivais #rivals-bars{grid-template-columns:1fr;gap:0}#view-rivais .rivals-comparison-row,#view-rivais .rivals-comparison-row:first-child,#view-rivais .rivals-comparison-row:last-child{padding:0 0 18px}#view-rivais .rivals-comparison-row:not(:last-child){border-right:0;border-bottom:1px solid rgba(128,154,138,.35);margin-bottom:18px}#view-rivais .rivals-comparison-row:last-child{padding-bottom:0}}
+@media(max-width:640px){#section-top-visitante .top-visitante-chart-wrap{min-height:330px}#view-classicos .classicos-comparison-metric strong,#view-rivais .rivals-comparison-metric strong{font-size:14px}}

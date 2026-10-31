@@ -1765,3 +1765,40 @@ html[data-theme="light"] #view-rivais .rivals-team-choice[aria-pressed="true"]{c
 @media(min-width:1024px){.charts-estadios-distribuicao{align-items:stretch}#section-top-visitante .top-visitante-chart-wrap{min-height:365px}}
 @media(max-width:850px){#view-rivais #rivals-bars{grid-template-columns:1fr;gap:0}#view-rivais .rivals-comparison-row,#view-rivais .rivals-comparison-row:first-child,#view-rivais .rivals-comparison-row:last-child{padding:0 0 18px}#view-rivais .rivals-comparison-row:not(:last-child){border-right:0;border-bottom:1px solid rgba(128,154,138,.35);margin-bottom:18px}#view-rivais .rivals-comparison-row:last-child{padding-bottom:0}}
 @media(max-width:640px){#section-top-visitante .top-visitante-chart-wrap{min-height:330px}#view-classicos .classicos-comparison-metric strong,#view-rivais .rivals-comparison-metric strong{font-size:14px}}
+
+/* V3.2.57 — A distribuição ocupa a altura disponível do card, sem alterar
+   escala, valores, largura das barras ou outros gráficos. */
+#section-distribuicao-mandante { display: flex; flex-direction: column; min-width: 0; }
+#section-distribuicao-mandante.hidden { display: none; }
+#section-distribuicao-mandante .distribuicao-mandante-chart-wrap {
+  position: relative; width: 100%; flex: 1 1 auto; height: 365px; min-height: 365px;
+}
+@media (min-width: 1024px) {
+  #section-distribuicao-mandante .distribuicao-mandante-chart-wrap { height: auto; min-height: 365px; }
+}
+@media (max-width: 639px) {
+  #section-distribuicao-mandante .distribuicao-mandante-chart-wrap { height: 330px; min-height: 330px; }
+}
+
+/* V3.2.61 — pesquisa nas competições de Clássicos e Rivais */
+.rivals-competition-panel .rivals-competition-search{display:block;box-sizing:border-box;width:100%;min-width:0;margin:0 0 7px;padding:8px 10px;border:1px solid rgba(197,160,89,.35);border-radius:8px;background:#12201a;color:#f1f4ef;font-size:12px;font-weight:400;outline-offset:2px}
+.rivals-competition-panel .rivals-competition-search::placeholder{color:#a8b9ae}
+.rivals-competition-panel label[hidden]{display:none!important}
+html[data-theme="light"] .rivals-competition-panel .rivals-competition-search{background:#fff;color:#294735;border-color:#bdd5c4}
+html[data-theme="light"] #classicos-competition-search{background:#fff;color:#294735;border-color:#bdd5c4}
+
+/* V3.2.62 — Competição dos Rivais no padrão visual de Clássicos */
+.rivals-competition-panel{display:flex;flex-direction:column;gap:8px;padding:10px;max-height:none;overflow:visible;border-radius:12px}
+.rivals-competition-actions{display:flex;justify-content:space-between;align-items:center;padding:0 2px 7px;border-bottom:1px solid rgba(255,255,255,.12);font-size:11px}
+.rivals-competition-actions button{background:none;border:0;cursor:pointer;padding:2px 0;font:inherit}
+.rivals-select-all{color:#c5a059;font-weight:600}.rivals-clear-all{color:#a5afa9}
+.rivals-competition-actions button:hover{text-decoration:underline}
+.rivals-competition-list{max-height:192px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;padding-right:4px}
+.rivals-competition-panel .rivals-competition-option{display:flex!important;justify-content:space-between;align-items:center;gap:8px;padding:6px!important;border-radius:8px;font-size:12px!important;font-weight:400!important;min-width:0}
+.rivals-competition-option-left{display:flex;align-items:center;gap:8px;min-width:0;flex:1}
+.rivals-competition-panel .rivals-competition-option input{width:14px;height:14px;flex-shrink:0}
+.rivals-competition-option-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rivals-competition-count{font-size:10px;opacity:.55;font-variant-numeric:tabular-nums;flex-shrink:0}
+.rivals-competition-panel .rivals-competition-option[hidden]{display:none!important}
+html[data-theme="light"] .rivals-competition-actions{border-bottom-color:rgba(0,0,0,.12)}
+html[data-theme="light"] .rivals-clear-all{color:#63766b}

@@ -530,7 +530,7 @@
               </p>
             </div>
           </div>
-          <div class="relative w-full h-[300px]">
+          <div class="relative w-full distribuicao-mandante-chart-wrap">
             <canvas id="chartDistribuicaoMandante"></canvas>
           </div>
         </section>
@@ -740,7 +740,7 @@
           <div class="relative" id="classicos-dropdown-container-competicao">
             <label class="block text-xs font-semibold text-emerald-200/80 mb-1.5 flex items-center gap-1.5"><i data-lucide="trophy" class="w-3.5 h-3.5 text-[#C5A059]"></i> Competição</label>
             <button type="button" data-action="toggle-classicos-dropdown" data-filter="competicao" class="w-full text-left text-xs rounded-xl px-3 py-2.5 bg-[#12201A] border border-[#C5A059]/30 flex items-center justify-between hover:border-[#C5A059]/60 transition"><span class="truncate pr-1 text-white/90" id="classicos-label-competicao">Todas</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#C5A059] shrink-0"></i></button>
-            <div id="classicos-panel-competicao" class="ms-dropdown-menu hidden absolute top-full left-0 right-0 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><div class="flex items-center justify-between text-[11px] pb-1.5 border-b border-white/10"><button data-action="select-classicos-all" data-filter="competicao" data-select="true" class="text-[#C5A059] hover:underline font-medium">Todos</button><button data-action="select-classicos-all" data-filter="competicao" data-select="false" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-48" id="classicos-list-competicao"></div></div>
+            <div id="classicos-panel-competicao" class="ms-dropdown-menu hidden absolute top-full left-0 right-0 mt-1.5 rounded-xl p-2.5 flex flex-col gap-2 z-50"><input type="search" id="classicos-competition-search" placeholder="Buscar competição..." aria-label="Buscar competição" data-input-action="filter-classicos-competition" class="w-full text-[11px] rounded-lg px-2.5 py-1.5 bg-black/50 border border-white/15 text-white" autocomplete="off"><div class="flex items-center justify-between text-[11px] pb-1.5 border-b border-white/10"><button data-action="select-classicos-all" data-filter="competicao" data-select="true" class="text-[#C5A059] hover:underline font-medium">Todos</button><button data-action="select-classicos-all" data-filter="competicao" data-select="false" class="text-white/50 hover:underline">Limpar</button></div><div class="overflow-y-auto space-y-1 pr-1 max-h-48" id="classicos-list-competicao"></div></div>
           </div>
           <div class="relative" id="classicos-dropdown-container-presente">
             <label class="block text-xs font-semibold text-emerald-200/80 mb-1.5 flex items-center gap-1.5"><i data-lucide="user-check" class="w-3.5 h-3.5 text-[#C5A059]"></i> Matador no estádio</label>
@@ -1046,7 +1046,7 @@
     <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-center gap-2">
       <p>Grandes são os outros, o Fluminense é enorme</p>
       <span class="hidden sm:inline" aria-hidden="true">•</span>
-      <p>Fluminense FC • Dashboard Analítico • <strong id="dashboard-version" class="font-semibold text-emerald-100/70">v3.2.56</strong></p>
+      <p>Fluminense FC • Dashboard Analítico • <strong id="dashboard-version" class="font-semibold text-emerald-100/70">v3.2.62</strong></p>
     </div>
   </footer>
 

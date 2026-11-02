@@ -1,4 +1,4 @@
-const DASHBOARD_VERSION = '3.2.58';
+const DASHBOARD_VERSION = '3.2.63';
 
 // V3.2.59 — Aba Público: sem linhas de grade internas; manter somente
 // a linha inferior do eixo X nos gráficos verticais e a linha esquerda
@@ -49,7 +49,7 @@ let selectedState = {
   presente: []
 };
 
-const classicosState = { competicao: [], adversario: [], presente: [], minAno: null, maxAno: null };
+const classicosState = { competicao: [], adversario: [], presente: [], minAno: null, maxAno: null, ultimos: 0 };
 
 let activeCharts = {};
 let filteredMatches = [];
@@ -60,6 +60,8 @@ let mainTableSort = { key: 'date', direction: 'desc' };
 let classicosTableSort = { key: 'date', direction: 'desc' };
 let currentFilteredClassicos = [];
 let semRivaisAtivo = false;
+// Linha do tempo é o padrão; preservar a escolha durante filtros e atualizações.
+let temporadaChartView = 'line';
 const RIVAIS_RAPIDOS = ['flamengo', 'botafogo', 'vasco'];
 function isRivalRapido(adversario) {
   const nome = normalizeComparable(adversario);
@@ -118,6 +120,32 @@ function normalizeComparable(value) {
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase();
+}
+
+// V3.2.63: registros marcados na coluna Competição são mantidos no Sheets,
+// mas excluídos de todas as estatísticas, filtros, tabelas e exports.
+function isNotCountedCompetition(value) {
+  return /\(\s*nao contabilizado\s*\)/.test(normalizeComparable(value));
+}
+
+// Aplica Últimos X após todos os demais filtros e separadamente por confronto.
+// Retém a ordem original na visualização (o recorte usa a data real do jogo).
+function limitLatestByPair(matches, limit, pairKey, dateValue) {
+  const count = Number(limit);
+  if (!Number.isInteger(count) || count <= 0) return matches;
+  const groups = new Map();
+  matches.forEach((match, index) => {
+    const key = String(pairKey(match) || '');
+    if (!groups.has(key)) groups.set(key, []);
+    const timestamp = Number(dateValue(match));
+    groups.get(key).push({ index, timestamp: Number.isFinite(timestamp) ? timestamp : 0 });
+  });
+  const selected = new Set();
+  groups.forEach(group => {
+    group.sort((a,b) => b.timestamp - a.timestamp || b.index - a.index);
+    group.slice(0,count).forEach(item => selected.add(item.index));
+  });
+  return matches.filter((_match, index) => selected.has(index));
 }
 
 function normalizeYesNo(value) {
@@ -202,8 +230,8 @@ function loadValidCache() {
 }
 
 function applyLoadedData(matches, classicos) {
-  MATCHES_DATA = matches;
-  CLASSICOS_DATA = classicos;
+  MATCHES_DATA = matches.filter(m => !isNotCountedCompetition(m.torneio));
+  CLASSICOS_DATA = classicos.filter(m => !isNotCountedCompetition(m.torneio));
   if (document.getElementById('view-rivais') && !document.getElementById('view-rivais').classList.contains('hidden')) renderRivalsInsights();
   updateDynamicYearRange();
   applyFilters();
@@ -444,7 +472,7 @@ async function fetchLiveGoogleSheet() {
       else if (mando === 'N') mando = 'Neutro';
 
       const comp = normalizeText(row['Competição'] || row['Torneio']) || '-';
-      if (normalizeComparable(comp).includes('amistoso')) return;
+      if (isNotCountedCompetition(comp) || normalizeComparable(comp).includes('amistoso')) return;
 
       const adv = normalizeText(row['Adversário']) || 'A Definir';
       const estadio = normalizeText(row['Estádio']) || 'A Definir';
@@ -503,6 +531,7 @@ async function fetchLiveGoogleSheet() {
       if (fGols !== null && fGols !== '' && fGols !== '-' && aGols !== null && aGols !== '' && aGols !== '-') placar = `${fGols}x${aGols}`;
       else placar = row['Placar'] || row['Resultado'] || row['Placar Jogo'] || '-';
 
+      if (isNotCountedCompetition(row['Competição'] || row['Torneio'] || row['Competicao'])) return;
       const status = normalizeText(row['Status'] || row['Resultado']);
       const statusNorm = normalizeComparable(status);
       if (statusNorm.includes('a realizar') || statusNorm.includes('adiado')) return;
@@ -652,18 +681,7 @@ function exportFilteredCsv() {
 }
 
 function exportClassicosFilteredCsv() {
-  const setComp = classicosState.competicao.length > 0 ? new Set(classicosState.competicao) : null;
-  const setAdv = classicosState.adversario.length > 0 ? new Set(classicosState.adversario) : null;
-  const setPres = classicosState.presente.length > 0 ? new Set(classicosState.presente) : null;
-
-  const filteredClassicos = CLASSICOS_DATA.filter(m => {
-    if (setComp && !setComp.has(m.torneio)) return false;
-    if (setAdv && !setAdv.has(m.adv)) return false;
-    if (setPres && !setPres.has(m.presente)) return false;
-    if (classicosState.minAno && m.ano < classicosState.minAno) return false;
-    if (classicosState.maxAno && m.ano > classicosState.maxAno) return false;
-    return true;
-  });
+  const filteredClassicos = currentFilteredClassicos;
 
   if (!filteredClassicos.length) {
     setUpdateStatus('Não há clássicos no filtro atual para exportar.', true);
@@ -1572,6 +1590,57 @@ function renderSulBarChart(canvasId, sulMatchesList) {
   });
 }
 
+let temporadaChartData = null;
+// Recria somente este gráfico ao alternar o tipo, sem recalcular os demais.
+function renderTemporadaChartOnly() {
+  if (!temporadaChartData || !document.getElementById('chartTemporada')) return;
+  const { seasons, datasetsTemp, showLegend } = temporadaChartData;
+  // Ao alternar de visualização, manter as séries ocultas pela legenda.
+  const previous = activeCharts['chartTemporada'];
+  const previousVisibility = previous && previous.data.datasets.length === datasetsTemp.length &&
+    previous.data.datasets.every((d,i) => d.label === datasetsTemp[i].label)
+    ? previous.data.datasets.map((_dataset,i) => previous.isDatasetVisible(i)) : null;
+  // Mesmas médias para os dois formatos. Ausência de público na série
+  // aparece como lacuna na linha, não como público médio zero.
+  const timeline = temporadaChartView === 'line';
+  const displayTemp = timeline ? datasetsTemp.map(dataset => ({
+    ...dataset,
+    data: dataset.data.map((value, index) => dataset.customCount[index] > 0 ? value : null),
+    borderColor: dataset.backgroundColor,
+    pointBackgroundColor: dataset.backgroundColor,
+    pointBorderColor: '#C5A059',
+    pointBorderWidth: 1.5,
+    pointRadius: 4,
+    pointHoverRadius: 6,
+    pointHitRadius: 12,
+    borderWidth: 2.5,
+    tension: 0.2,
+    spanGaps: false,
+    fill: false
+  })) : datasetsTemp;
+  activeCharts["chartTemporada"] = new Chart(getChartCanvas("chartTemporada"), {
+    type: timeline ? 'line' : 'bar', data: { labels: seasons.map(String), datasets: displayTemp },
+    plugins: [makeValueLabelsPlugin('publicoMedioTemporadaLabels', { decimals: 1, fullWhenSingleVisible: true })],
+    options: { layout: { padding: { top: 18 } }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: showLegend, position: 'top', labels: {color: (document.documentElement.dataset.theme === 'light' ? '#385642' : 'rgba(255,255,255,0.7)')} }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { y: { beginAtZero: true, ticks: { display: false, callback: v => v.toLocaleString('pt-BR') } } } }
+  });
+  if (previousVisibility && activeCharts['chartTemporada']?.setDatasetVisibility) {
+    previousVisibility.forEach((visible,index) => activeCharts['chartTemporada'].setDatasetVisibility(index,visible));
+    activeCharts['chartTemporada'].update('none');
+  }
+}
+
+function setTemporadaChartView(view) {
+  if (view !== 'line' && view !== 'bar') return;
+  temporadaChartView = view;
+  document.querySelectorAll('[data-action="temporada-chart-view"]').forEach(button => {
+    const active = button.dataset.view === view;
+    button.classList.toggle('is-active', active);
+    button.setAttribute('aria-pressed', String(active));
+  });
+  // Usa os mesmos dados filtrados, sem alterar a regra das médias.
+  if (!document.getElementById('view-estadio')?.classList.contains('hidden')) renderTemporadaChartOnly();
+}
+
 function updateCharts() {
   const validFiltered = filteredMatches;
   const chartsMobile = window.matchMedia('(max-width: 767px)').matches;
@@ -1714,11 +1783,8 @@ function updateCharts() {
       { label: 'Visitante', data: dsVis, backgroundColor: '#870A28', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: countVis }
     ];
   }
-  activeCharts["chartTemporada"] = new Chart(getChartCanvas("chartTemporada"), {
-    type: 'bar', data: { labels: seasons.map(String), datasets: datasetsTemp },
-    plugins: [makeValueLabelsPlugin('publicoMedioTemporadaLabels', { decimals: 1, fullWhenSingleVisible: true })],
-    options: { layout: { padding: { top: 18 } }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: showLegend, position: 'top', labels: {color: (document.documentElement.dataset.theme === 'light' ? '#385642' : 'rgba(255,255,255,0.7)')} }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { y: { beginAtZero: true, ticks: { display: false, callback: v => v.toLocaleString('pt-BR') } } } }
-  });
+  temporadaChartData = { seasons, datasetsTemp, showLegend };
+  renderTemporadaChartOnly();
 
   // 2. COMPETICAO
   const compStats = Object.keys(byComp).map(c => {
@@ -2118,6 +2184,7 @@ function classicosFilterSummary() {
   if (classicosState.competicao.length) items.push(`Competição: ${classicosState.competicao.join(', ')}`);
   if (classicosState.adversario.length) items.push(`Adversário: ${classicosState.adversario.join(', ')}`);
   if (classicosState.presente.length) items.push(`Presença: ${classicosState.presente.join(', ')}`);
+  if (classicosState.ultimos > 0) items.push(`Últimos ${classicosState.ultimos} jogos por confronto`);
   if (CLASSICOS_DATA.length) {
     const years = CLASSICOS_DATA.map(m => m.ano).filter(Number.isFinite);
     const minAll = Math.min(...years), maxAll = Math.max(...years);
@@ -2467,7 +2534,10 @@ function resetClassicosFilters() {
   classicosState.competicao = [];
   classicosState.adversario = [];
   classicosState.presente = [];
-  
+  classicosState.ultimos = 0;
+  const ultimosSelect = document.getElementById('classicos-ultimos-jogos');
+  if (ultimosSelect) ultimosSelect.value = '0';
+
   if (CLASSICOS_DATA.length > 0) {
     const years = CLASSICOS_DATA.map(c => c.ano).filter(a => !isNaN(a) && a > 1900);
     classicosState.minAno = Math.min(...years);
@@ -2486,7 +2556,7 @@ function applyClassicosFilters() {
   const setAdv = classicosState.adversario.length > 0 ? new Set(classicosState.adversario) : null;
   const setPres = classicosState.presente.length > 0 ? new Set(classicosState.presente) : null;
 
-  const filteredClassicos = CLASSICOS_DATA.filter(m => {
+  const filteredClassicosBase = CLASSICOS_DATA.filter(m => {
     if (setComp && !setComp.has(m.torneio)) return false;
     if (setAdv && !setAdv.has(m.adv)) return false;
     if (setPres && !setPres.has(m.presente)) return false;
@@ -2495,6 +2565,10 @@ function applyClassicosFilters() {
     return true;
   });
 
+  const filteredClassicos = limitLatestByPair(
+    filteredClassicosBase, classicosState.ultimos, m => m.advNorm || normalizeAdv(m.adv),
+    m => m.timestamp || m.sortTime || computeTimestamp(m.data)
+  );
   currentFilteredClassicos = filteredClassicos;
 
   const tag = document.getElementById('classicos-matches-tag');
@@ -2960,6 +3034,7 @@ function handleDelegatedClick(event) {
     'reset-filters': () => resetFilters(),
     'toggle-sem-rivais': () => toggleSemRivais(),
     'reset-classicos-filters': () => resetClassicosFilters(),
+    'temporada-chart-view': () => setTemporadaChartView(target.dataset.view),
     'reset-rivals-filters': () => resetRivalsFilters(),
     'copy-filtered-url': () => copyFilteredUrl(),
     'export-filtered-csv': () => exportFilteredCsv(),
@@ -3000,6 +3075,8 @@ function handleDelegatedChange(event) {
   if (!target) return;
 
   if (target.dataset.changeAction === 'apply-classicos-filters') applyClassicosFilters();
+  if (target.dataset.changeAction === 'classicos-ultimos-jogos') { classicosState.ultimos = Number(target.value) || 0; applyClassicosFilters(); }
+  if (target.dataset.changeAction === 'rivals-ultimos-jogos') { rivalsFilterState.ultimos = Number(target.value) || 0; renderRivals(); }
   if (target.dataset.changeAction === 'filter-checkbox') onCheckboxChange(target.dataset.filter, target.value, target.checked);
   if (target.dataset.changeAction === 'classicos-checkbox') onClassicosCheckboxChange(target.dataset.filter, target.value, target.checked);
 }
@@ -3013,6 +3090,7 @@ function initEventHandlers() {
 function initDashboard() {
   applyDashboardTheme(document.documentElement.dataset.theme === 'light' ? 'light' : 'dark');
   initEventHandlers();
+  renderDashboardVersion();
   initChartRecoveryHandlers();
   restoreFiltersFromUrl();
   initPublicFiltersPanel();
@@ -3117,6 +3195,7 @@ function rivalsCSVToRows(csv,key){
   const date=String(line[dateIdx]||'').trim(),year=rivalsYearFromDate(date);
   const a=Number(String(line[firstIdx]||'').trim()),b=Number(String(line[secondIdx]||'').trim());
   const competition=String(line[competitionIdx]||'').trim();
+  if(isNotCountedCompetition(competition))continue;
   if(!date||!Number.isFinite(year)||!competition||!/^\d+$/.test(String(line[firstIdx]||'').trim())||!/^\d+$/.test(String(line[secondIdx]||'').trim()))continue;
   rows.push([date,year,a,b,competition,String(line[notesIdx]||'').trim(),a>b?teams[0]:b>a?teams[1]:'']);
  }
@@ -3170,8 +3249,8 @@ const RIVALS_COLORS={Flamengo:'#d52c32',Vasco:'#151a1d',Botafogo:'#697983',Empat
 let rivalsActiveTab='fv',rivalsChart=null;
 function rivalsStats(key){
  const d=RIVALS_DATA[key],wins={[d.a]:0,[d.b]:0},byYear={};
- d.rows.forEach(r=>{if(r[6])wins[r[6]]++;const y=byYear[r[1]]||(byYear[r[1]]=[0,0]);if(r[6]===d.a)y[0]++;if(r[6]===d.b)y[1]++;});
- return {wins,draws:d.rows.length-wins[d.a]-wins[d.b],byYear};
+ rivalsFilteredRows(d).forEach(r=>{if(r[6])wins[r[6]]++;const y=byYear[r[1]]||(byYear[r[1]]=[0,0]);if(r[6]===d.a)y[0]++;if(r[6]===d.b)y[1]++;});
+ return {wins,draws:rivalsFilteredRows(d).length-wins[d.a]-wins[d.b],byYear};
 }
 function toggleRivalsMenu(){const m=document.getElementById('rivals-menu');const open=m.classList.toggle('hidden')===false;document.getElementById('rivals-menu-button').setAttribute('aria-expanded',String(open));}
 function openRivalsView(){
@@ -3282,8 +3361,10 @@ function parseRivalsDate(row) {
   const monthNames=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
   const match=raw.match(/^(\d{1,2})-([a-zç]+)\.?-(\d{2,4})$/);
   if(match) {const m=monthNames.findIndex(v=>match[2].startsWith(v));return new Date(row[1],Math.max(0,m),Number(match[1])).getTime();}
-  const slash=raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if(slash)return new Date(Number(slash[3]),Number(slash[2])-1,Number(slash[1])).getTime();
+  const iso=raw.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/);
+  if(iso)return new Date(+iso[1],+iso[2]-1,+iso[3]).getTime();
+  const brazil=raw.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{2}|\d{4})$/);
+  if(brazil){const year=+brazil[3];return new Date(brazil[3].length===2?(year<=26?2000+year:1900+year):year,+brazil[2]-1,+brazil[1]).getTime();}
   return new Date(row[1],0,1).getTime();
 }
 function renderRivalsChart(){
@@ -3295,8 +3376,9 @@ function renderRivalsChart(){
    const years=[...new Set(Object.values(RIVALS_DATA).flatMap(d=>rivalsFilteredRows(d).map(r=>r[1])))].sort((a,b)=>a-b);
    labels=years.map(String);
    datasets=keys.map((key,idx)=>{
-     const d=RIVALS_DATA[key],byYear=rivalsStatsFiltered(d,rivalsFilteredRows(d)).byYear;let saldo=0;
-     return {label:d.a+' × '+d.b,data:years.map(y=>{if(byYear[y])saldo+=byYear[y][0]-byYear[y][1];return y<d.rows[0][1]?null:saldo;}),borderColor:colors[idx],backgroundColor:colors[idx],borderWidth:2.5,pointRadius:0,pointHoverRadius:4,spanGaps:false,tension:0};
+     const d=RIVALS_DATA[key],recorte=rivalsFilteredRows(d),byYear=rivalsStatsFiltered(d,recorte).byYear;let saldo=0;
+     const initialYear=recorte.reduce((min,row)=>Math.min(min,row[1]),Infinity);
+     return {label:d.a+' × '+d.b,data:years.map(y=>{if(byYear[y])saldo+=byYear[y][0]-byYear[y][1];return y<initialYear?null:saldo;}),borderColor:colors[idx],backgroundColor:colors[idx],borderWidth:2.5,pointRadius:0,pointHoverRadius:4,spanGaps:false,tension:0};
    });
  } else {
    // Each chronological match is one event; other series keep their current balance.
@@ -3329,7 +3411,7 @@ function setSaldoMode(view,mode) {
 document.addEventListener('click',event=>{const wrap=document.getElementById('rivals-menu-wrap');if(wrap&&!wrap.contains(event.target))document.getElementById('rivals-menu')?.classList.add('hidden');if(event.target.closest('#theme-toggle')&&!document.getElementById('view-rivais')?.classList.contains('hidden'))requestAnimationFrame(renderRivalsChart);});
 
 // V3.2.42 — Filtros gerais e cards de desempenho dos rivais.
-const rivalsFilterState={competitions:[],minYear:null,maxYear:null,team:'Flamengo',opponents:['Vasco','Botafogo','Fluminense']};
+const rivalsFilterState={competitions:[],minYear:null,maxYear:null,ultimos:0,team:'Flamengo',opponents:['Vasco','Botafogo','Fluminense']};
 const rivalsInsightOpen={recent:false,wins:false,unbeaten:false};
 let rivalsInsightLists={recent:[],wins:[],unbeaten:[]};
 function normalizeRivalsCompetition(value){
@@ -3343,9 +3425,11 @@ function rivalsCompetitionSelected(value){
  return !chosen.length || chosen.includes(rivalsCompetitionKey(value));
 }
 function rivalsFilteredRows(d){
- return d.rows.filter(r=>rivalsCompetitionSelected(r[4]) &&
+ const base=d.rows.filter(r=>!isNotCountedCompetition(r[4]) && rivalsCompetitionSelected(r[4]) &&
  (rivalsFilterState.minYear===null||r[1]>=rivalsFilterState.minYear)&&
  (rivalsFilterState.maxYear===null||r[1]<=rivalsFilterState.maxYear));
+ // d contém apenas um par de equipes: Últimos X é aplicado por confronto.
+ return limitLatestByPair(base,rivalsFilterState.ultimos,()=>d.a+'|'+d.b,parseRivalsDate);
 }
 function rivalsStatsFiltered(d,rows){
  const wins={[d.a]:0,[d.b]:0},byYear={};
@@ -3354,7 +3438,7 @@ function rivalsStatsFiltered(d,rows){
 }
 function initRivalsFilters(){
  const select=document.getElementById('rivals-competition');if(!select||select.dataset.initialized)return;
- const all=Object.values(RIVALS_DATA).flatMap(d=>d.rows);
+ const all=Object.values(RIVALS_DATA).flatMap(d=>d.rows.filter(r=>!isNotCountedCompetition(r[4])));
  const years=all.map(r=>r[1]).filter(Number.isFinite),min=Math.min(...years),max=Math.max(...years);
  if(rivalsFilterState.minYear===null)rivalsFilterState.minYear=min;if(rivalsFilterState.maxYear===null)rivalsFilterState.maxYear=max;
  // V3.2.57 — Opções obtidas exclusivamente das competições registradas
@@ -3484,6 +3568,7 @@ function rivalsInsightMatches(){
  });
  if(selected.includes('Fluminense')){
   if(!CLASSICOS_DATA.length){ /* A base principal ainda pode estar carregando. */ }
+  const fluMatches=[];
   CLASSICOS_DATA.forEach((m,i)=>{
    const other=normalizeComparable(m.adv);
    if(other!==normalizeComparable(team)||!Number.isFinite(m.gf)||!Number.isFinite(m.ga))return;
@@ -3491,8 +3576,9 @@ function rivalsInsightMatches(){
    if(rivalsFilterState.maxYear!==null&&m.ano>rivalsFilterState.maxYear)return;
    if(!rivalsCompetitionSelected(m.torneio))return;
    const time=m.timestamp||computeTimestamp(m.data);
-   items.push({date:m.data,year:m.ano,time,gf:m.ga,ga:m.gf,opp:'Fluminense',competition:m.torneio,result:m.ga>m.gf?'V':m.ga<m.gf?'D':'E',key:'flu-'+i});
+   fluMatches.push({date:m.data,year:m.ano,time,gf:m.ga,ga:m.gf,opp:'Fluminense',competition:m.torneio,result:m.ga>m.gf?'V':m.ga<m.gf?'D':'E',key:'flu-'+i});
   });
+  items.push(...limitLatestByPair(fluMatches,rivalsFilterState.ultimos,m=>m.opp,m=>m.time));
  }
  return items.sort((a,b)=>a.time-b.time||a.key.localeCompare(b.key));
 }
@@ -3514,6 +3600,8 @@ function renderRivalsInsightList(kind){
 function toggleRivalsInsight(kind){rivalsInsightOpen[kind]=!rivalsInsightOpen[kind];renderRivalsInsightList(kind);}
 function resetRivalsFilters(){
  rivalsFilterState.competitions=[];
+ rivalsFilterState.ultimos=0;
+ const last=document.getElementById('rivals-ultimos-jogos');if(last)last.value='0';
  const clear=document.querySelector('#rivals-competition .rivals-clear-all');
  if(clear)clear.click();
  const left=document.getElementById('rivals-year-min'),right=document.getElementById('rivals-year-max');

@@ -1802,3 +1802,34 @@ html[data-theme="light"] #classicos-competition-search{background:#fff;color:#29
 .rivals-competition-panel .rivals-competition-option[hidden]{display:none!important}
 html[data-theme="light"] .rivals-competition-actions{border-bottom-color:rgba(0,0,0,.12)}
 html[data-theme="light"] .rivals-clear-all{color:#63766b}
+
+/* V3.2.63 — Destaques da tela Início: preservar faixa colorida no modo claro. */
+#view-capa .home-summary-card{border-left-width:4px!important;border-left-style:solid!important;}
+#view-capa .home-summary-card--gold{border-left-color:#c5a059!important;}
+#view-capa .home-summary-card--green{border-left-color:#22a06b!important;}
+#view-capa .home-summary-card--blue{border-left-color:#0891b2!important;}
+html[data-theme="light"] #view-capa .home-summary-card--gold{border-left-color:#bc8c2c!important;}
+html[data-theme="light"] #view-capa .home-summary-card--green{border-left-color:#13855c!important;}
+html[data-theme="light"] #view-capa .home-summary-card--blue{border-left-color:#087c9b!important;}
+
+/* V3.2.63 — Linha do tempo / Colunas (apenas gráfico de público por temporada). */
+.season-view-switch{display:flex;flex:0 0 auto;align-items:center;gap:3px;padding:3px;border-radius:10px;border:1px solid rgba(197,160,89,.32);background:rgba(10,22,16,.45);margin-left:12px;}
+.season-view-switch button{font:inherit;font-size:10px;font-weight:750;color:#c3d4c9;background:transparent;border:0;border-radius:7px;padding:7px 9px;white-space:nowrap;cursor:pointer;transition:background .15s,color .15s;}
+.season-view-switch button.is-active{background:#0e4735;color:#fff;box-shadow:0 1px 4px rgba(0,0,0,.18);}
+.season-view-switch button:focus-visible,.last-games-field select:focus-visible{outline:2px solid #c5a059;outline-offset:2px;}
+html[data-theme="light"] .season-view-switch{background:#edf4ee;border-color:#b8cfbd;}
+html[data-theme="light"] .season-view-switch button{color:#476753;}
+html[data-theme="light"] .season-view-switch button.is-active{background:#176346;color:#fff;}
+@media(max-width:700px){#section-geral-temporada-competicao > .glass-panel:first-child > .flex.items-center.justify-between{align-items:flex-start;flex-direction:column;gap:10px;}.season-view-switch{margin-left:0;}}
+
+/* V3.2.63 — Últimos X jogos: filtros no desktop e no celular. */
+.last-games-field{min-width:0;display:flex;flex-direction:column;justify-content:flex-start;gap:6px;}
+.last-games-field label{display:block;font-size:12px;font-weight:650;line-height:18px;color:#d7e5db;}
+.last-games-field select{display:block;width:100%;min-height:40px;border:1px solid rgba(197,160,89,.32);border-radius:11px;padding:8px 28px 8px 10px;background:#12201a;color:#e8f5ed;font:inherit;font-size:12px;font-weight:650;cursor:pointer;}
+html[data-theme="light"] .last-games-field label{color:#385c45;}
+html[data-theme="light"] .last-games-field select{background:#fff;color:#294b38;border-color:#bdd5c4;}
+#view-rivais .rivals-filter-card{grid-template-columns:repeat(3,minmax(0,1fr));}
+#view-rivais .rivals-last-games-field{padding:0;}
+#view-rivais .rivals-last-games-field label{color:#cbded0;}
+html[data-theme="light"] #view-rivais .rivals-last-games-field label{color:#176045;}
+@media(max-width:700px){#view-rivais .rivals-filter-card{grid-template-columns:1fr;}}

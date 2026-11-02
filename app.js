@@ -1,4 +1,4 @@
-const DASHBOARD_VERSION = '3.2.63';
+const DASHBOARD_VERSION = '3.2.64.7';
 
 // V3.2.59 — Aba Público: sem linhas de grade internas; manter somente
 // a linha inferior do eixo X nos gráficos verticais e a linha esquerda
@@ -6,7 +6,7 @@ const DASHBOARD_VERSION = '3.2.63';
 const PUBLICO_CHART_IDS_SEM_GRADE = new Set([
   'chartTemporada', 'chartCompeticao', 'chartDiaSemana', 'chartHorario',
   'chartTopVisitante', 'chartDistribuicaoMandante', 'chartDesempenhoTemporada',
-  'chartSetorSul'
+  'chartSetorSul', 'chartTopMandanteSemClassicos'
 ]);
 const PUBLICO_CHARTS_HORIZONTAIS = new Set(['chartCompeticao', 'chartTopVisitante']);
 Chart.register({
@@ -62,6 +62,7 @@ let currentFilteredClassicos = [];
 let semRivaisAtivo = false;
 // Linha do tempo é o padrão; preservar a escolha durante filtros e atualizações.
 let temporadaChartView = 'line';
+let topMandanteView3264 = 'line';
 const RIVAIS_RAPIDOS = ['flamengo', 'botafogo', 'vasco'];
 function isRivalRapido(adversario) {
   const nome = normalizeComparable(adversario);
@@ -122,6 +123,159 @@ function normalizeComparable(value) {
     .toLowerCase();
 }
 
+// V3.2.64 — equivalências aprovadas; o campo original permanece imutável.
+const VENUE_ALIASES_3264 = Object.freeze({
+  'allianz parque': 'Arena Palmeiras', 'nubank parque': 'Arena Palmeiras',
+  'engenhao': 'Engenhão', 'nilton santos': 'Engenhão',
+  'kyocera arena': 'Arena da Baixada', 'ligga arena': 'Arena da Baixada',
+  'arena da baixada': 'Arena da Baixada'
+});
+function normalizedVenue3264(value) {
+  const raw = normalizeText(value);
+  return VENUE_ALIASES_3264[normalizeComparable(raw)] || raw;
+}
+function venueForStatistics3264(match) { return normalizedVenue3264(match.estadio); }
+function stadiumDisplay3264(match) { return match.estadio; }
+
+// Codes identify documented attendance status, not zero-valued measurements.
+const ATTENDANCE_CODES_3264 = new Set(['PAND', 'PU', 'NI']);
+function attendanceCheck3264(raw, field, id, problems) {
+  const value = normalizeText(raw);
+  if (!value || value === '-') return;
+  if (ATTENDANCE_CODES_3264.has(value.toUpperCase())) return;
+  if (!/^-?\d{1,3}(?:\.\d{3})*(?:,\d+)?$|^-?\d+(?:,\d+)?$/.test(value)) {
+    problems.push({id, field, value, level:'Erro', issue:'Valor de público não numérico ou código desconhecido'}); return;
+  }
+  const number = parseNumber(value);
+  if (!Number.isFinite(number)) problems.push({id, field, value, level:'Erro', issue:'Público inválido'});
+  else if (number < 0) problems.push({id,field,value,level:'Erro',issue:'Público negativo'});
+  else if (number >= 100000) problems.push({id,field,value,level:'Alerta',issue:'Público com seis ou mais dígitos; conferir fonte'});
+}
+function editDistance3264(a,b) {
+  if (Math.abs(a.length-b.length)>2) return 99;
+  let row=Array.from({length:b.length+1},(_,i)=>i);
+  for(let i=1;i<=a.length;i++) {const next=[i];for(let j=1;j<=b.length;j++)next[j]=Math.min(next[j-1]+1,row[j]+1,row[j-1]+(a[i-1]===b[j-1]?0:1));row=next;}
+  return row[b.length];
+}
+const KNOWN_VENUES_3264 = ['Maracanã','São Januário','Engenhão','Nilton Santos','Alfredo Jaconi','Allianz Parque','Nubank Parque','Palestra Itália','Parque Antarctica','Arena da Baixada','Kyocera Arena','Ligga Arena','Morumbi','Mineirão','Beira-Rio','Arena do Grêmio','Castelão','Vila Belmiro','Barradão','Fonte Nova','Mané Garrincha','Couto Pereira','Ilha do Retiro','Arena Pantanal'];
+// Registros ainda não realizados não integram a auditoria de inconsistências.
+function isPendingFixtureQuality32642(row) {
+  return normalizeComparable(row?.['Resultado']) === 'a realizar';
+}
+// Competições distintas e válidas não devem ser sugeridas uma como grafia da outra.
+const DISTINCT_COMPETITIONS_32642 = new Set([
+  'recopa sul-americana', 'copa sul-americana'
+]);
+function isDistinctCompetitionPair32642(a,b) {
+  const first=normalizeComparable(a),second=normalizeComparable(b);
+  return first!==second && DISTINCT_COMPETITIONS_32642.has(first) && DISTINCT_COMPETITIONS_32642.has(second);
+}
+// V3.2.64.4 — nomes de clubes distintos não são erros de digitação.
+// Lista conservadora de clubes conhecidos; novos/históricos continuam permitidos.
+const VALID_CLUB_NAMES_32644 = new Set([
+  'Flamengo','Vasco','Botafogo','Fluminense','Remo','Grêmio','Internacional',
+  'Juventude','Corinthians','Palmeiras','Santos','São Paulo','São Paulo FC',
+  'Cruzeiro','Atlético Mineiro','Atlético-MG','Atlético Paranaense','Athletico-PR',
+  'Athletico Paranaense','Coritiba','Cuiabá','Goiás','Atlético-GO','Atlético Goianiense',
+  'Bahia','Vitória','Fortaleza','Ceará','Sport','Náutico','Santa Cruz',
+  'Chapecoense','Avaí','Figueirense','Criciúma','América-MG','América-RJ',
+  'Bragantino','Red Bull Bragantino','RB Bragantino','Ponte Preta','Guarani',
+  'Portuguesa','Portuguesa-RJ','Portuguesa-SP','Volta Redonda','Bangu',
+  'Madureira','Boavista','Nova Iguaçu','Resende','Macaé','Sampaio Corrêa',
+  'Operário','Operário-PR','Paysandu','Amazonas','Mirassol','Novorizontino',
+  'CRB','CSA','ABC','Vila Nova','Botafogo-SP','Tombense','Londrina',
+  'River Plate','Boca Juniors','Barcelona de Guayaquil','Barcelona SC',
+  'Cerro Porteño','Junior Barranquilla','Independiente Santa Fe',
+  'LDU Quito','Defensor Sporting','Libertad','Peñarol','Nacional',
+  'Olimpia','Emelec','The Strongest','Bolívar','Colo-Colo','Universidad de Chile',
+  'Universidad Católica','Alianza Lima','Sporting Cristal','Estudiantes',
+  'Independiente','Racing','Argentinos Juniors','Lanús','Vélez Sarsfield'
+].map(normalizeComparable));
+function knownClub32644(name) { return VALID_CLUB_NAMES_32644.has(normalizeComparable(name)); }
+const QUALITY_3264 = [];
+function addQuality3264(id,field,value,level,issue) {QUALITY_3264.push({id,field,value:String(value??''),level,issue});}
+function validateQuality3264(rows) {
+  QUALITY_3264.length=0;
+  const seen=new Set();
+  rows.forEach((row,index)=>{
+    if (isPendingFixtureQuality32642(row)) return;
+    const id=normalizeText(row['ID Jogo']) || `Linha ${index+2}`;
+    const season=normalizeText(row['Temporada']);
+    const comp=normalizeText(row['Competição']);
+    const score=normalizeText(row['Placar']);
+    if(!normalizeText(row['ID Jogo']))addQuality3264(id,'ID Jogo','', 'Erro','Identificador vazio');
+    else if(seen.has(id))addQuality3264(id,'ID Jogo',id,'Erro','Identificador duplicado');
+    else if(!/^FLU-\d{4}-\d{3,}$/.test(id))addQuality3264(id,'ID Jogo',id,'Alerta','ID fora do padrão FLU-AAAA-NNN');
+    seen.add(id);
+    if(season && (!/^\d{4}$/.test(season) || Number(season)<1900 || Number(season)>2100))addQuality3264(id,'Temporada',season,'Erro','Temporada inválida');
+    const date=normalizeText(row['Data']);
+    let dt=null;
+    if(date){const iso=/^(\d{4})-(\d{2})-(\d{2})/.exec(date); const br=/^(\d{2})\/(\d{2})\/(\d{4})/.exec(date);if(iso)dt=new Date(Date.UTC(+iso[1],+iso[2]-1,+iso[3]));else if(br)dt=new Date(Date.UTC(+br[3],+br[2]-1,+br[1]));if(!dt || Number.isNaN(dt.getTime()) || (iso && dt.toISOString().slice(0,10)!==iso[0]) || (br && (dt.getUTCDate()!==+br[1]||dt.getUTCMonth()+1!==+br[2])))addQuality3264(id,'Data',date,'Erro','Data inválida');}
+    const time=normalizeText(row['Horário']);if(time && time!=='-' && !/^(?:[01]?\d|2[0-3]):[0-5]\d$/.test(time))addQuality3264(id,'Horário',time,'Alerta','Formato de horário suspeito');
+    const week=normalizeComparable(row['Dia da Semana']).replace('-feira',''); const weeks=['domingo','segunda','terca','quarta','quinta','sexta','sabado'];if(dt && weeks.includes(week)&&weeks[dt.getUTCDay()]!==week)addQuality3264(id,'Dia da Semana',row['Dia da Semana'],'Erro','Dia da semana diverge da data');
+    const mando=normalizeComparable(row['Mando']);if(mando && !['mandante','visitante','neutro','c','f','n'].includes(mando))addQuality3264(id,'Mando',row['Mando'],'Erro','Mando deve ser Mandante, Visitante ou Neutro');
+    const present=normalizeComparable(row['Presente?']);if(present && !['sim','nao','a definir'].includes(present))addQuality3264(id,'Presente?',row['Presente?'],'Alerta','Presença pessoal deve ser Sim, Não ou A Definir');
+    if(!comp)addQuality3264(id,'Competição','','Alerta','Competição vazia');
+    const stadium=normalizeText(row['Estádio']); const normalized=normalizeComparable(stadium);
+    if(stadium && !KNOWN_VENUES_3264.some(v=>normalizeComparable(v)===normalized)) {
+      const close=KNOWN_VENUES_3264.map(v=>({v,d:editDistance3264(normalized,normalizeComparable(v))})).sort((a,b)=>a.d-b.d)[0];
+      if(close?.d<=2)addQuality3264(id,'Estádio',stadium,'Sugestão',`Possível grafia: ${close.v}`);
+    }
+    attendanceCheck3264(row['Público Total'],'Público Total',id,QUALITY_3264);
+    attendanceCheck3264(row['Público Visitante (Flu)'],'Público Visitante (Flu)',id,QUALITY_3264);
+    const total=parseNumber(row['Público Total']);const vis=parseNumber(row['Público Visitante (Flu)']);
+    if(total!==null&&vis!==null&&vis>total)addQuality3264(id,'Público Visitante (Flu)',row['Público Visitante (Flu)'],'Erro','Público visitante maior que o público total');
+    if(mando==='mandante'&&normalizeText(row['Público Visitante (Flu)']))addQuality3264(id,'Público Visitante (Flu)',row['Público Visitante (Flu)'],'Alerta','Campo normalmente não se aplica ao mando Mandante');
+    const gf=normalizeText(row['Gols Flu']),ga=normalizeText(row['Gols Adv']);
+    for(const [field,value] of [['Gols Flu',gf],['Gols Adv',ga]])if(value && (!/^\d+$/.test(value)||+value>50))addQuality3264(id,field,value,'Erro','Gols inválidos');
+    if(/^\d+$/.test(gf)&&/^\d+$/.test(ga)){
+      const parsed=parseScore(score,false);
+      if(parsed.gf!==null&&(+gf!==parsed.gf||+ga!==parsed.ga))addQuality3264(id,'Placar',score,'Erro','Placar não corresponde às colunas de gols');
+      const expected=+gf>+ga?'V':+gf<+ga?'D':'E';const result=normalizeComparable(row['Resultado']);
+      if(result && !['v','e','d','vitoria','empate','derrota'].includes(result))addQuality3264(id,'Resultado',row['Resultado'],'Alerta','Resultado fora das categorias previstas');
+      else if(result && result[0]!==expected.toLowerCase())addQuality3264(id,'Resultado',row['Resultado'],'Erro','Resultado não corresponde aos gols');
+      const points=normalizeText(row['Pontos']);if(points && Number(points)!==({V:3,E:1,D:0})[expected])addQuality3264(id,'Pontos',points,'Erro','Pontos divergentes do resultado');
+    }
+    if(!normalizeText(row['Adversário']))addQuality3264(id,'Adversário','','Alerta','Adversário vazio');
+    const round=normalizeText(row['Fase / Rodada']);if(!round)addQuality3264(id,'Fase / Rodada','','Alerta','Fase ou rodada não informada');
+    ['Sul Pagantes','Sul Devolvidos','Sul Total (Hipotético)','Sócios Sul','Gratuidades','Ingresso promocional','Taxa Ocupação Sul*'].forEach(field=>{const value=normalizeText(row[field]);if(value && !/^\d+(?:[.,]\d+)?%?$/.test(value.replace(/\.(?=\d{3}(?:\D|$))/g,'')))addQuality3264(id,field,value,'Alerta','Valor numérico ou percentual suspeito');});
+  });
+  // Sugestões baseadas apenas em nomes que aparecem repetidamente na base.
+  // Nomes raros/históricos nunca são substituídos automaticamente.
+  for (const field of ['Competição', 'Adversário']) {
+    const counts=new Map();
+    rows.forEach(row=>{if(isPendingFixtureQuality32642(row))return;const v=normalizeText(row[field]);if(v)counts.set(v,(counts.get(v)||0)+1);});
+    const established=[...counts].filter(([v,count])=>count>=3 && normalizeComparable(v).length>=5);
+    rows.forEach((row,index)=>{
+      if(isPendingFixtureQuality32642(row))return;
+      const value=normalizeText(row[field]);if(!value || (counts.get(value)||0)>=3) return;
+      // Nunca sugerir trocar um clube válido por outro (ex.: Remo x Grêmio).
+      if(field==='Adversário' && knownClub32644(value)) return;
+      const comparable=normalizeComparable(value);
+      const options=established.map(([name])=>({name,distance:editDistance3264(comparable,normalizeComparable(name))}))
+        .filter(x=>x.distance>0 && x.distance<=(field==='Adversário'?1:2)
+          && (field!=='Competição'||!isDistinctCompetitionPair32642(value,x.name))
+          && (field!=='Adversário'||knownClub32644(x.name)))
+        .sort((a,b)=>a.distance-b.distance);
+      // Empates de similaridade são ambíguos: não apresentar sugestão.
+      if(options.length && (options.length===1 || options[0].distance<options[1].distance)) {
+        addQuality3264(normalizeText(row['ID Jogo'])||`Linha ${index+2}`,field,value,'Sugestão',`Possível grafia: ${options[0].name}`);
+      }
+    });
+  }
+  renderQuality3264();
+}
+function renderQuality3264(){
+  const summary=document.getElementById('quality-summary-3264'),body=document.getElementById('quality-body-3264');if(!summary||!body)return;
+  const errs=QUALITY_3264.filter(x=>x.level==='Erro').length;
+  summary.textContent=`${errs} erros · ${QUALITY_3264.filter(x=>x.level==='Alerta').length} alertas · ${QUALITY_3264.filter(x=>x.level==='Sugestão').length} sugestões`;
+  body.replaceChildren();
+  for(const p of QUALITY_3264.slice(0,200)){
+    const row=document.createElement('tr');
+    [p.level,p.id,p.field,p.value,p.issue].forEach(t=>{const td=document.createElement('td');td.className='p-2 border-b border-white/10 text-xs';td.textContent=t;row.appendChild(td);});body.appendChild(row);
+  }
+}
+
 // V3.2.63: registros marcados na coluna Competição são mantidos no Sheets,
 // mas excluídos de todas as estatísticas, filtros, tabelas e exports.
 function isNotCountedCompetition(value) {
@@ -149,7 +303,9 @@ function limitLatestByPair(matches, limit, pairKey, dateValue) {
 }
 
 function normalizeYesNo(value) {
-  return normalizeComparable(value) === 'sim' ? 'Sim' : 'Não';
+  const normalized = normalizeComparable(value);
+  if (normalized === 'a definir') return 'A Definir';
+  return normalized === 'sim' ? 'Sim' : 'Não';
 }
 
 function hasAnyHeader(headers, aliases) {
@@ -449,6 +605,7 @@ async function fetchLiveGoogleSheet() {
 
     const rows = mainResults.data;
     if (!rows || rows.length === 0) throw new Error('Base principal vazia');
+    validateQuality3264(rows);
     const parsedMatches = [];
     rows.forEach((row, idx) => {
       const placar = row['Placar'] || '-';
@@ -737,7 +894,7 @@ function getMatchesExcluding(excludeDimension) {
     if (setTemp && !setTemp.has(String(m.ano))) return false;
     if (setComp && !setComp.has(m.torneio)) return false;
     if (setMando && !setMando.has(m.mando)) return false;
-    if (setEst && !setEst.has(m.estadio)) return false;
+    if (setEst && !setEst.has(venueForStatistics3264(m))) return false;
     if (setDia && !setDia.has(m.dia)) return false;
     if (setHor && !setHor.has(m.hora)) return false;
     if (setAdv && !setAdv.has(m.adv)) return false;
@@ -764,6 +921,7 @@ function renderChecklist(type, items, matchingSubset) {
     else if (type === 'competicao') val = m.torneio;
     else if (type === 'adversario') val = m.adv;
     else if (type === 'horario') val = m.hora;
+    else if (type === 'estadio') val = venueForStatistics3264(m);
     else val = m[type];
     counts[val] = (counts[val] || 0) + 1;
   });
@@ -800,7 +958,7 @@ function updateAllDropdowns() {
   renderChecklist('adversario', opponents.map(adv => ({ value: adv, label: adv })), getMatchesExcluding('adversario'));
 
   const validEstadioMatches = getMatchesExcluding('estadio');
-  const venues = [...new Set(validEstadioMatches.map(m => m.estadio))].filter(v => v && v !== "-" && v !== "A Definir").sort();
+  const venues = [...new Set(validEstadioMatches.map(m => venueForStatistics3264(m)))].filter(v => v && v !== "-" && v !== "A Definir").sort();
   renderChecklist('estadio', venues.map(v => ({ value: v, label: v })), validEstadioMatches);
 
   const validDiaMatches = getMatchesExcluding('dia');
@@ -981,7 +1139,17 @@ function makeValueLabelsPlugin(id, { decimals = 0, horizontal = false, fontSize 
             const x = id === 'topVisitanteLabels' ? Math.min(element.x + 8, chart.width - rightReserve) : ((mobileOutside && isMobile) ? element.x + 8 : Math.min(element.x + 8, chart.width - rightReserve));
             ctx.fillText(useFullValue ? formatFull(value) : formatK(value, decimals), x, element.y);
           }
-          else ctx.fillText(useFullValue ? formatFull(value) : formatK(value, decimals), element.x, Math.max(chartArea.top + 12, element.y - 6));
+          else {
+            const label = useFullValue ? formatFull(value) : formatK(value, decimals);
+            // Keep edge labels inside the drawing surface, particularly on mobile line charts.
+            const halfWidth = ctx.measureText(label).width / 2;
+            const labelX = Math.max(chartArea.left + halfWidth + 4, Math.min(chartArea.right - halfWidth - 4, element.x));
+            // Manter o número claramente acima da linha/barra, inclusive no maior ponto.
+            const labelY = Math.max(chartArea.top + fontSize + 4, element.y - 15);
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText(label, labelX, labelY);
+          }
         });
       });
       ctx.restore();
@@ -1010,7 +1178,7 @@ function applyFilters() {
     if (setTemp && !setTemp.has(String(m.ano))) return false;
     if (setComp && !setComp.has(m.torneio)) return false;
     if (setMando && !setMando.has(m.mando)) return false;
-    if (setEst && !setEst.has(m.estadio)) return false;
+    if (setEst && !setEst.has(venueForStatistics3264(m))) return false;
     if (setDia && !setDia.has(m.dia)) return false;
     if (setHor && !setHor.has(m.hora)) return false;
     if (setAdv && !setAdv.has(m.adv)) return false;
@@ -1591,42 +1759,211 @@ function renderSulBarChart(canvasId, sulMatchesList) {
 }
 
 let temporadaChartData = null;
+// V3.2.64.7 — Recalcular espessuras e rótulos quando o card muda de largura.
+const audienceMeasuredWidths32647 = {season: 0, top: 0};
+function audienceBarThickness32647(wrap, categories, series, mobile, limit) {
+  const actualWidth = wrap?.clientWidth || (mobile ? 300 : 720);
+  const available = Math.max(180, actualWidth - (mobile ? 26 : 36));
+  const slot = available / Math.max(1, categories);
+  return Math.max(5, Math.min(limit, Math.floor(slot * 0.70 / Math.max(1, series))));
+}
+// Divide os nomes SEM truncá-los: todas as letras ficam acessíveis no eixo,
+// inclusive nomes extensos, enquanto o tooltip mostra o adversário original.
+function audienceWrapLabel32647(value, context, maxWidth, fontSize) {
+  const text = String(value ?? '-').trim() || '-';
+  context.save();
+  context.font = `${fontSize}px 'Plus Jakarta Sans', sans-serif`;
+  const result = [];
+  let line = '';
+  const fits = candidate => context.measureText(candidate).width <= maxWidth;
+  const flush = () => { if (line) { result.push(line); line = ''; } };
+  for (const word of text.split(/\s+/)) {
+    const joined = line ? `${line} ${word}` : word;
+    if (fits(joined)) { line = joined; continue; }
+    flush();
+    if (fits(word)) { line = word; continue; }
+    // Palavras sem espaços (como nomes compostos por hífen).
+    let part = '';
+    for (const char of word) {
+      if (part && !fits(part + char)) { result.push(part); part = ''; }
+      part += char;
+    }
+    line = part;
+  }
+  flush();
+  context.restore();
+  return result.length ? result : ['-'];
+}
 // Recria somente este gráfico ao alternar o tipo, sem recalcular os demais.
+// V3.2.64.6 — Gráficos de público: escala definida pelos dados visíveis,
+// margem de segurança REAL no eixo Y, categorias com largura uniforme e
+// rótulos inteiramente acima das barras/pontos (sem deslocá-los para dentro).
+function audienceScaleMax32646(chartOrDatasets, visibility = null) {
+  const datasets = Array.isArray(chartOrDatasets) ? chartOrDatasets : chartOrDatasets.data.datasets;
+  const values = [];
+  datasets.forEach((dataset, index) => {
+    const visible = visibility ? visibility[index] :
+      Array.isArray(chartOrDatasets) ? !dataset.hidden : chartOrDatasets.isDatasetVisible(index);
+    if (!visible) return;
+    (dataset.data || []).forEach(raw => {
+      const v = Number(raw);
+      if (raw !== null && raw !== '' && Number.isFinite(v) && v > 0) values.push(v);
+    });
+  });
+  if (!values.length) return 1;
+  const peak = Math.max(...values);
+  const padded = peak * 1.22;
+  const step = Math.pow(10, Math.floor(Math.log10(padded)) - 1);
+  return Math.ceil(padded / step) * step;
+}
+
+function audienceLegendClick32646(_event, item, legend) {
+  const chart = legend.chart;
+  const index = item.datasetIndex;
+  if (index === undefined || index === null) return;
+  chart.setDatasetVisibility(index, !chart.isDatasetVisible(index));
+  if (chart.canvas?.id === 'chartTemporada' && chart.config.type === 'bar') {
+    const remaining = chart.data.datasets.filter((_,i) => chart.isDatasetVisible(i)).length;
+    const mobile = window.matchMedia('(max-width: 767px)').matches;
+    const thickness = audienceBarThickness32647(chart.canvas.parentElement, chart.data.labels.length, remaining, mobile, mobile ? 25 : 43);
+    chart.data.datasets.forEach(dataset => { dataset.barThickness = thickness; });
+  }
+  chart.options.scales.y.max = audienceScaleMax32646(chart);
+  chart.update('none');
+}
+
+// Cada rótulo é ancorado no topo REAL de sua barra ou no centro do ponto.
+// Não utiliza chartArea.top para mover texto SOBRE a barra quando falta espaço.
+// O espaço é reservado pela escala y.max, antes do desenho do gráfico.
+function audienceLabels32646(id, { fullValue = false, fontSize = 11 } = {}) {
+  return {
+    id,
+    afterDatasetsDraw(chart) {
+      const {ctx, chartArea} = chart;
+      if (!chartArea) return;
+      const mobile = window.matchMedia('(max-width: 767px)').matches;
+      const px = mobile ? Math.min(fontSize, 10) : fontSize;
+      const labelHeight = px + 3;
+      const entries = [];
+      ctx.save();
+      ctx.font = `700 ${px}px 'Plus Jakarta Sans', sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.fillStyle = document.documentElement.dataset.theme === 'light' ? '#244634' : '#f0f5ef';
+      const onlyOneSeries = chart.data.datasets.filter((_, i) => chart.isDatasetVisible(i)).length === 1;
+      chart.data.datasets.forEach((dataset, datasetIndex) => {
+        if (!chart.isDatasetVisible(datasetIndex)) return;
+        chart.getDatasetMeta(datasetIndex).data.forEach((element, dataIndex) => {
+          const raw = dataset.data[dataIndex];
+          const value = Number(raw);
+          if (raw === null || raw === '' || !Number.isFinite(value) || value <= 0) return;
+          if (dataset.customCount && !(dataset.customCount[dataIndex] > 0)) return;
+          // Temporada: duas séries usam 1 casa + k; uma única série
+          // deve mostrar o valor completo, mesmo após clique na legenda.
+          const useFull = fullValue || (chart.canvas?.id === 'chartTemporada' && onlyOneSeries);
+          const label = useFull ? formatFull(value) : formatK(value, 1);
+          const width = ctx.measureText(label).width;
+          // Elementos do Chart.js: x=centro; y=topo da barra ou centro do ponto.
+          const props = typeof element.getProps === 'function' ? element.getProps(['x', 'y', 'base'], true) : element;
+          if (!Number.isFinite(props.x) || !Number.isFinite(props.y)) return;
+          const bar = chart.config.type === 'bar';
+          const top = bar && Number.isFinite(props.base) ? Math.min(props.y, props.base) : props.y;
+          const x = Math.max(chartArea.left + width / 2 + 3,
+            Math.min(chartArea.right - width / 2 - 3, props.x));
+          const y = top - (bar ? 9 : 11);
+          entries.push({label, x, y, width});
+        });
+      });
+      // Mantém rótulos de séries vizinhas separados, sobretudo no celular.
+      // Move um rótulo um pouco mais para CIMA, jamais para dentro da coluna.
+      entries.sort((a,b) => a.y - b.y || a.x - b.x);
+      const positioned=[];
+      for (const e of entries) {
+        let y=e.y;
+        for (let tries=0;tries<5;tries++) {
+          const hit=positioned.some(p => Math.abs(e.x-p.x) < (e.width+p.width)/2 + 4 &&
+            y > p.y - labelHeight - 2 && y - labelHeight - 2 < p.y);
+          if (!hit) break;
+          y -= labelHeight + 3;
+        }
+        // O y.max já oferece respiro. Se necessário, manter legível no topo.
+        y = Math.max(chartArea.top + labelHeight + 1, y);
+        ctx.fillText(e.label, e.x, y);
+        positioned.push({...e, y});
+      }
+      ctx.restore();
+    }
+  };
+}
+
 function renderTemporadaChartOnly() {
   if (!temporadaChartData || !document.getElementById('chartTemporada')) return;
   const { seasons, datasetsTemp, showLegend } = temporadaChartData;
-  // Ao alternar de visualização, manter as séries ocultas pela legenda.
-  const previous = activeCharts['chartTemporada'];
+  const previous = activeCharts.chartTemporada;
   const previousVisibility = previous && previous.data.datasets.length === datasetsTemp.length &&
     previous.data.datasets.every((d,i) => d.label === datasetsTemp[i].label)
     ? previous.data.datasets.map((_dataset,i) => previous.isDatasetVisible(i)) : null;
-  // Mesmas médias para os dois formatos. Ausência de público na série
-  // aparece como lacuna na linha, não como público médio zero.
   const timeline = temporadaChartView === 'line';
-  const displayTemp = timeline ? datasetsTemp.map(dataset => ({
-    ...dataset,
-    data: dataset.data.map((value, index) => dataset.customCount[index] > 0 ? value : null),
-    borderColor: dataset.backgroundColor,
-    pointBackgroundColor: dataset.backgroundColor,
-    pointBorderColor: '#C5A059',
-    pointBorderWidth: 1.5,
-    pointRadius: 4,
-    pointHoverRadius: 6,
-    pointHitRadius: 12,
-    borderWidth: 2.5,
-    tension: 0.2,
-    spanGaps: false,
-    fill: false
-  })) : datasetsTemp;
-  activeCharts["chartTemporada"] = new Chart(getChartCanvas("chartTemporada"), {
-    type: timeline ? 'line' : 'bar', data: { labels: seasons.map(String), datasets: displayTemp },
-    plugins: [makeValueLabelsPlugin('publicoMedioTemporadaLabels', { decimals: 1, fullWhenSingleVisible: true })],
-    options: { layout: { padding: { top: 18 } }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: showLegend, position: 'top', labels: {color: (document.documentElement.dataset.theme === 'light' ? '#385642' : 'rgba(255,255,255,0.7)')} }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { y: { beginAtZero: true, ticks: { display: false, callback: v => v.toLocaleString('pt-BR') } } } }
+  const mobile = window.matchMedia('(max-width: 767px)').matches;
+  const seasonWrap = document.querySelector('.audience-season-chart-wrap');
+  audienceMeasuredWidths32647.season = seasonWrap?.clientWidth || 0;
+  const visibleCount = previousVisibility ? previousVisibility.filter(Boolean).length : datasetsTemp.length;
+  const seasonThickness = audienceBarThickness32647(seasonWrap, seasons.length, visibleCount, mobile, mobile ? 25 : 43);
+  // O vazio é lacuna histórica; nunca representa zero de público.
+  const displayTemp = datasetsTemp.map((dataset, index) => {
+    const data = dataset.data.map((v,i) => dataset.customCount[i] > 0 ? v : null);
+    const color = dataset.backgroundColor;
+    const isVisible = previousVisibility ? previousVisibility[index] : true;
+    return {
+      ...dataset,
+      data,
+      hidden: !isVisible,
+      borderColor: timeline ? color : '#C5A059',
+      backgroundColor: timeline ?
+        dataset.label === 'Visitante' ? 'rgba(138,21,56,0.13)' :
+        dataset.label === 'Mandante' ? 'rgba(14,71,53,0.16)' : 'rgba(15,118,110,0.14)' : color,
+      pointBackgroundColor: color,
+      pointBorderColor: '#C5A059',
+      pointBorderWidth: 1.5,
+      pointRadius: timeline ? 4 : 0,
+      pointHoverRadius: 6,
+      pointHitRadius: 12,
+      borderWidth: timeline ? 2.5 : 1.5,
+      borderRadius: timeline ? 0 : 5,
+      tension: timeline ? 0.2 : 0,
+      spanGaps: false,
+      fill: timeline ? 'origin' : false,
+      categoryPercentage: 0.76,
+      barPercentage: 0.84,
+      barThickness: seasonThickness,
+      maxBarThickness: mobile ? 25 : 43
+    };
   });
-  if (previousVisibility && activeCharts['chartTemporada']?.setDatasetVisibility) {
-    previousVisibility.forEach((visible,index) => activeCharts['chartTemporada'].setDatasetVisibility(index,visible));
-    activeCharts['chartTemporada'].update('none');
-  }
+  const axisMax = audienceScaleMax32646(displayTemp);
+  activeCharts.chartTemporada = new Chart(getChartCanvas('chartTemporada'), {
+    type: timeline ? 'line' : 'bar',
+    data: {labels: seasons.map(String), datasets: displayTemp},
+    plugins: [audienceLabels32646('audienceSeasonLabels32646', {fontSize: mobile ? 10 : 11})],
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      animation: false,
+      layout: {padding: {top: 6, left: mobile ? 2 : 4, right: mobile ? 2 : 4, bottom: 0}},
+      plugins: {
+        legend: {
+          display: showLegend, position: 'top', onClick: audienceLegendClick32646,
+          labels: {color: document.documentElement.dataset.theme === 'light' ? '#385642' : 'rgba(255,255,255,0.7)', padding: 10}
+        },
+        tooltip: {callbacks: {label: ctx => {
+          const count=ctx.dataset.customCount?.[ctx.dataIndex] || 0;
+          return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} (${count} ${count>1?'jogos':'jogo'})`;
+        }}}
+      },
+      scales: {
+        x: {offset: true, ticks: {autoSkip: false, maxRotation: 0, minRotation: 0, font: {size: mobile ? 10 : 12}}},
+        y: {min: 0, max: axisMax, beginAtZero: true, ticks: {display: false}}
+      }
+    }
+  });
 }
 
 function setTemporadaChartView(view) {
@@ -1637,8 +1974,67 @@ function setTemporadaChartView(view) {
     button.classList.toggle('is-active', active);
     button.setAttribute('aria-pressed', String(active));
   });
-  // Usa os mesmos dados filtrados, sem alterar a regra das médias.
   if (!document.getElementById('view-estadio')?.classList.contains('hidden')) renderTemporadaChartOnly();
+}
+
+function renderTopMandante3264(matches) {
+  const canvas=document.getElementById('chartTopMandanteSemClassicos');
+  if (!canvas) return;
+  if (activeCharts.chartTopMandanteSemClassicos) {
+    activeCharts.chartTopMandanteSemClassicos.destroy();
+    activeCharts.chartTopMandanteSemClassicos=null;
+  }
+  const mobile=window.matchMedia('(max-width: 767px)').matches;
+  const top=matches.filter(m=>m.mando==='Mandante'&&!isRivalRapido(m.adv)&&Number.isFinite(m.pub)&&m.pub>0)
+    .sort((a,b)=>b.pub-a.pub||(a.timestamp||0)-(b.timestamp||0)).slice(0,mobile?5:10);
+  const topWrap = canvas.parentElement;
+  audienceMeasuredWidths32647.top = topWrap?.clientWidth || 0;
+  const visualFont = mobile ? 9 : 11;
+  const usableWidth = Math.max(180, audienceMeasuredWidths32647.top || (mobile ? 300 : 720));
+  const axisLabelWidth = Math.max(29, (usableWidth - (mobile ? 36 : 52)) / Math.max(1, top.length) - 5);
+  const ctxLabels = canvas.getContext('2d');
+  const labels = top.map(m => [
+    ...audienceWrapLabel32647(m.adv, ctxLabels, axisLabelWidth, visualFont),
+    ...audienceWrapLabel32647(formatCatalogDate(m.data), ctxLabels, axisLabelWidth, visualFont)
+  ]);
+  const barThickness = audienceBarThickness32647(topWrap, top.length, 1, mobile, mobile ? 42 : 65);
+  const line=topMandanteView3264==='line';
+  const dataset={
+    label:'Público presente',data:top.map(m=>m.pub),
+    borderColor:'#0E4735',backgroundColor:line?'rgba(14,71,53,0.17)':'#0E4735',
+    borderWidth:line?2.5:1.5,fill:line?'origin':false,tension:line?0.25:0,
+    pointRadius:line?5:0,pointHoverRadius:7,pointBackgroundColor:'#C5A059',
+    pointBorderColor:'#0E4735',borderRadius:line?0:5,
+    categoryPercentage:0.76,barPercentage:0.85,
+    barThickness:barThickness,maxBarThickness:mobile?42:65
+  };
+  const axisMax=audienceScaleMax32646([dataset]);
+  activeCharts.chartTopMandanteSemClassicos=new Chart(canvas.getContext('2d'),{
+    type:line?'line':'bar',data:{labels,datasets:[dataset]},
+    plugins:[audienceLabels32646('audienceTopMandanteLabels32646',{fullValue:true,fontSize:mobile?10:12})],
+    options:{
+      responsive:true,maintainAspectRatio:false,animation:false,
+      layout:{padding:{top:6,right:mobile?4:8,left:mobile?4:8,bottom:0}},
+      plugins:{legend:{display:false},tooltip:{callbacks:{
+        title:(items)=>{const m=top[items[0]?.dataIndex];return m?`${m.adv} · ${m.data}`:''},
+        label:ctx=>` Público: ${ctx.parsed.y.toLocaleString('pt-BR')}`
+      }}},
+      scales:{
+        y:{min:0,max:axisMax,beginAtZero:true,ticks:{display:false}},
+        x:{offset:true,ticks:{autoSkip:false,maxRotation:0,minRotation:0,padding:6,font:{size:visualFont,lineHeight:1.08}}}
+      }
+    }
+  });
+}
+function setTopMandanteView3264(view) {
+  if (!['line','bar'].includes(view)) return;
+  topMandanteView3264=view;
+  document.querySelectorAll('[data-action="top-mandante-view-3264"]').forEach(btn=>{
+    const active=btn.dataset.view===view;
+    btn.classList.toggle('is-active',active);
+    btn.setAttribute('aria-pressed',String(active));
+  });
+  if (!document.getElementById('view-estadio')?.classList.contains('hidden')) renderTopMandante3264(filteredMatches);
 }
 
 function updateCharts() {
@@ -1749,9 +2145,10 @@ function updateCharts() {
 
     // Top 10 Visitante (todos os jogos com pubVis > 0)
     if (m.pubVis !== null && m.pubVis > 0) {
-      if (!visitEstadioMap[m.estadio]) visitEstadioMap[m.estadio] = { sum: 0, count: 0 };
-      visitEstadioMap[m.estadio].sum += m.pubVis;
-      visitEstadioMap[m.estadio].count += 1;
+      const venueKey = venueForStatistics3264(m);
+      if (!visitEstadioMap[venueKey]) visitEstadioMap[venueKey] = { sum: 0, count: 0 };
+      visitEstadioMap[venueKey].sum += m.pubVis;
+      visitEstadioMap[venueKey].count += 1;
     }
 
     // Setor Sul Maracanã
@@ -2075,6 +2472,7 @@ function updateCharts() {
 
   // 7. SETOR SUL
   const sulMatches = sulCandidates.sort((a, b) => b.sul - a.sul).slice(0, 10);
+  renderTopMandante3264(validFiltered);
   renderSulBarChart("chartSetorSul", sulMatches);
 }
 
@@ -3004,6 +3402,15 @@ function recoverChartSizes() {
             console.warn('Não foi possível reajustar um gráfico:', err);
           }
         });
+        // Só reconstrói os dois gráficos auditados caso a largura útil tenha
+        // mudado substancialmente. Isso reaplica o layout de eixos e espessuras
+        // em rotações e ao redimensionar a janela dentro do mesmo breakpoint.
+        if (!document.getElementById('view-estadio')?.classList.contains('hidden')) {
+          const seasonWidth = document.querySelector('.audience-season-chart-wrap')?.clientWidth || 0;
+          const topWidth = document.querySelector('.audience-top-chart-wrap')?.clientWidth || 0;
+          if (seasonWidth && Math.abs(seasonWidth - audienceMeasuredWidths32647.season) > 18) renderTemporadaChartOnly();
+          if (topWidth && Math.abs(topWidth - audienceMeasuredWidths32647.top) > 18) renderTopMandante3264(filteredMatches);
+        }
       });
     });
   }, 80);
@@ -3013,6 +3420,15 @@ function initChartRecoveryHandlers() {
   window.addEventListener('pageshow', recoverChartSizes);
   window.addEventListener('resize', recoverChartSizes, { passive: true });
   window.addEventListener('orientationchange', recoverChartSizes, { passive: true });
+  const chartBreakpoint32646 = window.matchMedia('(max-width: 767px)');
+  const updateTopOnBreakpoint32646 = () => {
+    if (!document.getElementById('view-estadio')?.classList.contains('hidden')) {
+      renderTopMandante3264(filteredMatches);
+      renderTemporadaChartOnly();
+    }
+  };
+  if (chartBreakpoint32646.addEventListener) chartBreakpoint32646.addEventListener('change', updateTopOnBreakpoint32646);
+  else if (chartBreakpoint32646.addListener) chartBreakpoint32646.addListener(updateTopOnBreakpoint32646);
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') recoverChartSizes();
   });
@@ -3035,6 +3451,7 @@ function handleDelegatedClick(event) {
     'toggle-sem-rivais': () => toggleSemRivais(),
     'reset-classicos-filters': () => resetClassicosFilters(),
     'temporada-chart-view': () => setTemporadaChartView(target.dataset.view),
+    'top-mandante-view-3264': () => setTopMandanteView3264(target.dataset.view),
     'reset-rivals-filters': () => resetRivalsFilters(),
     'copy-filtered-url': () => copyFilteredUrl(),
     'export-filtered-csv': () => exportFilteredCsv(),

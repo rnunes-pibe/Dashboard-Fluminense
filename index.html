@@ -78,7 +78,13 @@
   <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
     
     <div id="view-capa" class="space-y-8">
-      <section class="glass-panel rounded-3xl p-8 sm:p-12 shadow-2xl relative overflow-hidden border border-[#C5A059]/40">
+<section id="quality-panel-3264" class="glass-panel rounded-xl p-4 my-4" aria-label="Validação da base">
+  <details><summary class="cursor-pointer font-bold text-sm">Qualidade da Base — <span id="quality-summary-3264">Aguardando dados</span></summary>
+  <p class="text-xs opacity-70 my-2">Avisos para conferência manual. Nenhuma célula do Google Sheets é modificada. Até 200 ocorrências exibidas.</p>
+  <div class="overflow-x-auto max-h-72 overflow-y-auto"><table class="min-w-full text-left"><thead><tr><th>Tipo</th><th>ID Jogo</th><th>Campo</th><th>Valor</th><th>Verificação</th></tr></thead><tbody id="quality-body-3264"></tbody></table></div>
+  </details>
+</section>
+      <section id="home-hero-panel" class="glass-panel rounded-3xl p-8 sm:p-12 shadow-2xl relative overflow-hidden border border-[#C5A059]/40">
         <div class="absolute -right-16 -bottom-16 w-80 h-80 rounded-full bg-gradient-to-br from-[#8A1538]/20 via-[#0E4735]/30 to-[#C5A059]/10 blur-3xl pointer-events-none"></div>
         
         <div class="max-w-3xl space-y-6 relative z-10">
@@ -466,7 +472,7 @@
 
       <!-- GRÁFICOS DINÂMICOS GERAIS UNIFICADOS -->
       <div id="section-geral-temporada-competicao" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="glass-panel rounded-2xl p-6 shadow-xl flex flex-col">
+        <div class="glass-panel rounded-2xl p-3 sm:p-6 shadow-xl flex flex-col">
           <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
             <div>
               <h3 class="text-base font-bold text-white flex items-center gap-2">
@@ -480,7 +486,7 @@
               <button type="button" data-action="temporada-chart-view" data-view="bar" aria-pressed="false">Colunas</button>
             </div>
           </div>
-          <div class="relative flex-1 min-h-[300px]">
+          <div class="audience-season-chart-wrap relative w-full">
             <canvas id="chartTemporada"></canvas>
           </div>
         </div>
@@ -587,6 +593,18 @@
         <div class="relative w-full h-[300px]">
           <canvas id="chartDesempenhoTemporada"></canvas>
         </div>
+      </section>
+
+      <section class="glass-panel rounded-2xl p-3 sm:p-6 shadow-2xl" id="section-top-mandante-3264">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+          <div><h3 class="text-base font-black text-white flex items-center gap-2"><i data-lucide="users" class="w-4 h-4 text-[#C5A059] shrink-0" aria-hidden="true"></i><span>Maiores públicos do Fluminense mandante (exceto clássicos)</span></h3>
+            <p class="text-xs text-white/60 mt-1"><span class="hidden md:inline">Top 10</span><span class="md:hidden">Top 5</span> maiores públicos presentes · respeita os filtros atuais</p></div>
+          <div class="season-view-switch" role="group" aria-label="Visualização dos maiores públicos">
+            <button type="button" class="is-active" data-action="top-mandante-view-3264" data-view="line" aria-pressed="true">Linha</button>
+            <button type="button" data-action="top-mandante-view-3264" data-view="bar" aria-pressed="false">Barras</button>
+          </div>
+        </div>
+        <div class="audience-top-chart-wrap relative w-full"><canvas id="chartTopMandanteSemClassicos"></canvas></div>
       </section>
 
       <section class="glass-panel rounded-2xl p-6 shadow-2xl border border-cyan-500/30">
@@ -1068,7 +1086,7 @@
     <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-center gap-2">
       <p>Grandes são os outros, o Fluminense é enorme</p>
       <span class="hidden sm:inline" aria-hidden="true">•</span>
-      <p>Fluminense FC • Dashboard Analítico • <strong id="dashboard-version" class="font-semibold text-emerald-100/70">v3.2.63</strong></p>
+      <p>Fluminense FC • Dashboard Analítico • <strong id="dashboard-version" class="font-semibold text-emerald-100/70">v3.2.64.6</strong></p>
     </div>
   </footer>
 

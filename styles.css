@@ -1833,3 +1833,39 @@ html[data-theme="light"] .last-games-field select{background:#fff;color:#294b38;
 #view-rivais .rivals-last-games-field label{color:#cbded0;}
 html[data-theme="light"] #view-rivais .rivals-last-games-field label{color:#176045;}
 @media(max-width:700px){#view-rivais .rivals-filter-card{grid-template-columns:1fr;}}
+
+/* V3.2.64.1 — restore original high-contrast brand colors in home hero (light theme). */
+html[data-theme="light"] #view-capa > section:first-child .bg-\[\#0E4735\] {
+  background-color:#0E4735 !important;
+  color:#C5A059 !important;
+}
+html[data-theme="light"] #view-capa > section:first-child .bg-\[\#0E4735\] .leading-tight {
+  color:#C5A059 !important;
+}
+html[data-theme="light"] #view-capa > section:first-child p.text-emerald-100\/80 {
+  color:#176443 !important;
+}
+
+/* v3.2.64.3: restore the intended high-contrast light-theme hero palette.
+   Target the hero by stable ID, not :first-child (now the quality panel). */
+html[data-theme="light"] #home-hero-panel > .max-w-3xl > div.inline-flex.bg-\[\#0E4735\] {
+  background-color: #0E4735 !important;
+  color: #C5A059 !important;
+  border-color: rgba(197,160,89,.55) !important;
+}
+html[data-theme="light"] #home-hero-panel > .max-w-3xl > div.inline-flex.bg-\[\#0E4735\] .leading-tight {
+  color: #C5A059 !important;
+}
+html[data-theme="light"] #home-hero-panel > .max-w-3xl > p.text-emerald-100\/80 {
+  color: #176443 !important;
+}
+
+/* V3.2.64.6 — Gráficos de público: altura controlada, sem espaço morto
+   imposto pelo card vizinho; canvas ocupa integralmente a área disponível. */
+#section-geral-temporada-competicao > .glass-panel:first-child{align-self:start;}
+.audience-season-chart-wrap{height:324px;flex:0 0 auto;min-height:0;}
+.audience-top-chart-wrap{height:344px;min-height:0;}
+@media(max-width:767px){
+  .audience-season-chart-wrap{height:286px;}
+  .audience-top-chart-wrap{height:306px;}
+}

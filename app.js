@@ -1,4 +1,4 @@
-const DASHBOARD_VERSION = '3.2.64.7';
+const DASHBOARD_VERSION = '3.2.64.11';
 
 // V3.2.59 — Aba Público: sem linhas de grade internas; manter somente
 // a linha inferior do eixo X nos gráficos verticais e a linha esquerda
@@ -123,12 +123,34 @@ function normalizeComparable(value) {
     .toLowerCase();
 }
 
-// V3.2.64 — equivalências aprovadas; o campo original permanece imutável.
+// V3.2.64.10 — equivalências aprovadas; o campo original permanece imutável.
+// As chaves seguem normalizeComparable (sem acentos, minúsculas).
 const VENUE_ALIASES_3264 = Object.freeze({
   'allianz parque': 'Arena Palmeiras', 'nubank parque': 'Arena Palmeiras',
   'engenhao': 'Engenhão', 'nilton santos': 'Engenhão',
   'kyocera arena': 'Arena da Baixada', 'ligga arena': 'Arena da Baixada',
-  'arena da baixada': 'Arena da Baixada'
+  'arena da baixada': 'Arena da Baixada',
+  'rodrigo paz delgado': 'Casa Blanca',
+  'casa blanca': 'Casa Blanca',
+  'rodrigo paz delgado - casa blanca': 'Casa Blanca',
+  'elcyr resende': 'Bacaxá',
+  'elcyr resende de mendonca': 'Bacaxá',
+  'elcyr resende - bacaxa': 'Bacaxá',
+  'elcyrzao': 'Bacaxá',
+  'jose maria de campos maia': 'Maião',
+  'jose maria de campos maia - maiao': 'Maião',
+  'maiao': 'Maião',
+  'neo quimica arena': 'Arena Corinthians',
+  'arena corinthians': 'Arena Corinthians',
+  'morumbi': 'Morumbi',
+  'morumbis': 'Morumbi',
+  'barradao': 'Barradão',
+  'manoel barradas': 'Barradão',
+  'haile pinheiro - serrinha': 'Serrinha',
+  'haile pinheiro': 'Serrinha',
+  'serrinha': 'Serrinha',
+  'luso-brasileiro': 'Luso-Brasileiro',
+  'luso brasileiro': 'Luso-Brasileiro'
 });
 function normalizedVenue3264(value) {
   const raw = normalizeText(value);
@@ -139,10 +161,18 @@ function stadiumDisplay3264(match) { return match.estadio; }
 
 // Codes identify documented attendance status, not zero-valued measurements.
 const ATTENDANCE_CODES_3264 = new Set(['PAND', 'PU', 'NI']);
+// Zero documentado por restrição sanitária ou punição, inclusive na grafia da base.
+// Não confundir estes valores com ausência de informação.
+function isDocumentedZeroAttendance32648(value) {
+  return /^(?:0\s*[-–—]\s*)?(?:PAND|PUNIDO)$/i.test(normalizeText(value));
+}
+function isNonApplicableAttendance32648(value) {
+  return isDocumentedZeroAttendance32648(value);
+}
 function attendanceCheck3264(raw, field, id, problems) {
   const value = normalizeText(raw);
   if (!value || value === '-') return;
-  if (ATTENDANCE_CODES_3264.has(value.toUpperCase())) return;
+  if (ATTENDANCE_CODES_3264.has(value.toUpperCase()) || isDocumentedZeroAttendance32648(value)) return;
   if (!/^-?\d{1,3}(?:\.\d{3})*(?:,\d+)?$|^-?\d+(?:,\d+)?$/.test(value)) {
     problems.push({id, field, value, level:'Erro', issue:'Valor de público não numérico ou código desconhecido'}); return;
   }
@@ -157,7 +187,7 @@ function editDistance3264(a,b) {
   for(let i=1;i<=a.length;i++) {const next=[i];for(let j=1;j<=b.length;j++)next[j]=Math.min(next[j-1]+1,row[j]+1,row[j-1]+(a[i-1]===b[j-1]?0:1));row=next;}
   return row[b.length];
 }
-const KNOWN_VENUES_3264 = ['Maracanã','São Januário','Engenhão','Nilton Santos','Alfredo Jaconi','Allianz Parque','Nubank Parque','Palestra Itália','Parque Antarctica','Arena da Baixada','Kyocera Arena','Ligga Arena','Morumbi','Mineirão','Beira-Rio','Arena do Grêmio','Castelão','Vila Belmiro','Barradão','Fonte Nova','Mané Garrincha','Couto Pereira','Ilha do Retiro','Arena Pantanal'];
+const KNOWN_VENUES_3264 = [...new Set(['Maracanã','São Januário','Engenhão','Nilton Santos','Alfredo Jaconi','Allianz Parque','Nubank Parque','Palestra Itália','Parque Antarctica','Arena da Baixada','Kyocera Arena','Ligga Arena','Morumbi','Mineirão','Beira-Rio','Arena do Grêmio','Castelão','Vila Belmiro','Barradão','Fonte Nova','Mané Garrincha','Couto Pereira','Ilha do Retiro','Arena Pantanal',...Object.keys(VENUE_ALIASES_3264),...Object.values(VENUE_ALIASES_3264)])];
 // Registros ainda não realizados não integram a auditoria de inconsistências.
 function isPendingFixtureQuality32642(row) {
   return normalizeComparable(row?.['Resultado']) === 'a realizar';
@@ -225,7 +255,7 @@ function validateQuality3264(rows) {
     attendanceCheck3264(row['Público Visitante (Flu)'],'Público Visitante (Flu)',id,QUALITY_3264);
     const total=parseNumber(row['Público Total']);const vis=parseNumber(row['Público Visitante (Flu)']);
     if(total!==null&&vis!==null&&vis>total)addQuality3264(id,'Público Visitante (Flu)',row['Público Visitante (Flu)'],'Erro','Público visitante maior que o público total');
-    if(mando==='mandante'&&normalizeText(row['Público Visitante (Flu)']))addQuality3264(id,'Público Visitante (Flu)',row['Público Visitante (Flu)'],'Alerta','Campo normalmente não se aplica ao mando Mandante');
+    if(mando==='mandante'&&normalizeText(row['Público Visitante (Flu)'])&&!isNonApplicableAttendance32648(row['Público Visitante (Flu)']))addQuality3264(id,'Público Visitante (Flu)',row['Público Visitante (Flu)'],'Alerta','Campo normalmente não se aplica ao mando Mandante');
     const gf=normalizeText(row['Gols Flu']),ga=normalizeText(row['Gols Adv']);
     for(const [field,value] of [['Gols Flu',gf],['Gols Adv',ga]])if(value && (!/^\d+$/.test(value)||+value>50))addQuality3264(id,field,value,'Erro','Gols inválidos');
     if(/^\d+$/.test(gf)&&/^\d+$/.test(ga)){
@@ -469,6 +499,7 @@ function parseScore(placarStr, normalizeHyphen = false) {
 }
 
 function parseNumber(val) {
+  if (isDocumentedZeroAttendance32648(val)) return 0;
   if (val === null || val === undefined || val === "" || val === "-") return null;
   if (typeof val === 'number') return val;
   const cleanStr = String(val).replace(/\./g, '').replace(/,/g, '.').trim();
@@ -1977,6 +2008,53 @@ function setTemporadaChartView(view) {
   if (!document.getElementById('view-estadio')?.classList.contains('hidden')) renderTemporadaChartOnly();
 }
 
+// V3.2.64.9 — Rótulos mobile do Top 5 com fontes independentes.
+function topMandanteMobileLabel32649(top, horizontal) {
+  return {
+    id: horizontal ? 'topMobileHorizontal32649' : 'topMobileLine32649',
+    afterDraw(chart) {
+      const {ctx, chartArea, scales} = chart;
+      if (!chartArea || !window.matchMedia('(max-width: 767px)').matches) return;
+      const light=document.documentElement.dataset.theme === 'light';
+      ctx.save(); ctx.fillStyle=light?'#405b4d':'#c5d5cc'; ctx.textBaseline='middle';
+      top.forEach((m,i)=>{
+        const club=horizontal ? m.adv : topMandanteShortName32649(m.adv);
+        const date=formatCatalogDate(m.data);
+        if(horizontal){
+          const y=scales.y.getPixelForTick(i);
+          if (!Number.isFinite(y)) return;
+          ctx.textAlign='left';
+          ctx.font="600 10px 'Plus Jakarta Sans', sans-serif";
+          ctx.fillText(club, 4, y-7, Math.max(30,chartArea.left-13));
+          ctx.font="9px 'Plus Jakarta Sans', sans-serif";
+          ctx.fillText(date, 4, y+7, Math.max(30,chartArea.left-13));
+          const el=chart.getDatasetMeta(0).data[i];
+          if (!el) return;
+          const x=Math.min(chart.width-6,el.x+8);
+          ctx.font="700 10px 'Plus Jakarta Sans', sans-serif";
+          ctx.textAlign='left';ctx.fillText(formatFull(m.pub), x, y);
+        }else{
+          const x=scales.x.getPixelForTick(i);
+          if (!Number.isFinite(x)) return;
+          ctx.textAlign='center';
+          ctx.font="600 9px 'Plus Jakarta Sans', sans-serif";
+          ctx.fillText(club,x,chartArea.bottom+15,Math.max(28,scales.x.width/Math.max(top.length,1)-3));
+          ctx.font="8px 'Plus Jakarta Sans', sans-serif";
+          ctx.fillText(date,x,chartArea.bottom+29,Math.max(28,scales.x.width/Math.max(top.length,1)-3));
+        }
+      });
+      ctx.restore();
+    }
+  };
+}
+function topMandanteShortName32649(value) {
+  const name=String(value||'').trim();
+  const replacements=[[/^internacional$/i,'Inter'],[/^red bull bragantino$/i,'RB Bragantino'],[/^atl[eé]tico mineiro$/i,'Atlético-MG'],[/^atl[eé]tico goianiense$/i,'Atlético-GO'],[/^cerro porte[nñ]o$/i,'Cerro'],[/^athletico paranaense$/i,'Athletico-PR']];
+  for (const [pattern,short] of replacements) if(pattern.test(name)) return short;
+  if(name.length<=12) return name;
+  const pieces=name.split(/\s+/);
+  return pieces.length>1 ? pieces[0] : name;
+}
 function renderTopMandante3264(matches) {
   const canvas=document.getElementById('chartTopMandanteSemClassicos');
   if (!canvas) return;
@@ -1987,18 +2065,20 @@ function renderTopMandante3264(matches) {
   const mobile=window.matchMedia('(max-width: 767px)').matches;
   const top=matches.filter(m=>m.mando==='Mandante'&&!isRivalRapido(m.adv)&&Number.isFinite(m.pub)&&m.pub>0)
     .sort((a,b)=>b.pub-a.pub||(a.timestamp||0)-(b.timestamp||0)).slice(0,mobile?5:10);
-  const topWrap = canvas.parentElement;
-  audienceMeasuredWidths32647.top = topWrap?.clientWidth || 0;
-  const visualFont = mobile ? 9 : 11;
-  const usableWidth = Math.max(180, audienceMeasuredWidths32647.top || (mobile ? 300 : 720));
-  const axisLabelWidth = Math.max(29, (usableWidth - (mobile ? 36 : 52)) / Math.max(1, top.length) - 5);
-  const ctxLabels = canvas.getContext('2d');
-  const labels = top.map(m => [
-    ...audienceWrapLabel32647(m.adv, ctxLabels, axisLabelWidth, visualFont),
-    ...audienceWrapLabel32647(formatCatalogDate(m.data), ctxLabels, axisLabelWidth, visualFont)
-  ]);
-  const barThickness = audienceBarThickness32647(topWrap, top.length, 1, mobile, mobile ? 42 : 65);
+  const topWrap=canvas.parentElement;
   const line=topMandanteView3264==='line';
+  const horizontal=mobile&&!line;
+  topWrap?.classList.toggle('top-mobile-horizontal-32649',horizontal);
+  audienceMeasuredWidths32647.top=topWrap?.clientWidth||0;
+  const visualFont=mobile?9:11;
+  const usableWidth=Math.max(180,audienceMeasuredWidths32647.top||(mobile?300:720));
+  const axisLabelWidth=Math.max(29,(usableWidth-(mobile?36:52))/Math.max(1,top.length)-5);
+  const ctxLabels=canvas.getContext('2d');
+  const labels=mobile ? top.map((m,i)=>horizontal ? String(i+1) : topMandanteShortName32649(m.adv)) : top.map(m=>[
+    ...audienceWrapLabel32647(m.adv,ctxLabels,axisLabelWidth,visualFont),
+    ...audienceWrapLabel32647(formatCatalogDate(m.data),ctxLabels,axisLabelWidth,visualFont)
+  ]);
+  const barThickness=horizontal?22:audienceBarThickness32647(topWrap,top.length,1,mobile,mobile?42:65);
   const dataset={
     label:'Público presente',data:top.map(m=>m.pub),
     borderColor:'#0E4735',backgroundColor:line?'rgba(14,71,53,0.17)':'#0E4735',
@@ -2006,22 +2086,27 @@ function renderTopMandante3264(matches) {
     pointRadius:line?5:0,pointHoverRadius:7,pointBackgroundColor:'#C5A059',
     pointBorderColor:'#0E4735',borderRadius:line?0:5,
     categoryPercentage:0.76,barPercentage:0.85,
-    barThickness:barThickness,maxBarThickness:mobile?42:65
+    barThickness,maxBarThickness:horizontal?22:mobile?42:65
   };
   const axisMax=audienceScaleMax32646([dataset]);
+  const mobilePlugin=mobile?topMandanteMobileLabel32649(top,horizontal):null;
   activeCharts.chartTopMandanteSemClassicos=new Chart(canvas.getContext('2d'),{
     type:line?'line':'bar',data:{labels,datasets:[dataset]},
-    plugins:[audienceLabels32646('audienceTopMandanteLabels32646',{fullValue:true,fontSize:mobile?10:12})],
+    plugins:[...(horizontal?[]:[audienceLabels32646('audienceTopMandanteLabels32646',{fullValue:true,fontSize:mobile?10:12})]),...(mobilePlugin?[mobilePlugin]:[])],
     options:{
-      responsive:true,maintainAspectRatio:false,animation:false,
-      layout:{padding:{top:6,right:mobile?4:8,left:mobile?4:8,bottom:0}},
+      indexAxis:horizontal?'y':'x',responsive:true,maintainAspectRatio:false,animation:false,
+      layout:{padding:horizontal?{top:8,right:6,left:0,bottom:4}:{top:6,right:mobile?4:8,left:mobile?4:8,bottom:mobile?36:0}},
       plugins:{legend:{display:false},tooltip:{callbacks:{
-        title:(items)=>{const m=top[items[0]?.dataIndex];return m?`${m.adv} · ${m.data}`:''},
-        label:ctx=>` Público: ${ctx.parsed.y.toLocaleString('pt-BR')}`
+        title:(items)=>{const m=top[items[0]?.dataIndex];return m?`${m.adv} · ${formatCatalogDate(m.data)}`:''},
+        afterTitle:(items)=>{const m=top[items[0]?.dataIndex];return m?.torneio && m.torneio !== '-' ? m.torneio : 'Competição não informada';},
+        label:ctx=>` Público: ${Number(horizontal?ctx.parsed.x:ctx.parsed.y).toLocaleString('pt-BR')}`
       }}},
-      scales:{
+      scales:horizontal?{
+        x:{min:0,max:axisMax,beginAtZero:true,grid:{display:false},ticks:{display:false},border:{display:false}},
+        y:{offset:true,grid:{display:false},border:{display:false},afterFit(scale){scale.width=Math.min(142,Math.max(96,canvas.parentElement?.clientWidth*.36||110));},ticks:{display:false}}
+      }:{
         y:{min:0,max:axisMax,beginAtZero:true,ticks:{display:false}},
-        x:{offset:true,ticks:{autoSkip:false,maxRotation:0,minRotation:0,padding:6,font:{size:visualFont,lineHeight:1.08}}}
+        x:{offset:true,ticks:{display:!mobile,autoSkip:false,maxRotation:0,minRotation:0,padding:6,font:{size:visualFont,lineHeight:1.08}}}
       }
     }
   });
@@ -2341,6 +2426,9 @@ function updateCharts() {
       });
 
       const totalMandante = mandantePublicos.length;
+      // Folga acima da maior barra, inclusive se coincidir com um tick.
+      const maiorFaixa = Math.max(0, ...faixas.map(f => f.count));
+      const limiteSuperiorDistribuicao = Math.max(1, Math.ceil(maiorFaixa * 1.12 + 2));
       const countLabelsPlugin = {
         id: 'distribuicaoMandanteCountLabels',
         afterDatasetsDraw(chart) {
@@ -2354,7 +2442,9 @@ function updateCharts() {
           meta.data.forEach((bar, i) => {
             const value = chart.data.datasets[0].data[i];
             if (!value) return;
-            ctx.fillText(String(value), bar.x, Math.max(chartArea.top + 12, bar.y - 6));
+            // Rótulo ancorado acima da barra, sem sobrepor o contorno.
+            // O teto explícito do eixo Y reserva espaço antes do desenho.
+            ctx.fillText(String(value), bar.x, bar.y - 8);
           });
           ctx.restore();
         }
@@ -2404,6 +2494,8 @@ function updateCharts() {
               grid: { display: false }
             },
             y: {
+              min: 0,
+              max: limiteSuperiorDistribuicao,
               beginAtZero: true,
               ticks: { display: false, precision: 0 }
             }

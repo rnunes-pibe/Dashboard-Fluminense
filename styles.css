@@ -1869,3 +1869,12 @@ html[data-theme="light"] #home-hero-panel > .max-w-3xl > p.text-emerald-100\/80 
   .audience-season-chart-wrap{height:286px;}
   .audience-top-chart-wrap{height:306px;}
 }
+
+/* V3.2.64.9: Top 5 mobile. Sem espaço morto no seletor; barras horizontais. */
+@media(max-width:767px){
+  #section-top-mandante-3264 .top-mandante-switch-32649{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);width:100%;flex:0 0 100%;gap:3px;margin:0;box-sizing:border-box;}
+  #section-top-mandante-3264 .top-mandante-switch-32649 button{width:100%;text-align:center;font-size:12px;}
+  #section-top-mandante-3264 > .flex:first-child{margin-bottom:12px;}
+  #section-top-mandante-3264 .audience-top-chart-wrap{height:286px;}
+  #section-top-mandante-3264 .audience-top-chart-wrap.top-mobile-horizontal-32649{height:300px;}
+}

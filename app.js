@@ -1,4 +1,4 @@
-const DASHBOARD_VERSION = '3.2.64.11';
+const DASHBOARD_VERSION = '3.2.64.13';
 
 // V3.2.59 — Aba Público: sem linhas de grade internas; manter somente
 // a linha inferior do eixo X nos gráficos verticais e a linha esquerda
@@ -1927,9 +1927,118 @@ function audienceLabels32646(id, { fullValue = false, fontSize = 11 } = {}) {
   };
 }
 
+// V3.2.64.12 — Campanhas cuja disputa pelo Fluminense foi marcada pelas
+// restrições de público da pandemia. A classificação não altera o CSV nem
+// transforma gratuidades/públicos positivos em zero.
+function isPandemicSeasonCampaign326412(match) {
+  const year = Number(match.ano);
+  const comp = normalizeComparable(match.torneio).replace(/\s+/g, ' ');
+  if (year === 2020) return /^(?:campeonato brasileiro(?: serie a)?|brasileirao(?: serie a)?)$/.test(comp);
+  if (year === 2021) return /^(?:copa (?:conmebol )?libertadores(?: da america)?|(?:conmebol )?libertadores(?: da america)?|campeonato carioca|copa do brasil)$/.test(comp);
+  return false;
+}
+
+// A anotação vale apenas quando o ano existe no recorte e nenhuma das séries
+// exibidas possui média positiva: a falta de público não substitui um dado real.
+function pandemicSeasonYears326412(matches, seasons, datasets) {
+  const group = new Map();
+  matches.forEach(match => {
+    const year = Number(match.ano);
+    if (!group.has(year)) group.set(year, []);
+    group.get(year).push(match);
+  });
+  return seasons.filter((year, index) => {
+    const games = group.get(year) || [];
+    return games.length > 0 && games.every(isPandemicSeasonCampaign326412) &&
+      datasets.every(ds => !(ds.customCount?.[index] > 0));
+  });
+}
+
+// V3.2.64.13 — Anotação compacta desenhada no próprio canvas (não em
+// um overlay HTML). O centro horizontal vem do eixo X do Chart.js, inclusive
+// no mobile. Ao desenhar antes de audienceLabels32646, nenhum rótulo fica
+// escondido atrás da caixa, em Linhas ou Colunas.
+function pandemicSeasonAnnotationPlugin326413(years) {
+  return {
+    id: 'pandemicSeasonAnnotation326413',
+    afterDatasetsDraw(chart) {
+      const {chartArea, scales, ctx} = chart;
+      if (!years?.length || !chartArea || !scales?.x) return;
+      const labels = chart.data.labels || [];
+      const xPoints = labels.map((_, i) => scales.x.getPixelForTick(i));
+      const gaps = xPoints.slice(1).map((v,i) => v-xPoints[i]).filter(v => Number.isFinite(v) && v > 0);
+      const step = gaps.length ? Math.min(...gaps) : chartArea.width;
+      const mobile = window.matchMedia('(max-width: 767px)').matches;
+      // Uma caixa por ano; largura próxima a um único intervalo temporal.
+      // O mínimo mantém legível 'pandemia' nos celulares estreitos.
+      const w = Math.min(mobile ? 47 : 65, Math.max(mobile ? 40 : 52, step * 0.96));
+      const h = Math.min(mobile ? 78 : 92, Math.max(48, (chartArea.bottom-chartArea.top) * 0.52));
+      const r = mobile ? 8 : 9;
+      const labelLines = ['Sem', 'público,', 'pandemia'];
+      const light = document.documentElement.dataset.theme === 'light';
+      const fill = light ? 'rgba(253,242,219,0.95)' : 'rgba(79,56,29,0.96)';
+      const stroke = light ? 'rgba(179,132,48,0.78)' : 'rgba(231,196,120,0.85)';
+      const ink = light ? '#755014' : '#f1d59a';
+      const plotH = chartArea.bottom-chartArea.top;
+      const top = chartArea.top + (plotH-h) * 0.54;
+      ctx.save();
+      for (const year of years) {
+        const index = labels.indexOf(String(year));
+        if (index < 0 || !Number.isFinite(xPoints[index])) continue;
+        const cx = xPoints[index];
+        const x = Math.max(chartArea.left, Math.min(chartArea.right-w, cx-w/2));
+        // Fundo e borda: limitados à área do gráfico, sem ocultar legendas/eixo.
+        ctx.beginPath();
+        ctx.roundRect(x, top, w, h, r);
+        ctx.fillStyle = fill;
+        ctx.fill();
+        ctx.lineWidth = 0.9;
+        ctx.setLineDash([3, 3]);
+        ctx.strokeStyle = stroke;
+        ctx.stroke();
+        ctx.setLineDash([]);
+        const centerX = x+w/2;
+        const radius = mobile ? 8 : 9;
+        const iconY = top + (mobile ? 16 : 20);
+        ctx.beginPath();
+        ctx.arc(centerX, iconY, radius, 0, Math.PI*2);
+        ctx.lineWidth = 1.1;
+        ctx.strokeStyle = ink;
+        ctx.stroke();
+        ctx.fillStyle = ink;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = `700 ${mobile ? 10 : 11}px Georgia, serif`;
+        ctx.fillText('i', centerX, iconY+0.4);
+        const textStart = top + (mobile ? 35 : 42);
+        const lineGap = mobile ? 11 : 12;
+        for (let i = 0; i < labelLines.length; i++) {
+          let fontSize = mobile ? 8.8 : 9.5;
+          do {
+            ctx.font = `700 ${fontSize}px 'Plus Jakarta Sans', sans-serif`;
+            if (ctx.measureText(labelLines[i]).width <= w-5 || fontSize <= 7) break;
+            fontSize -= 0.4;
+          } while (true);
+          ctx.fillText(labelLines[i], centerX, textStart+i*lineGap);
+        }
+      }
+      ctx.restore();
+    },
+    afterDraw() {
+      // O próprio canvas é visual; o texto de apoio permanece acessível.
+      const layer = document.getElementById('season-pandemic-annotations');
+      if (layer) layer.textContent = years.map(y => `${y}: Sem público, pandemia`).join('. ');
+    },
+    beforeDestroy() {
+      const layer = document.getElementById('season-pandemic-annotations');
+      if (layer) layer.textContent = '';
+    }
+  };
+}
+
 function renderTemporadaChartOnly() {
   if (!temporadaChartData || !document.getElementById('chartTemporada')) return;
-  const { seasons, datasetsTemp, showLegend } = temporadaChartData;
+  const { seasons, datasetsTemp, showLegend, pandemicYears } = temporadaChartData;
   const previous = activeCharts.chartTemporada;
   const previousVisibility = previous && previous.data.datasets.length === datasetsTemp.length &&
     previous.data.datasets.every((d,i) => d.label === datasetsTemp[i].label)
@@ -1974,7 +2083,7 @@ function renderTemporadaChartOnly() {
   activeCharts.chartTemporada = new Chart(getChartCanvas('chartTemporada'), {
     type: timeline ? 'line' : 'bar',
     data: {labels: seasons.map(String), datasets: displayTemp},
-    plugins: [audienceLabels32646('audienceSeasonLabels32646', {fontSize: mobile ? 10 : 11})],
+    plugins: [pandemicSeasonAnnotationPlugin326413(pandemicYears || []), audienceLabels32646('audienceSeasonLabels32646', {fontSize: mobile ? 10 : 11})],
     options: {
       responsive: true, maintainAspectRatio: false,
       animation: false,
@@ -2265,7 +2374,8 @@ function updateCharts() {
       { label: 'Visitante', data: dsVis, backgroundColor: '#870A28', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: countVis }
     ];
   }
-  temporadaChartData = { seasons, datasetsTemp, showLegend };
+  const pandemicYears = pandemicSeasonYears326412(validFiltered, seasons, datasetsTemp);
+  temporadaChartData = { seasons, datasetsTemp, showLegend, pandemicYears };
   renderTemporadaChartOnly();
 
   // 2. COMPETICAO

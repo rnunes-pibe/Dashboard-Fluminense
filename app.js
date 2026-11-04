@@ -1,4 +1,4 @@
-const DASHBOARD_VERSION = '3.2.68';
+const DASHBOARD_VERSION = '3.2.69';
 
 // V3.2.59 — Aba Público: sem linhas de grade internas; manter somente
 // a linha inferior do eixo X nos gráficos verticais e a linha esquerda
@@ -66,6 +66,10 @@ let temporadaChartView = 'line';
 let diaSemanaChartView3266 = 'line'; // V3.2.66: linha por padrão, escolha preservada ao filtrar.
 let diaSemanaChartData3266 = null;
 let topMandanteView3264 = 'line';
+// V3.2.69: amostra mínima para o ranking de estádios visitantes.
+let topVisitanteMinJogos3269 = 1;
+let topVisitanteEstadios3269 = {};
+let topVisitanteVisible3269 = false;
 const RIVAIS_RAPIDOS = ['flamengo', 'botafogo', 'vasco'];
 function isRivalRapido(adversario) {
   const nome = normalizeComparable(adversario);
@@ -2398,6 +2402,87 @@ function setDiaSemanaChartView3266(view) {
   if (!document.getElementById('view-estadio')?.classList.contains('hidden')) renderDiaSemanaChartOnly3266();
 }
 
+// V3.2.69 — conta somente partidas com público visitante numérico válido:
+// o mínimo é o tamanho real da amostra da qual a média é calculada.
+function calculateTopVisitante3269(venueMap, minJogos = 1) {
+  return Object.entries(venueMap)
+    .filter(([, stats]) => stats.count >= minJogos && Number.isFinite(stats.sum) && stats.count > 0)
+    .map(([est, stats]) => ({ est, avg: Math.round(stats.sum / stats.count), count: stats.count }))
+    .sort((a, b) => b.avg - a.avg || b.count - a.count || a.est.localeCompare(b.est, 'pt-BR'))
+    .slice(0, 10);
+}
+
+function renderTopVisitanteChart3269() {
+  const section = document.getElementById('section-top-visitante');
+  const canvas = document.getElementById('chartTopVisitante');
+  if (!section || !canvas) return;
+  section.classList.toggle('hidden', !topVisitanteVisible3269);
+  if (activeCharts.chartTopVisitante) {
+    activeCharts.chartTopVisitante.destroy();
+    activeCharts.chartTopVisitante = null;
+  }
+  if (!topVisitanteVisible3269) return;
+
+  const topEstadios = calculateTopVisitante3269(topVisitanteEstadios3269, topVisitanteMinJogos3269);
+  const emptyEl = document.getElementById('top-visitante-empty');
+  const mobile = window.matchMedia('(max-width: 767px)').matches;
+  const ctx = canvas.getContext('2d');
+  if (!topEstadios.length) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    canvas.style.visibility = 'hidden';
+    if (emptyEl) {
+      emptyEl.textContent = `Nenhum estádio com pelo menos ${topVisitanteMinJogos3269} ${topVisitanteMinJogos3269 === 1 ? 'jogo' : 'jogos'} com público visitante informado para os filtros atuais.`;
+      emptyEl.hidden = false;
+    }
+    return;
+  }
+  canvas.style.visibility = 'visible';
+  if (emptyEl) emptyEl.hidden = true;
+  activeCharts.chartTopVisitante = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: topEstadios.map(e => e.est),
+      datasets: [{
+        label: 'Média de Público', data: topEstadios.map(e => e.avg),
+        backgroundColor: '#870A28', borderColor: '#C5A059',
+        borderWidth: 1.5, borderRadius: 6, maxBarThickness: 28,
+        customCount: topEstadios.map(e => e.count)
+      }]
+    },
+    plugins: [makeValueLabelsPlugin('topVisitanteLabels', {horizontal: true, mobileOutside: true, fullValue: true})],
+    options: {
+      indexAxis: 'y',
+      layout: {padding: {right: mobile ? 54 : 60, top: 6, bottom: 4}},
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: {display: false},
+        tooltip: {callbacks: {label: context => {
+          const count = context.dataset.customCount[context.dataIndex];
+          return ` Média: ${context.parsed.x.toLocaleString('pt-BR')} (${count} ${count > 1 ? 'jogos' : 'jogo'})`;
+        }}}
+      },
+      scales: {
+        x: {display: !mobile, beginAtZero: true, grace: '15%', grid: {display: false},
+          border: {display: false}, ticks: {display: false, callback: v => v.toLocaleString('pt-BR')}},
+        y: {grid: {display: false}, border: {display: false},
+          ticks: {display: true, padding: mobile ? 2 : 6}}
+      }
+    }
+  });
+}
+
+function setTopVisitanteMinJogos3269(value) {
+  const minimum = Number(value);
+  if (!Number.isInteger(minimum) || minimum < 1 || minimum > 5) return;
+  topVisitanteMinJogos3269 = minimum;
+  document.querySelectorAll('[data-action="top-visitante-min-jogos"]').forEach(button => {
+    const selected = Number(button.dataset.minJogos) === minimum;
+    button.classList.toggle('is-active', selected);
+    button.setAttribute('aria-pressed', String(selected));
+  });
+  renderTopVisitanteChart3269();
+}
+
 function updateCharts() {
   const validFiltered = filteredMatches;
   const chartsMobile = window.matchMedia('(max-width: 767px)').matches;
@@ -2654,29 +2739,10 @@ function updateCharts() {
     }
   });
 
-  // 5. TOP VISITANTE
-  const topVisitanteSection = document.getElementById("section-top-visitante");
-  if (topVisitanteSection) {
-    if (hasV) {
-      topVisitanteSection.classList.remove("hidden");
-      const topEstadios = Object.keys(visitEstadioMap)
-        .map(est => ({ est, avg: Math.round(visitEstadioMap[est].sum / visitEstadioMap[est].count), count: visitEstadioMap[est].count }))
-        .sort((a, b) => b.avg - a.avg)
-        .slice(0, 10);
-      if (activeCharts["chartTopVisitante"]) activeCharts["chartTopVisitante"].destroy();
-      if (topEstadios.length > 0) {
-        activeCharts["chartTopVisitante"] = new Chart(getChartCanvas("chartTopVisitante"), {
-          type: 'bar', data: { labels: topEstadios.map(e => e.est), datasets: [{ label: 'Média de Público', data: topEstadios.map(e => e.avg), backgroundColor: '#870A28', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: topEstadios.map(e => e.count) }] },
-          plugins: [makeValueLabelsPlugin('topVisitanteLabels', { horizontal: true, mobileOutside: true, fullValue: true })],
-          options: { indexAxis: 'y', layout: { padding: { right: chartsMobile ? 54 : 60, top: 6, bottom: 4 } }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` Média: ${ctx.parsed.x.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { x: { display: !chartsMobile, beginAtZero: true, grace: '15%', grid: { display: false }, border: { display: false }, ticks: { display: false, callback: v => v.toLocaleString('pt-BR') } }, y: { grid: { display: false }, border: { display: false }, ticks: { display: true, padding: chartsMobile ? 2 : 6 } } } }
-        });
-      } else {
-        const ctx = getChartCanvas("chartTopVisitante"); ctx.font = "12px 'Plus Jakarta Sans', sans-serif"; ctx.fillStyle = "rgba(255,255,255,0.4)"; ctx.textAlign = "center"; ctx.fillText("Nenhum dado de público visitante para os filtros atuais.", ctx.canvas.width / 2, 50);
-      }
-    } else {
-      topVisitanteSection.classList.add("hidden");
-    }
-  }
+  // 5. TOP VISITANTE — a escolha da amostra mínima permanece ao aplicar filtros.
+  topVisitanteEstadios3269 = visitEstadioMap;
+  topVisitanteVisible3269 = hasV;
+  renderTopVisitanteChart3269();
 
   // 6. DISTRIBUIÇÃO DO PÚBLICO (MANDANTE)
   // Exibe quando Mandante faz parte do filtro Mando. Se houver outras opções
@@ -3879,6 +3945,7 @@ function handleDelegatedClick(event) {
     'temporada-chart-view': () => setTemporadaChartView(target.dataset.view),
     'dia-semana-chart-view': () => setDiaSemanaChartView3266(target.dataset.view),
     'top-mandante-view-3264': () => setTopMandanteView3264(target.dataset.view),
+    'top-visitante-min-jogos': () => setTopVisitanteMinJogos3269(target.dataset.minJogos),
     'reset-rivals-filters': () => resetRivalsFilters(),
     'copy-filtered-url': () => copyFilteredUrl(),
     'export-filtered-csv': () => exportFilteredCsv(),

@@ -523,8 +523,20 @@
               </p>
             </div>
           </div>
+          <!-- V3.2.69: recorte da amostra mínima para o ranking de estádios visitantes. -->
+          <div class="top-visitante-min-filter">
+            <span class="top-visitante-min-label" id="top-visitante-min-label">Qtd mínima de jogos no estádio</span>
+            <div class="top-visitante-min-selector" role="group" aria-labelledby="top-visitante-min-label">
+              <button type="button" data-action="top-visitante-min-jogos" data-min-jogos="5" aria-pressed="false">5</button>
+              <button type="button" data-action="top-visitante-min-jogos" data-min-jogos="4" aria-pressed="false">4</button>
+              <button type="button" data-action="top-visitante-min-jogos" data-min-jogos="3" aria-pressed="false">3</button>
+              <button type="button" data-action="top-visitante-min-jogos" data-min-jogos="2" aria-pressed="false">2</button>
+              <button type="button" data-action="top-visitante-min-jogos" data-min-jogos="1" aria-pressed="true" class="is-active">1</button>
+            </div>
+          </div>
           <div class="relative w-full top-visitante-chart-wrap">
             <canvas id="chartTopVisitante"></canvas>
+            <div id="top-visitante-empty" class="top-visitante-empty" role="status" aria-live="polite" hidden></div>
           </div>
         </section>
 
@@ -1091,7 +1103,7 @@
     <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-center gap-2">
       <p>Grandes são os outros, o Fluminense é enorme</p>
       <span class="hidden sm:inline" aria-hidden="true">•</span>
-      <p>Fluminense FC • Dashboard Analítico • <strong id="dashboard-version" class="font-semibold text-emerald-100/70">v3.2.68</strong></p>
+      <p>Fluminense FC • Dashboard Analítico • <strong id="dashboard-version" class="font-semibold text-emerald-100/70">v3.2.69</strong></p>
     </div>
   </footer>
 

@@ -1,4 +1,4 @@
-const DASHBOARD_VERSION = '3.2.67';
+const DASHBOARD_VERSION = '3.2.68';
 
 // V3.2.59 — Aba Público: sem linhas de grade internas; manter somente
 // a linha inferior do eixo X nos gráficos verticais e a linha esquerda
@@ -189,12 +189,18 @@ const ATTENDANCE_CODES_3264 = new Set(['PAND', 'PU', 'NI']);
 function isDocumentedZeroAttendance32648(value) {
   return /^(?:0\s*[-–—]\s*)?(?:PAND|PUNIDO)$/i.test(normalizeText(value));
 }
+// V3.2.68 — NA indica campo não aplicável (não é zero nem dado faltante).
+// Aplicar a isenção de validação somente aos campos aprovados.
+function isNotApplicableNA3268(value) {
+  return normalizeText(value).toUpperCase() === 'NA';
+}
 function isNonApplicableAttendance32648(value) {
-  return isDocumentedZeroAttendance32648(value);
+  return isDocumentedZeroAttendance32648(value) || isNotApplicableNA3268(value);
 }
 function attendanceCheck3264(raw, field, id, problems) {
   const value = normalizeText(raw);
   if (!value || value === '-') return;
+  if (field === 'Público Visitante (Flu)' && isNotApplicableNA3268(value)) return;
   if (ATTENDANCE_CODES_3264.has(value.toUpperCase()) || isDocumentedZeroAttendance32648(value)) return;
   if (!/^-?\d{1,3}(?:\.\d{3})*(?:,\d+)?$|^-?\d+(?:,\d+)?$/.test(value)) {
     problems.push({id, field, value, level:'Erro', issue:'Valor de público não numérico ou código desconhecido'}); return;
@@ -296,14 +302,14 @@ function validateQuality3264(rows) {
     }
     if(!normalizeText(row['Adversário']))addQuality3264(id,'Adversário','','Alerta','Adversário vazio');
     const round=normalizeText(row['Fase / Rodada']);if(!round)addQuality3264(id,'Fase / Rodada','','Alerta','Fase ou rodada não informada');
-    // V3.2.64.15: "0 - PAND" no Sul Pagantes indica público ausente por
-    // restrição sanitária, e não falha de preenchimento. Fórmulas dependentes
-    // podem retornar #VALUE!: suprimir SOMENTE os três alertas derivados.
-    // Nenhum conteúdo é alterado na planilha ou nas tabelas de partidas.
+    // V3.2.68: NA em Sul Pagantes significa não aplicável e, assim como
+    // 0 - PAND, não pode causar alertas em seus dois campos derivados.
+    // Valores vazios continuam sendo considerados ausência de registro.
+    const sulNaoAplicavel = isNotApplicableNA3268(row['Sul Pagantes']);
     const sulSemPublicoPandemia = isPandemicSulZeroQuality326415(row['Sul Pagantes']);
-    const camposSulPandemia = new Set(['Sul Pagantes', 'Sul Total (Hipotético)', 'Taxa Ocupação Sul*']);
+    const camposSulDerivados = new Set(['Sul Pagantes', 'Sul Total (Hipotético)', 'Taxa Ocupação Sul*']);
     ['Sul Pagantes','Sul Devolvidos','Sul Total (Hipotético)','Sócios Sul','Gratuidades','Ingresso promocional','Taxa Ocupação Sul*'].forEach(field=>{
-      if (sulSemPublicoPandemia && camposSulPandemia.has(field)) return;
+      if ((sulSemPublicoPandemia || sulNaoAplicavel) && camposSulDerivados.has(field)) return;
       const value = normalizeText(row[field]);
       if (value && !/^\d+(?:[.,]\d+)?%?$/.test(value.replace(/\.(?=\d{3}(?:\D|$))/g,''))) {
         addQuality3264(id,field,value,'Alerta','Valor numérico ou percentual suspeito');
@@ -765,6 +771,7 @@ async function fetchLiveGoogleSheet() {
           pub: parseNumber(row['Público Total']),
           pubVis: parseNumber(row['Público Visitante (Flu)'] || row['Público Visitante']),
           sul: parseNumber(row['Sul Pagantes']),
+          sulNotApplicable: isNotApplicableNA3268(row['Sul Pagantes']),
           sulPandemicZero: isPandemicSulZeroQuality326415(row['Sul Pagantes']),
           sulOccupancyPct: parseSulOccupancyPct326416(row['Taxa Ocupação Sul*']),
           presente: normalizeYesNo(presVal)
@@ -1592,15 +1599,15 @@ function updateKpis() {
       countVis++;
     }
     if (m.estadio === "Maracanã") {
-      // V3.2.64.14: 0 - PAND é convertido em 0 por parseNumber.
-      // Zero numérico (com ou sem PAND) é informação registrada, não falta de dado.
-      // A contagem do alerta inclui exclusivamente registros sem valor numérico.
+      // V3.2.68: 0 - PAND e zero numérico são registrados como zero;
+      // NA significa não aplicável e é ignorado no alerta, sem virar zero.
+      // Somente campos realmente sem informação entram na contagem.
       if (Number.isFinite(m.sul)) {
         if (m.sul > 0) {
           sumSul += m.sul;
           countSul++;
         }
-      } else {
+      } else if (!m.sulNotApplicable) {
         missingSulCount++;
         const tournament = (m.torneio && m.torneio !== "-") ? m.torneio : "Sem torneio informado";
         missingSulByTournament.set(tournament, (missingSulByTournament.get(tournament) || 0) + 1);
@@ -3461,8 +3468,8 @@ function applyClassicosFilters() {
     if (!isMatchInFilteredClassicos(m)) return;
     if (m.sul !== null && m.sul > 0) {
       sulMatchesClassicos.push(m);
-    } else if (!Number.isFinite(m.sul)) {
-      // 0 - PAND e zero numérico são dados registrados, não faltantes.
+    } else if (!Number.isFinite(m.sul) && !m.sulNotApplicable) {
+      // 0 - PAND, zero numérico e NA não são dados faltantes.
       missingSulCountClassicos++;
     }
   });

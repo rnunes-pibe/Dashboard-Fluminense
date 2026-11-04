@@ -1906,3 +1906,37 @@ html[data-theme="light"] #home-hero-panel > .max-w-3xl > p.text-emerald-100\/80 
     height: 292px;
   }
 }
+
+/* V3.2.66 — seletor de visualização igual nos três gráficos:
+   colunas simétricas, mesmo tamanho no desktop e no mobile. */
+.season-view-switch.chart-view-toggle-3266,
+#section-top-mandante-3264 .top-mandante-switch-32649.chart-view-toggle-3266 {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:3px;
+  width:144px;
+  min-width:144px;
+  flex:0 0 144px;
+  padding:3px;
+  margin-left:0;
+  box-sizing:border-box;
+  align-items:stretch;
+}
+.season-view-switch.chart-view-toggle-3266 button,
+#section-top-mandante-3264 .top-mandante-switch-32649.chart-view-toggle-3266 button {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  min-width:0;
+  min-height:34px;
+  padding:7px 3px;
+  font-size:12px;
+  line-height:1.2;
+  text-align:center;
+}
+@media(max-width:767px){
+  #section-geral-dia-horario > .glass-panel:first-child > .flex:first-child {align-items:flex-start;}
+  #section-geral-dia-horario > .glass-panel:first-child > .flex:first-child > div:first-child {min-width:0;}
+  #section-top-mandante-3264 .top-mandante-switch-32649.chart-view-toggle-3266 {width:144px;flex-basis:144px;}
+}

@@ -1,4 +1,4 @@
-const DASHBOARD_VERSION = '3.2.64.15';
+const DASHBOARD_VERSION = '3.2.66';
 
 // V3.2.59 — Aba Público: sem linhas de grade internas; manter somente
 // a linha inferior do eixo X nos gráficos verticais e a linha esquerda
@@ -28,7 +28,8 @@ Chart.register({
 const CONFIG = Object.freeze({
   googleSheetsCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVyyhMTbQRPjb1lXdljnsi6kjWt7mU5xKEeZRB24-Ic5hZKzkZCG9gIYvlN81CXVpd0SGc6e0XW18b/pub?gid=1810912358&single=true&output=csv",
   classicosCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTW1huagd5Q9phZyCJE3fit-z1Is8ny15NpTMB1KiHB_wNAopeF9-mecdx0cH4BidxqFS9vTLB6UOvc/pub?gid=1492939094&single=true&output=csv",
-  capacidadeSulPagantes: 20000,
+  // Capacidade total do Setor Sul: pagantes + gratuidades (referência do Sheets).
+  capacidadeSulPagantes: 21520,
   tablePageSize: 40,
   searchDebounceMs: 180,
   fallbackYear: new Date().getFullYear(),
@@ -62,6 +63,8 @@ let currentFilteredClassicos = [];
 let semRivaisAtivo = false;
 // Linha do tempo é o padrão; preservar a escolha durante filtros e atualizações.
 let temporadaChartView = 'line';
+let diaSemanaChartView3266 = 'line'; // V3.2.66: linha por padrão, escolha preservada ao filtrar.
+let diaSemanaChartData3266 = null;
 let topMandanteView3264 = 'line';
 const RIVAIS_RAPIDOS = ['flamengo', 'botafogo', 'vasco'];
 function isRivalRapido(adversario) {
@@ -150,7 +153,27 @@ const VENUE_ALIASES_3264 = Object.freeze({
   'haile pinheiro': 'Serrinha',
   'serrinha': 'Serrinha',
   'luso-brasileiro': 'Luso-Brasileiro',
-  'luso brasileiro': 'Luso-Brasileiro'
+  'luso brasileiro': 'Luso-Brasileiro',
+  // V3.2.64.16 — dez novas equivalências de estádios aprovadas.
+  'olimpico de la universidad central de venezuela': 'Olímpico de la UCV',
+  'estadio municipal nicolas chahuan nazar': 'Nicolás Chahuán Nazar',
+  'ciudad de lanus - nestor diaz perez': 'Ciudad de Lanús',
+  'francisco stedile | centenario': 'Centenário Caxias do Sul',
+  'metropolitano roberto melendez': 'Metrop. Roberto Meléndez',
+  'monumental isidro romero carbo': 'Monum. Isidro Romero Carbo',
+  'monumental david arellano': 'Monum. David Arellano',
+  'cicero de souza marques': 'Cicero Souza Marques',
+  'ciudad de vicente lopez': 'Ciudad Vicente López',
+  'municipal de la florida': 'Municipal La Florida',
+  'olimpico de la ucv': 'Olímpico de la UCV',
+  'nicolas chahuan nazar': 'Nicolás Chahuán Nazar',
+  'centenario caxias do sul': 'Centenário Caxias do Sul',
+  'metrop. roberto melendez': 'Metrop. Roberto Meléndez',
+  'monum. isidro romero carbo': 'Monum. Isidro Romero Carbo',
+  'monum. david arellano': 'Monum. David Arellano',
+  'cicero souza marques': 'Cicero Souza Marques',
+  'ciudad vicente lopez': 'Ciudad Vicente López',
+  'municipal la florida': 'Municipal La Florida'
 });
 function normalizedVenue3264(value) {
   const raw = normalizeText(value);
@@ -524,6 +547,38 @@ function parseNumber(val) {
   return isNaN(num) ? null : num;
 }
 
+// V3.2.64.16 — o percentual da coluna "Taxa Ocupação Sul*" prevalece
+// sobre o cálculo local quando estiver numérico. Percentuais exibidos pelo
+// Google Sheets podem ser "97,1%" ou uma fração como "0,971".
+function parseSulOccupancyPct326416(value) {
+  if (value === null || value === undefined || value === '') return null;
+  if (typeof value === 'number') return Number.isFinite(value) ? (Math.abs(value) <= 2 ? value * 100 : value) : null;
+  const raw = String(value).trim().replace(/\s|\u00a0/g, '');
+  const hasPercent = raw.endsWith('%');
+  const digits = hasPercent ? raw.slice(0, -1) : raw;
+  if (!/^-?\d+(?:[,.]\d+)?$/.test(digits)) return null;
+  const n = Number(digits.replace(',', '.'));
+  if (!Number.isFinite(n) || n < 0) return null;
+  return !hasPercent && n <= 2 ? n * 100 : n;
+}
+function sulOccupancyPercent326416(match) {
+  if (!match) return null;
+  if (Number.isFinite(match.sulOccupancyPct)) return match.sulOccupancyPct;
+  // A fórmula do Sheets pode não estar disponível na base em cache.
+  // O único fallback válido usa 21.520, nunca o antigo divisor 20.000.
+  if (Number.isFinite(match.sul) && !match.sulPandemicZero)
+    return (match.sul / CONFIG.capacidadeSulPagantes) * 100;
+  return null;
+}
+function sulAverageOccupancyPercent326416(matches) {
+  const values = matches.map(sulOccupancyPercent326416).filter(Number.isFinite);
+  return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null;
+}
+function formatSulOccupancyPct326416(match) {
+  const pct = sulOccupancyPercent326416(match);
+  return Number.isFinite(pct) ? `${pct.toFixed(1).replace('.', ',')}%` : 'não informado';
+}
+
 function isValidMatch(placar) {
   if (!placar) return false;
   const str = String(placar).trim().toLowerCase();
@@ -680,7 +735,8 @@ async function fetchLiveGoogleSheet() {
       if (isNotCountedCompetition(comp) || normalizeComparable(comp).includes('amistoso')) return;
 
       const adv = normalizeText(row['Adversário']) || 'A Definir';
-      const estadio = normalizeText(row['Estádio']) || 'A Definir';
+      const estadioOriginal = normalizeText(row['Estádio']) || 'A Definir';
+      const estadio = normalizedVenue3264(estadioOriginal);
       const presVal = row['Presente?'] || row['Presente'] || 'Não';
 
       if (dtStr || comp !== '-' || adv !== 'A Definir') {
@@ -701,6 +757,7 @@ async function fetchLiveGoogleSheet() {
           advLower: adv.toLowerCase(),
           advNorm: normalizeAdv(adv),
           estadio,
+          estadioOriginal,
           isMaracanaNorm,
           placar: placarStr,
           gf: score.gf,
@@ -708,6 +765,8 @@ async function fetchLiveGoogleSheet() {
           pub: parseNumber(row['Público Total']),
           pubVis: parseNumber(row['Público Visitante (Flu)'] || row['Público Visitante']),
           sul: parseNumber(row['Sul Pagantes']),
+          sulPandemicZero: isPandemicSulZeroQuality326415(row['Sul Pagantes']),
+          sulOccupancyPct: parseSulOccupancyPct326416(row['Taxa Ocupação Sul*']),
           presente: normalizeYesNo(presVal)
         });
       }
@@ -756,7 +815,7 @@ async function fetchLiveGoogleSheet() {
         sortTime: computeSortDate(dataStr),
         ano: anoClassico,
         torneio: normalizeText(row['Competição'] || row['Torneio'] || row['Competicao']) || '-',
-        estadio: normalizeText(row['Estádio'] || row['Estadio'] || row['Local']) || '-',
+        estadio: normalizedVenue3264(normalizeText(row['Estádio'] || row['Estadio'] || row['Local']) || '-'),
         placar: placarStr,
         gf: score.gf,
         ga: score.ga,
@@ -869,7 +928,7 @@ function exportFilteredCsv() {
   const rows = filteredMatches.map(m => [
     m.id, m.data, m.hora, m.ano, m.torneio, m.mando, m.adv, m.estadio, m.placar,
     m.pub ?? '', m.pubVis ?? '', m.sul ?? '',
-    m.sul !== null && m.sul !== undefined ? `${((m.sul / CONFIG.capacidadeSulPagantes) * 100).toFixed(1)}%` : '',
+    Number.isFinite(sulOccupancyPercent326416(m)) ? formatSulOccupancyPct326416(m) : '',
     m.presente
   ]);
   const csv = '\uFEFF' + [headers, ...rows].map(row => row.map(csvSafeCell).join(';')).join('\r\n');
@@ -1581,8 +1640,8 @@ function updateKpis() {
   document.getElementById("kpi-media-sul").textContent = countSul > 0 ? fmt(avgSul) : "-";
   document.getElementById("kpi-sub-sul").textContent = countSul > 0 ? `${countSul} jogos com Tricolores no Setor Sul` : "Sem dados do Setor Sul";
 
-  const taxaSul = avgSul > 0 ? (avgSul / CONFIG.capacidadeSulPagantes) * 100 : 0;
-  document.getElementById("kpi-taxa-sul").textContent = taxaSul > 0 ? `${taxaSul.toFixed(1)}%` : "-";
+  const taxaSul = sulAverageOccupancyPercent326416(validFiltered.filter(m => m.isMaracanaNorm && m.sul > 0));
+  document.getElementById("kpi-taxa-sul").textContent = Number.isFinite(taxaSul) ? formatSulOccupancyPct326416({sulOccupancyPct: taxaSul}) : "-";
   document.getElementById("sul-recorded-count").textContent = `${countSul} jogos`;
 
   const alertEl = document.getElementById("sul-alert-missing");
@@ -1746,8 +1805,7 @@ function renderSulBarChart(canvasId, sulMatchesList) {
         return [`${m.adv}`, `(${dia}-${mes}-${ano})`];
       }),
       datasets: [
-        { label: 'Sul Pagantes', data: sulMatchesExibidos.map(m => m.sul), backgroundColor: degradeTricolor, borderRadius: 6, order: 2 },
-        { label: 'Capacidade Máxima Pagantes (20K)', data: sulMatchesExibidos.map(() => CONFIG.capacidadeSulPagantes), type: 'line', borderColor: '#f59e0b', borderDash: [5, 5], borderWidth: 3, pointRadius: 0, pointHoverRadius: 0, fill: false, order: 1 }
+        { label: 'Sul Pagantes', data: sulMatchesExibidos.map(m => m.sul), backgroundColor: degradeTricolor, borderRadius: 6 }
       ]
     },
     plugins: [sulMobileAxisLabels, sulBarValueLabels],
@@ -1787,7 +1845,7 @@ function renderSulBarChart(canvasId, sulMatchesList) {
               const index = context[0].dataIndex;
               return sulMatchesExibidos[index].torneio;
             },
-            label: ctx => ctx.dataset.type === 'line' ? `Capacidade Máxima Pagantes (20K)` : ` Sul Pagantes: ${ctx.parsed.y.toLocaleString('pt-BR')} (${((ctx.parsed.y / CONFIG.capacidadeSulPagantes) * 100).toFixed(1)}% do setor)` 
+            label: ctx => ` Sul Pagantes: ${ctx.parsed.y.toLocaleString('pt-BR')} (${formatSulOccupancyPct326416(sulMatchesExibidos[ctx.dataIndex])} do setor)` 
           } 
         }
       }, 
@@ -2253,6 +2311,86 @@ function setTopMandanteView3264(view) {
   if (!document.getElementById('view-estadio')?.classList.contains('hidden')) renderTopMandante3264(filteredMatches);
 }
 
+// V3.2.66 — mesmo público por dia da semana nos modos Linha e Coluna.
+function renderDiaSemanaChartOnly3266() {
+  if (!diaSemanaChartData3266 || !document.getElementById('chartDiaSemana')) return;
+  const { daysOrder, datasetsDia, showLegend } = diaSemanaChartData3266;
+  const previous = activeCharts.chartDiaSemana;
+  const previousVisibility = previous && previous.data.datasets.length === datasetsDia.length &&
+    previous.data.datasets.every((d,i) => d.label === datasetsDia[i].label)
+    ? datasetsDia.map((_,i) => previous.isDatasetVisible(i)) : null;
+  const mobile = window.matchMedia('(max-width: 767px)').matches;
+  const line = diaSemanaChartView3266 === 'line';
+  const themeLight = document.documentElement.dataset.theme === 'light';
+  const datasets = datasetsDia.map((source, index) => {
+    const color = source.label === 'Visitante' ? '#870A28' :
+      source.label === 'Mandante' ? '#0E4735' : '#0f766e';
+    const values = source.data.map((value, i) => source.customCount[i] > 0 ? value : null);
+    return {
+      ...source,
+      data: values,
+      hidden: previousVisibility ? !previousVisibility[index] : false,
+      borderColor: line ? color : source.borderColor,
+      backgroundColor: line ? (
+        source.label === 'Visitante' ? 'rgba(138,21,56,0.12)' :
+        source.label === 'Mandante' ? 'rgba(14,71,53,0.15)' : 'rgba(15,118,110,0.12)'
+      ) : source.backgroundColor,
+      pointBackgroundColor: color,
+      pointBorderColor: '#C5A059',
+      pointBorderWidth: 1.5,
+      pointRadius: line ? 4.5 : 0,
+      pointHoverRadius: 6,
+      pointHitRadius: 12,
+      tension: line ? 0.22 : 0,
+      fill: line ? 'origin' : false,
+      spanGaps: false,
+      borderWidth: line ? 2.5 : source.borderWidth,
+      borderRadius: line ? 0 : source.borderRadius
+    };
+  });
+  activeCharts.chartDiaSemana = new Chart(getChartCanvas('chartDiaSemana'), {
+    type: line ? 'line' : 'bar',
+    data: {
+      labels: mobile ? ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB', 'DOM'] :
+        daysOrder.map(day => day.replace('-feira', '')),
+      datasets
+    },
+    plugins: [makeValueLabelsPlugin('publicoMedioDiaLabels', { decimals: 1, fullWhenSingleVisible: true, fontSize: mobile ? 10 : 11 })],
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      layout: {padding: {top: 18, left: mobile ? 0 : 6, right: mobile ? 2 : 6}},
+      plugins: {
+        legend: {
+          display: showLegend,
+          position: 'top',
+          labels: {color: themeLight ? '#385642' : 'rgba(255,255,255,0.7)'}
+        },
+        tooltip: {callbacks: {label: context => {
+          const count = context.dataset.customCount[context.dataIndex];
+          return ` ${context.dataset.label}: ${context.parsed.y.toLocaleString('pt-BR')} (${count} ${count > 1 ? 'jogos' : 'jogo'})`;
+        }}}
+      },
+      scales: {
+        x: {ticks: {autoSkip: false, maxRotation: 0, minRotation: 0, font: {size: mobile ? 10 : 12}}},
+        y: {display: !mobile, beginAtZero: true, grace: line ? '18%' : '8%', ticks: {display: false, callback: value => value.toLocaleString('pt-BR')}}
+      }
+    }
+  });
+}
+
+function setDiaSemanaChartView3266(view) {
+  if (view !== 'line' && view !== 'bar') return;
+  diaSemanaChartView3266 = view;
+  document.querySelectorAll('[data-action="dia-semana-chart-view"]').forEach(button => {
+    const active = button.dataset.view === view;
+    button.classList.toggle('is-active', active);
+    button.setAttribute('aria-pressed', String(active));
+  });
+  if (!document.getElementById('view-estadio')?.classList.contains('hidden')) renderDiaSemanaChartOnly3266();
+}
+
 function updateCharts() {
   const validFiltered = filteredMatches;
   const chartsMobile = window.matchMedia('(max-width: 767px)').matches;
@@ -2468,11 +2606,10 @@ function updateCharts() {
       { label: 'Visitante', data: dsVisDia, backgroundColor: '#870A28', borderColor: '#C5A059', borderWidth: bwDuplo, borderRadius: 6, customCount: countVisDia }
     ];
   }
-  activeCharts["chartDiaSemana"] = new Chart(getChartCanvas("chartDiaSemana"), {
-    type: 'bar', data: { labels: chartsMobile ? ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB', 'DOM'] : daysOrder.map(d => d.replace('-feira', '')), datasets: datasetsDia },
-    plugins: [makeValueLabelsPlugin('publicoMedioDiaLabels', { decimals: 1, fullWhenSingleVisible: true })],
-    options: { layout: { padding: { top: 18, left: chartsMobile ? 0 : 6, right: chartsMobile ? 2 : 6 } }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: showLegend, position: 'top', labels: {color: (document.documentElement.dataset.theme === 'light' ? '#385642' : 'rgba(255,255,255,0.7)')} }, tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } } }, scales: { y: { display: !chartsMobile, beginAtZero: true, ticks: { display: false, callback: v => v.toLocaleString('pt-BR') } } } }
-  });
+  // Dados compartilhados pelos modos Linha e Coluna. Não recalcular as médias
+  // ao alternar o desenho nem perder a escolha quando os filtros mudam.
+  diaSemanaChartData3266 = { daysOrder, datasetsDia, showLegend };
+  renderDiaSemanaChartOnly3266();
 
   // 4. HORARIO
   const dsMandHor = [], countMandHor = [], dsVisHor = [], countVisHor = [], dsNeuHor = [], countNeuHor = [];
@@ -3324,7 +3461,8 @@ function applyClassicosFilters() {
     if (!isMatchInFilteredClassicos(m)) return;
     if (m.sul !== null && m.sul > 0) {
       sulMatchesClassicos.push(m);
-    } else {
+    } else if (!Number.isFinite(m.sul)) {
+      // 0 - PAND e zero numérico são dados registrados, não faltantes.
       missingSulCountClassicos++;
     }
   });
@@ -3343,9 +3481,9 @@ function applyClassicosFilters() {
   if (elMediaSul) elMediaSul.textContent = sulMatchesClassicos.length > 0 ? fmt(avgSulClassicos) : "-";
   if (elSubSul) elSubSul.textContent = sulMatchesClassicos.length > 0 ? `${sulMatchesClassicos.length} jogos (${xxxx} - ${yyyy})` : "Sem dados do Setor Sul";
 
-  const taxaSulClassicos = avgSulClassicos > 0 ? (avgSulClassicos / CONFIG.capacidadeSulPagantes) * 100 : 0;
+  const taxaSulClassicos = sulAverageOccupancyPercent326416(sulMatchesClassicos);
   const elTaxaSul = document.getElementById("classicos-kpi-taxa-sul");
-  if (elTaxaSul) elTaxaSul.textContent = taxaSulClassicos > 0 ? `${taxaSulClassicos.toFixed(1)}%` : "-";
+  if (elTaxaSul) elTaxaSul.textContent = Number.isFinite(taxaSulClassicos) ? formatSulOccupancyPct326416({sulOccupancyPct: taxaSulClassicos}) : "-";
 
   const recordedCountEl = document.getElementById("classicos-sul-recorded-count");
   if (recordedCountEl) recordedCountEl.textContent = `${sulMatchesClassicos.length} jogos`;
@@ -3705,6 +3843,7 @@ function initChartRecoveryHandlers() {
     if (!document.getElementById('view-estadio')?.classList.contains('hidden')) {
       renderTopMandante3264(filteredMatches);
       renderTemporadaChartOnly();
+      renderDiaSemanaChartOnly3266();
     }
   };
   if (chartBreakpoint32646.addEventListener) chartBreakpoint32646.addEventListener('change', updateTopOnBreakpoint32646);
@@ -3731,6 +3870,7 @@ function handleDelegatedClick(event) {
     'toggle-sem-rivais': () => toggleSemRivais(),
     'reset-classicos-filters': () => resetClassicosFilters(),
     'temporada-chart-view': () => setTemporadaChartView(target.dataset.view),
+    'dia-semana-chart-view': () => setDiaSemanaChartView3266(target.dataset.view),
     'top-mandante-view-3264': () => setTopMandanteView3264(target.dataset.view),
     'reset-rivals-filters': () => resetRivalsFilters(),
     'copy-filtered-url': () => copyFilteredUrl(),

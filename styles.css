@@ -1887,3 +1887,22 @@ html[data-theme="light"] #home-hero-panel > .max-w-3xl > p.text-emerald-100\/80 
   overflow:hidden;clip-path:inset(50%);white-space:nowrap;
   pointer-events:none;
 }
+
+/* V3.2.64.14 — apenas mobile: card Desempenho por Temporada mais compacto.
+   Reduz espaço vazio antes da legenda e preserva a área real do gráfico. */
+@media (max-width: 767px) {
+  #section-desempenho-temporada {
+    padding: 14px 12px 12px !important;
+  }
+  #section-desempenho-temporada > .flex:first-child {
+    padding-bottom: 5px !important;
+    gap: 4px !important;
+  }
+  #section-desempenho-temporada > .flex:first-child p {
+    line-height: 1.35;
+  }
+  #section-desempenho-temporada > .relative {
+    margin-top: 5px !important;
+    height: 292px;
+  }
+}

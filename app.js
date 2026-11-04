@@ -1,4 +1,4 @@
-const DASHBOARD_VERSION = '3.2.64.13';
+const DASHBOARD_VERSION = '3.2.64.15';
 
 // V3.2.59 — Aba Público: sem linhas de grade internas; manter somente
 // a linha inferior do eixo X nos gráficos verticais e a linha esquerda
@@ -222,6 +222,11 @@ const VALID_CLUB_NAMES_32644 = new Set([
   'Independiente','Racing','Argentinos Juniors','Lanús','Vélez Sarsfield'
 ].map(normalizeComparable));
 function knownClub32644(name) { return VALID_CLUB_NAMES_32644.has(normalizeComparable(name)); }
+// V3.2.64.15 — classificação específica do campo Sul Pagantes.
+// Não interpretar PUNIDO, 0 numérico, vazio ou outros códigos como 0 - PAND.
+function isPandemicSulZeroQuality326415(value) {
+  return /^0\s*[-–—]\s*PAND$/i.test(normalizeText(value));
+}
 const QUALITY_3264 = [];
 function addQuality3264(id,field,value,level,issue) {QUALITY_3264.push({id,field,value:String(value??''),level,issue});}
 function validateQuality3264(rows) {
@@ -268,7 +273,19 @@ function validateQuality3264(rows) {
     }
     if(!normalizeText(row['Adversário']))addQuality3264(id,'Adversário','','Alerta','Adversário vazio');
     const round=normalizeText(row['Fase / Rodada']);if(!round)addQuality3264(id,'Fase / Rodada','','Alerta','Fase ou rodada não informada');
-    ['Sul Pagantes','Sul Devolvidos','Sul Total (Hipotético)','Sócios Sul','Gratuidades','Ingresso promocional','Taxa Ocupação Sul*'].forEach(field=>{const value=normalizeText(row[field]);if(value && !/^\d+(?:[.,]\d+)?%?$/.test(value.replace(/\.(?=\d{3}(?:\D|$))/g,'')))addQuality3264(id,field,value,'Alerta','Valor numérico ou percentual suspeito');});
+    // V3.2.64.15: "0 - PAND" no Sul Pagantes indica público ausente por
+    // restrição sanitária, e não falha de preenchimento. Fórmulas dependentes
+    // podem retornar #VALUE!: suprimir SOMENTE os três alertas derivados.
+    // Nenhum conteúdo é alterado na planilha ou nas tabelas de partidas.
+    const sulSemPublicoPandemia = isPandemicSulZeroQuality326415(row['Sul Pagantes']);
+    const camposSulPandemia = new Set(['Sul Pagantes', 'Sul Total (Hipotético)', 'Taxa Ocupação Sul*']);
+    ['Sul Pagantes','Sul Devolvidos','Sul Total (Hipotético)','Sócios Sul','Gratuidades','Ingresso promocional','Taxa Ocupação Sul*'].forEach(field=>{
+      if (sulSemPublicoPandemia && camposSulPandemia.has(field)) return;
+      const value = normalizeText(row[field]);
+      if (value && !/^\d+(?:[.,]\d+)?%?$/.test(value.replace(/\.(?=\d{3}(?:\D|$))/g,''))) {
+        addQuality3264(id,field,value,'Alerta','Valor numérico ou percentual suspeito');
+      }
+    });
   });
   // Sugestões baseadas apenas em nomes que aparecem repetidamente na base.
   // Nomes raros/históricos nunca são substituídos automaticamente.
@@ -1516,9 +1533,14 @@ function updateKpis() {
       countVis++;
     }
     if (m.estadio === "Maracanã") {
-      if (m.sul !== null && m.sul > 0) {
-        sumSul += m.sul;
-        countSul++;
+      // V3.2.64.14: 0 - PAND é convertido em 0 por parseNumber.
+      // Zero numérico (com ou sem PAND) é informação registrada, não falta de dado.
+      // A contagem do alerta inclui exclusivamente registros sem valor numérico.
+      if (Number.isFinite(m.sul)) {
+        if (m.sul > 0) {
+          sumSul += m.sul;
+          countSul++;
+        }
       } else {
         missingSulCount++;
         const tournament = (m.torneio && m.torneio !== "-") ? m.torneio : "Sem torneio informado";
@@ -2621,53 +2643,109 @@ function updateCharts() {
     }
   }
 
-  // 7. DESEMPENHO POR TEMPORADA
+  // 7. DESEMPENHO POR TEMPORADA — V3.2.64.14: tratamento mobile
+  const desempenhoCanvas = getChartCanvas('chartDesempenhoTemporada');
+  const desempenhoArea = desempenhoCanvas.parentElement?.clientWidth || Math.max(240, window.innerWidth - 56);
+  const faixaTemporada = desempenhoArea / Math.max(1, seasons.length);
+  // Uma única espessura para todas as séries e anos, inclusive após filtros.
+  const espessuraMobileDesempenho = Math.max(5, Math.min(11, Math.floor((faixaTemporada - 7) / 3)));
+  const maiorDesempenho = Math.max(0, ...vTemporada, ...eTemporada, ...dTemporada);
+  // Reserva espaço suficiente para até três rótulos em alturas próximas.
+  const maximoMobileDesempenho = Math.max(5, Math.ceil(maiorDesempenho * 1.27 + 2));
   const desempenhoTemporadaLabelsPlugin = {
     id: 'desempenhoTemporadaLabels',
     afterDatasetsDraw(chart) {
       const { ctx, chartArea } = chart;
+      const compacto = window.matchMedia('(max-width: 767px)').matches;
+      const fonte = compacto ? (chart.width < 300 ? 9 : 10) : 12;
       ctx.save();
-      ctx.font = "600 12px 'Plus Jakarta Sans', sans-serif";
+      ctx.font = `600 ${fonte}px 'Plus Jakarta Sans', sans-serif`;
       ctx.fillStyle = document.documentElement.dataset.theme === 'light' ? '#244634' : 'rgba(255,255,255,0.88)';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'bottom';
 
+      const rotulos = [];
       chart.data.datasets.forEach((dataset, datasetIndex) => {
         const meta = chart.getDatasetMeta(datasetIndex);
         if (meta.hidden) return;
-
         meta.data.forEach((bar, dataIndex) => {
           const value = dataset.data[dataIndex];
-          if (value === null || value === undefined || Number.isNaN(Number(value))) return;
-          const y = Math.max(bar.y - 10, chartArea.top + 14);
-          ctx.fillText(Number(value).toLocaleString('pt-BR'), bar.x, y);
+          if (value === null || value === undefined || !Number.isFinite(Number(value))) return;
+          const valor = Number(value).toLocaleString('pt-BR');
+          rotulos.push({ bar, dataIndex, datasetIndex, valor, largura: ctx.measureText(valor).width });
         });
+      });
+      // Desktop mantém o posicionamento já utilizado na versão anterior.
+      if (!compacto) {
+        rotulos.forEach(({bar, valor}) => {
+          ctx.fillText(valor, bar.x, Math.max(bar.y - 10, chartArea.top + 14));
+        });
+        ctx.restore();
+        return;
+      }
+
+      // Rótulos mobile: testar retângulos ocupados antes de desenhar.
+      // Deslocamentos são apenas verticais; nunca alteram largura/posição das barras.
+      const ocupados = [];
+      rotulos.sort((a, b) => a.dataIndex - b.dataIndex || a.datasetIndex - b.datasetIndex);
+      rotulos.forEach(({bar, valor, largura}) => {
+        const x = Math.min(chartArea.right - largura / 2 - 1, Math.max(chartArea.left + largura / 2 + 1, bar.x));
+        const yInicial = Math.max(chartArea.top + fonte + 2, bar.y - 7);
+        let destino = yInicial;
+        const margem = 2;
+        // Cada colisão move o número para o nível imediatamente superior.
+        for (let tentativa = 0; tentativa < 9; tentativa++) {
+          const topo = destino - fonte - margem;
+          const esquerda = x - largura / 2 - margem;
+          const direita = x + largura / 2 + margem;
+          const colisao = ocupados.some(r => esquerda < r.direita && direita > r.esquerda && topo < r.baixo && destino + margem > r.topo);
+          if (!colisao) break;
+          destino -= fonte + 3;
+        }
+        // A escala reserva espaço superior; caso extremo, restringir ao canvas.
+        destino = Math.max(chartArea.top + fonte + 1, destino);
+        ocupados.push({ esquerda: x - largura / 2 - margem, direita: x + largura / 2 + margem,
+          topo: destino - fonte - margem, baixo: destino + margem });
+        ctx.fillText(valor, x, destino);
       });
       ctx.restore();
     }
   };
 
-  activeCharts["chartDesempenhoTemporada"] = new Chart(getChartCanvas("chartDesempenhoTemporada"), {
+  activeCharts["chartDesempenhoTemporada"] = new Chart(desempenhoCanvas, {
     type: 'bar',
     data: {
       labels: seasons.map(String),
       datasets: [
-        { label: 'Vitórias', data: vTemporada, backgroundColor: '#047857', borderRadius: 4 },
-        { label: 'Empates', data: eTemporada, backgroundColor: '#D97706', borderRadius: 4 },
-        { label: 'Derrotas', data: dTemporada, backgroundColor: '#BE123C', borderRadius: 4 }
+        { label: 'Vitórias', data: vTemporada, backgroundColor: '#047857', borderRadius: 4,
+          ...(chartsMobile ? { barThickness: espessuraMobileDesempenho, maxBarThickness: espessuraMobileDesempenho } : {}) },
+        { label: 'Empates', data: eTemporada, backgroundColor: '#D97706', borderRadius: 4,
+          ...(chartsMobile ? { barThickness: espessuraMobileDesempenho, maxBarThickness: espessuraMobileDesempenho } : {}) },
+        { label: 'Derrotas', data: dTemporada, backgroundColor: '#BE123C', borderRadius: 4,
+          ...(chartsMobile ? { barThickness: espessuraMobileDesempenho, maxBarThickness: espessuraMobileDesempenho } : {}) }
       ]
     },
     plugins: [desempenhoTemporadaLabelsPlugin],
     options: {
       responsive: true, maintainAspectRatio: false,
-      layout: { padding: { top: chartsMobile ? 32 : 30 } },
-      plugins: { 
-        legend: { position: 'top', labels: { color: (document.documentElement.dataset.theme === 'light' ? '#385642' : 'rgba(255,255,255,0.7)') } },
+      layout: { padding: { top: chartsMobile ? 4 : 30, left: chartsMobile ? 1 : 0, right: chartsMobile ? 1 : 0 } },
+      plugins: {
+        legend: { position: 'top', labels: {
+          color: (document.documentElement.dataset.theme === 'light' ? '#385642' : 'rgba(255,255,255,0.7)'),
+          ...(chartsMobile ? { boxWidth: 13, boxHeight: 9, padding: 11, font: { size: 11 } } : {})
+        } },
         tooltip: { mode: 'index', intersect: false }
       },
       scales: {
-        x: { stacked: false, ticks: { color: (document.documentElement.dataset.theme === 'light' ? '#385642' : 'rgba(255,255,255,0.7)') }, grid: { display: false } },
-        y: { beginAtZero: true, grace: chartsMobile ? '20%' : '16%', ticks: { display: false, color: (document.documentElement.dataset.theme === 'light' ? '#385642' : 'rgba(255,255,255,0.7)') }, grid: { color: 'rgba(255,255,255,0.05)' } }
+        x: { stacked: false, ticks: {
+          color: (document.documentElement.dataset.theme === 'light' ? '#385642' : 'rgba(255,255,255,0.7)'),
+          ...(chartsMobile ? { autoSkip: false, minRotation: 0, maxRotation: 0, font: { size: 10 }, padding: 5 } : {})
+        }, grid: { display: false } },
+        y: { beginAtZero: true,
+          ...(chartsMobile ? { min: 0, max: maximoMobileDesempenho } : { grace: '16%' }),
+          ticks: { display: false, color: (document.documentElement.dataset.theme === 'light' ? '#385642' : 'rgba(255,255,255,0.7)') },
+          grid: { color: 'rgba(255,255,255,0.05)' }
+        }
       }
     }
   });

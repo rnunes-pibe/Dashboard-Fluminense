@@ -1938,5 +1938,30 @@ html[data-theme="light"] #home-hero-panel > .max-w-3xl > p.text-emerald-100\/80 
 @media(max-width:767px){
   #section-geral-dia-horario > .glass-panel:first-child > .flex:first-child {align-items:flex-start;}
   #section-geral-dia-horario > .glass-panel:first-child > .flex:first-child > div:first-child {min-width:0;}
-  #section-top-mandante-3264 .top-mandante-switch-32649.chart-view-toggle-3266 {width:144px;flex-basis:144px;}
+}
+
+/* V3.2.67 — Corrige seletor gigante no celular.
+   Em layout flex-column, flex-basis define ALTURA (não largura); por isso
+   a regra 0 0 144px anterior produzia botões de ~144px de altura.
+   Os três seletores ficam fixos em 144 x 42px no mobile. */
+@media (max-width:767px) {
+  .season-view-switch.chart-view-toggle-3266,
+  #section-top-mandante-3264 .top-mandante-switch-32649.chart-view-toggle-3266 {
+    flex:0 0 auto;
+    flex-basis:auto;
+    width:144px;
+    min-width:144px;
+    max-width:144px;
+    height:42px;
+    min-height:42px;
+    max-height:42px;
+    align-self:flex-start;
+    align-content:center;
+  }
+  .season-view-switch.chart-view-toggle-3266 button,
+  #section-top-mandante-3264 .top-mandante-switch-32649.chart-view-toggle-3266 button {
+    height:34px;
+    min-height:34px;
+    max-height:34px;
+  }
 }

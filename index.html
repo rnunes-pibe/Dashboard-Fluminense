@@ -587,7 +587,7 @@
                 <i data-lucide="hourglass" class="w-4 h-4 text-[#C5A059]"></i>
                 <span id="title-horario">Média de Público por Faixa de Horário</span>
               </h3>
-              <p class="text-xs text-white/50">Manhã (&lt;13h), Tarde (13h-17h59), Noite (18h-20h59) e Noite Tardia (&ge;21h)</p>
+              <p class="text-xs text-white/50">Comparativo do público médio conforme o horário de início das partidas</p>
             </div>
           </div>
           <div class="relative flex-1 min-h-[310px]">
@@ -944,37 +944,73 @@
         </div>
       </section>
 
-      <section class="glass-panel rounded-2xl p-6 shadow-2xl border border-cyan-500/30">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4 mb-6">
-          <div>
-            <h3 class="text-base font-black text-white flex items-center gap-2">
-              <span class="w-3 h-3 rounded-full bg-cyan-400"></span>
-              Público pagante Setor Sul (Clássicos)
-            </h3>
-            <p id="classicos-sul-chart-subtitle" class="text-xs text-white/60 mt-0.5">
-              <span class="sul-top-count">Top 10</span> maiores ocupações do Setor Sul do Maracanã (Pagantes)
+      <!-- V3.2.70 — Visualizações do Setor Sul na aba Clássicos. Não altera o gráfico da aba Público. -->
+      <section id="classicos-sul-3270" class="glass-panel sul3270-card rounded-2xl shadow-2xl" data-view="ranking" aria-labelledby="classicos-sul-3270-title">
+        <header class="sul3270-header">
+          <div class="sul3270-header-text">
+            <h3 id="classicos-sul-3270-title"><i data-lucide="users" aria-hidden="true"></i> Setor Sul — Clássicos</h3>
+            <p id="classicos-sul-chart-subtitle">Público pagante na arquibancada Sul do Maracanã · Respeita os filtros da aba</p>
+            <p id="classicos-sul-alert-records" class="sul3270-record hidden">
+              Registros de público do Setor Sul: <strong id="classicos-sul-record-z">0</strong> jogos
+              (<span id="classicos-sul-record-x">—</span>–<span id="classicos-sul-record-y">—</span>)
             </p>
-            <p id="classicos-sul-alert-records" class="text-[11px] text-cyan-300 mt-1 font-semibold hidden">
-              Registro de público Setor Sul: <strong id="classicos-sul-record-z">0</strong> jogos (<span id="classicos-sul-record-x">XXXX</span> - <span id="classicos-sul-record-y">YYYY</span>)
-            </p>
-            <p id="classicos-sul-alert-missing" class="text-[10px] text-amber-400 mt-2 flex items-center gap-1.5 font-medium hidden">
-              <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i>
-              <span>Não há registros de público do Setor Sul de <strong id="classicos-sul-missing-count">0</strong> jogos (Maracanã)</span>
+            <p id="classicos-sul-alert-missing" class="sul3270-warning hidden">
+              <i data-lucide="alert-triangle" aria-hidden="true"></i>
+              Sem registros de público do Setor Sul em <strong id="classicos-sul-missing-count">0</strong> jogos (Maracanã)
             </p>
           </div>
-          <div class="flex items-center gap-4 text-xs">
-            <div class="px-3 py-1 rounded-lg bg-white/5 border border-white/10">
-              <span class="text-white/50">Capacidade Total (Pagantes + Gratuidades) ≈</span>
-              <span class="font-bold text-white ml-1">21.520 lugares</span>
+          <div class="sul3270-switch" role="tablist" aria-label="Visualização dos clássicos no Setor Sul">
+            <button id="sul3270-tab-ranking" type="button" role="tab" aria-controls="sul3270-panel-ranking" aria-selected="true" class="is-active" data-action="classicos-sul-view" data-view="ranking"><i data-lucide="trophy" aria-hidden="true"></i><span>Maiores públicos</span></button>
+            <button id="sul3270-tab-evolucao" type="button" role="tab" aria-controls="sul3270-panel-evolucao" aria-selected="false" data-action="classicos-sul-view" data-view="evolucao"><i data-lucide="chart-no-axes-combined" aria-hidden="true"></i><span>Evolução</span></button>
+            <button id="sul3270-tab-rivais" type="button" role="tab" aria-controls="sul3270-panel-rivais" aria-selected="false" data-action="classicos-sul-view" data-view="rivais"><i data-lucide="chart-no-axes-column" aria-hidden="true"></i><span>Por rival</span></button>
+          </div>
+        </header>
+
+        <div class="sul3270-body">
+          <div class="sul3270-primary">
+            <div id="sul3270-panel-ranking" class="sul3270-panel" role="tabpanel" aria-labelledby="sul3270-tab-ranking">
+              <div class="sul3270-panel-heading">
+                <h4>Maiores públicos pagantes</h4>
+                <span id="sul3270-ranking-count">Top 10</span>
+              </div>
+              <div class="sul3270-rank-columns" aria-hidden="true"><span>Partida</span><span>Pagantes (Setor Sul)</span><span>Ocupação*</span></div>
+              <div id="classicos-sul-rank-list" class="sul3270-rank-list" aria-live="polite"></div>
             </div>
-            <div class="px-3 py-1 rounded-lg bg-cyan-950/70 border border-cyan-500/40 text-cyan-300">
-              <span class="text-white/50">Partidas no Filtro Atual:</span>
-              <span id="classicos-sul-recorded-count" class="font-bold ml-1">0 jogos</span>
+
+            <div id="sul3270-panel-evolucao" class="sul3270-panel" role="tabpanel" aria-labelledby="sul3270-tab-evolucao" hidden>
+              <div class="sul3270-panel-heading"><h4>Evolução do público pagante nos clássicos</h4></div>
+              <p id="sul3270-evolution-description" class="sul3270-description"></p>
+              <div id="sul3270-evolution-legend" class="sul3270-rival-legend" aria-label="Legenda"><span><i class="sul3270-dot sul3270-fla"></i> Flamengo</span><span><i class="sul3270-dot sul3270-vas"></i> Vasco</span><span><i class="sul3270-dot sul3270-bot"></i> Botafogo</span><span class="sul3270-legend-trend"><i class="sul3270-trend-line"></i> Média móvel (5 jogos)</span></div>
+              <div class="sul3270-evolution-scroll"><div id="sul3270-evolution-chart-wrap" class="sul3270-evolution-chart-wrap"><canvas id="chartClassicosSulEvolucao3270" aria-label="Evolução do Setor Sul" role="img"></canvas></div></div>
+              <p id="sul3270-pandemic-note" class="sul3270-pandemic-note" hidden></p>
+              <p class="sul3270-footnote">No celular: média anual de jogos válidos. No desktop: público por clássico e média móvel de cinco jogos. Passe o cursor ou toque para detalhes.</p>
+            </div>
+
+            <div id="sul3270-panel-rivais" class="sul3270-panel" role="tabpanel" aria-labelledby="sul3270-tab-rivais" hidden>
+              <div class="sul3270-panel-heading"><h4>Média de público pagante no Sul por rival</h4></div>
+              <div class="sul3270-rivals-layout">
+                <div class="sul3270-rivals-chart"><canvas id="chartClassicosSulRivais3270" aria-label="Comparação de médias do Setor Sul por adversário" role="img"></canvas></div>
+                <div id="classicos-sul-rival-table" class="sul3270-rivals-table" aria-live="polite"></div>
+              </div>
+              <p class="sul3270-footnote">Médias e ocupações calculadas apenas com jogos que possuem dados válidos de pagantes no Setor Sul.</p>
             </div>
           </div>
-        </div>
-        <div class="relative w-full h-[280px]">
-          <canvas id="chartClassicosSetorSul"></canvas>
+
+          <aside class="sul3270-aside" aria-label="Resumo de público do Setor Sul nos clássicos">
+            <div class="sul3270-capacity" title="Capacidade total de referência: pagantes + gratuidades. Percentuais calculados com referência de 21.520 lugares, ou com a taxa informada na planilha.">
+              <i data-lucide="info" aria-hidden="true"></i>
+              <div><small>Capacidade de referência</small><strong>≈ 21.520 lugares</strong></div>
+            </div>
+            <div class="sul3270-stats">
+              <h4>Média nos clássicos</h4>
+              <div class="sul3270-stat-grid">
+                <div><strong id="classicos-sul-card-mean">—</strong><span>pagantes</span></div>
+                <div><strong id="classicos-sul-card-occupancy">—</strong><span>ocupação*</span></div>
+                <div><strong id="classicos-sul-card-count">0</strong><span>jogos</span></div>
+              </div>
+            </div>
+            <p class="sul3270-stats-note">*Taxa de ocupação referente à capacidade de 21.520 lugares. São considerados apenas jogos com público pagante válido.</p>
+          </aside>
         </div>
       </section>
 
@@ -1103,7 +1139,7 @@
     <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-center gap-2">
       <p>Grandes são os outros, o Fluminense é enorme</p>
       <span class="hidden sm:inline" aria-hidden="true">•</span>
-      <p>Fluminense FC • Dashboard Analítico • <strong id="dashboard-version" class="font-semibold text-emerald-100/70">v3.2.69</strong></p>
+      <p>Fluminense FC • Dashboard Analítico • <strong id="dashboard-version" class="font-semibold text-emerald-100/70">v3.2.71</strong></p>
     </div>
   </footer>
 

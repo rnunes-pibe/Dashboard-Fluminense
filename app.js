@@ -1,4 +1,4 @@
-const DASHBOARD_VERSION = '3.2.69';
+const DASHBOARD_VERSION = '3.2.71';
 
 // V3.2.59 — Aba Público: sem linhas de grade internas; manter somente
 // a linha inferior do eixo X nos gráficos verticais e a linha esquerda
@@ -3436,6 +3436,304 @@ function resetClassicosFilters() {
   applyClassicosFilters();
 }
 
+// ============================================================
+// V3.2.71 — ajustes aprovados: evolução válida do Setor Sul, cores/legendas padronizadas e subtítulo por faixa horária.
+// A fonte de verdade é MATCHES_DATA cruzada com os filtros de
+// CLASSICOS_DATA. NA, 0 - PAND e campos vazios não viram zeros.
+// ============================================================
+let classicosSulView3270 = 'ranking';
+let classicosSulValidMatches3270 = [];
+let classicosSulFilteredContext3270 = [];
+let classicosSulPandemicYears3270 = new Set();
+const CLASSICOS_SUL_RIVAIS_3270 = [
+  {key:'flamengo', label:'Flamengo'},
+  {key:'vasco', label:'Vasco'},
+  {key:'botafogo', label:'Botafogo'}
+];
+function sulRivalColor3271(key) {
+  const light = document.documentElement.dataset.theme === 'light';
+  if (key === 'flamengo') return '#bc203c';
+  if (key === 'vasco') return light ? '#111111' : '#ffffff';
+  if (key === 'botafogo') return light ? '#9aa7ac' : '#b7c0c7';
+  return '#8A1538';
+}
+function sulRivalKey3270(match) {
+  const n = normalizeComparable(match?.advNorm || match?.adv || '');
+  return CLASSICOS_SUL_RIVAIS_3270.find(r => n.includes(r.key))?.key || '';
+}
+function sulFormatCount3270(n) {
+  return Number.isFinite(n) ? Math.round(n).toLocaleString('pt-BR') : '—';
+}
+function sulFormatPct3270(value) {
+  return Number.isFinite(value) ? value.toFixed(1).replace('.', ',') + '%' : '—';
+}
+function sulValidData3270(matches) {
+  return matches.filter(m => Number.isFinite(m.sul) && m.sul >= 0 && !m.sulNotApplicable && !m.sulPandemicZero);
+}
+function sulStats3270(matches) {
+  const n = matches.length;
+  return {
+    n,
+    mean: n ? matches.reduce((acc,m) => acc + m.sul, 0) / n : null,
+    occupancy: n ? sulAverageOccupancyPercent326416(matches) : null,
+    max: n ? matches.reduce((best,m) => m.sul > best.sul ? m : best, matches[0]) : null
+  };
+}
+function sulYearStats3270(matches, year) {
+  const valid = matches.filter(m => m.ano === year);
+  return sulStats3270(valid);
+}
+function sulRankHTML3270(m, i, max) {
+  const ratio = Math.min(100, Math.max(1, m.sul / max * 100));
+  const pct = sulOccupancyPercent326416(m);
+  const gameDate = formatCatalogDate(m.data);
+  const title = `${m.adv} · ${gameDate} · ${m.torneio}: ${sulFormatCount3270(m.sul)} pagantes (${sulFormatPct3270(pct)} da capacidade de referência)`;
+  return `<div class="sul3270-rank-row" title="${escapeHtml(title)}">
+      <div class="sul3270-rank-pos">${i+1}</div>
+      <div class="sul3270-rank-match"><strong>${escapeHtml(m.adv)}</strong>
+        <small>${escapeHtml(gameDate)} · ${escapeHtml(m.torneio)}</small></div>
+      <div class="sul3270-rank-bar-container"><div class="sul3270-rank-bar-track"><div class="sul3270-rank-bar-fill" style="width:${ratio.toFixed(2)}%"></div></div>
+        <strong class="sul3270-rank-value">${sulFormatCount3270(m.sul)}</strong></div>
+      <div class="sul3270-rank-pct">${sulFormatPct3270(pct)}</div>
+    </div>`;
+}
+function renderSulRanking3270(valid) {
+  const list = document.getElementById('classicos-sul-rank-list');
+  if (!list) return;
+  const top = valid.slice().sort((a,b) => b.sul-a.sul || (b.timestamp||0)-(a.timestamp||0)).slice(0,10);
+  const max = Math.max(CONFIG.capacidadeSulPagantes, ...top.map(m => m.sul));
+  list.innerHTML = top.length
+    ? top.map((m,i) => sulRankHTML3270(m,i,max)).join('')
+    : '<p class="sul3270-empty">Não há registros válidos de pagantes no Setor Sul para os clássicos filtrados.</p>';
+}
+function showSulChartEmpty3270(canvasId, message) {
+  if (activeCharts[canvasId]) { activeCharts[canvasId].destroy(); delete activeCharts[canvasId]; }
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  canvas.style.display = 'none';
+  const parent = canvas.parentElement;
+  if (!parent) return;
+  let empty = parent.querySelector('.sul3270-chart-empty');
+  if (!empty) { empty = document.createElement('p'); empty.className='sul3270-chart-empty sul3270-empty'; parent.appendChild(empty); }
+  empty.textContent = message;
+}
+function prepareSulChart3270(canvasId) {
+  if (activeCharts[canvasId]) { activeCharts[canvasId].destroy(); delete activeCharts[canvasId]; }
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return null;
+  canvas.style.display='block';
+  canvas.parentElement?.querySelector('.sul3270-chart-empty')?.remove();
+  return canvas;
+}
+const sulPandemicBandPlugin3270 = {
+  id:'sulPandemicBand3270',
+  beforeDatasetsDraw(chart, _args, opts) {
+    if (!Array.isArray(opts?.indices) || !opts.indices.length) return;
+    const x = chart.scales.x;
+    if (!x) return;
+    const ctx=chart.ctx, area=chart.chartArea;
+    const interval = x.ticks.length > 1 ? Math.abs(x.getPixelForTick(1)-x.getPixelForTick(0)) : 45;
+    ctx.save();
+    opts.indices.forEach(i => {
+      const mid=x.getPixelForTick(i);
+      if (!Number.isFinite(mid)) return;
+      const left=Math.max(area.left,mid-Math.min(interval*.48,28));
+      const right=Math.min(area.right,mid+Math.min(interval*.48,28));
+      ctx.fillStyle='rgba(197,160,89,.14)'; ctx.fillRect(left,area.top,right-left,area.bottom-area.top);
+      ctx.strokeStyle='rgba(197,160,89,.65)'; ctx.setLineDash([3,3]);
+      ctx.strokeRect(left,area.top,right-left,area.bottom-area.top); ctx.setLineDash([]);
+      if (right-left>34) {
+        ctx.fillStyle=opts.color||'#B1843B'; ctx.font="700 9px 'Plus Jakarta Sans', sans-serif";
+        ctx.textAlign='center';ctx.fillText('PAND',mid,area.top+13);
+      }
+    });
+    ctx.restore();
+  }
+};
+function renderSulEvolution3270(valid, filteredClassicos) {
+  const id='chartClassicosSulEvolucao3270';
+  const mobile=window.matchMedia('(max-width: 639px)').matches;
+  const pandemicNote=document.getElementById('sul3270-pandemic-note');
+  if(pandemicNote){
+    const years=[...classicosSulPandemicYears3270].filter(y=>filteredClassicos.some(m=>m.ano===y) && !valid.some(m=>m.ano===y)).sort((a,b)=>a-b);
+    pandemicNote.hidden=years.length===0;
+    pandemicNote.textContent=years.length ? `${years.join(', ')}: Sem público, pandemia` : '';
+  }
+  const description=document.getElementById('sul3270-evolution-description');
+  const legend=document.getElementById('sul3270-evolution-legend');
+  if (legend) legend.style.display=mobile?'none':'';
+  const evoFootnote = document.querySelector('#sul3270-panel-evolucao .sul3270-footnote');
+  if (evoFootnote) evoFootnote.textContent = mobile ? 'Anos sem jogos elegíveis permanecem sem média. NA e 0 - PAND não são contados como público zero.' : 'Use o tooltip para identificar data, adversário, competição, público e ocupação de cada partida.';
+  if (description) description.textContent=mobile
+    ? 'Média anual de pagantes nos clássicos com dados válidos (toque nos pontos para ver quantidade de jogos).'
+    : 'Cada barra corresponde a um clássico; a linha verde mostra a média móvel dos últimos cinco jogos válidos.';
+  if (!valid.length) {
+    showSulChartEmpty3270(id,'Não há dados válidos de público no Setor Sul para o período e os filtros escolhidos.');
+    return;
+  }
+  const sorted=valid.slice().sort((a,b) => (a.timestamp||computeTimestamp(a.data))-(b.timestamp||computeTimestamp(b.data)));
+  const textColor=document.documentElement.dataset.theme==='light'?'#405c4a':'#c0d2c6';
+  const gridColor=document.documentElement.dataset.theme==='light'?'rgba(24,79,48,.1)':'rgba(255,255,255,.10)';
+  const optsBase={responsive:true,maintainAspectRatio:false,animation:false,interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:false},tooltip:{displayColors:true}},
+    scales:{x:{grid:{display:false},ticks:{color:textColor}},y:{beginAtZero:true,suggestedMax:22000,grid:{color:gridColor},ticks:{color:textColor,callback:v=>(v/1000).toFixed(0)+' mil'}}}};
+  const wrap=document.getElementById('sul3270-evolution-chart-wrap');
+  const yearsAll=filteredClassicos.map(m=>m.ano).filter(Number.isFinite);
+  if (mobile) {
+    if (wrap) wrap.style.width='100%';
+    const years=[...new Set(sorted.map(m=>m.ano).filter(Number.isFinite))].sort((a,b)=>a-b);
+    const stats=years.map(y=>sulYearStats3270(sorted,y));
+    const noAttendanceYears=[];
+    const canvas=prepareSulChart3270(id); if(!canvas)return;
+    activeCharts[id]=new Chart(canvas,{
+      type:'line',data:{labels:years.map(y=>String(y)),datasets:[{
+        label:'Média anual Setor Sul',data:stats.map(s=>s.mean),borderColor:'#0E7955',backgroundColor:'rgba(14,121,85,.12)',
+        fill:true,tension:.24,pointRadius:4,pointHoverRadius:6,pointBackgroundColor:'#0E4735',pointBorderColor:'#C5A059',pointBorderWidth:2,spanGaps:false,borderWidth:3
+      }]},plugins:[sulPandemicBandPlugin3270],options:{...optsBase,
+        layout:{padding:{top:9,right:7,left:0}},
+        plugins:{...optsBase.plugins,sulPandemicBand3270:{indices:noAttendanceYears,color:'#a77c32'},tooltip:{callbacks:{
+          title:items=>items.length?`Temporada ${years[items[0].dataIndex]}`:'',
+          label:ctx=>` Média: ${sulFormatCount3270(ctx.parsed.y)} pagantes`,
+          afterLabel:ctx=>` ${stats[ctx.dataIndex]?.n||0} jogo(s) válido(s) · Ocupação ${sulFormatPct3270(stats[ctx.dataIndex]?.occupancy)}`
+        }}},
+        scales:{...optsBase.scales,x:{grid:{display:false},ticks:{color:textColor,font:{size:10},autoSkip:false,maxRotation:0,minRotation:0,callback:(val,i)=>String(years[i]).slice(-2)}}}
+      }});
+  } else {
+    // Uma lacuna marcada apenas quando há clássico PAND na seleção e nenhum
+    // registro positivo daquele ano (nunca inventar zero ou interpolação).
+    const minYear=Math.min(...yearsAll, ...sorted.map(m=>m.ano));
+    const maxYear=Math.max(...yearsAll, ...sorted.map(m=>m.ano));
+    const plot=sorted.slice();
+    for(let year=minYear+1;year<maxYear;year++) {
+      if (classicosSulPandemicYears3270.has(year) && !sorted.some(m=>m.ano===year)) {
+        plot.push({_gap:true,ano:year,sul:null,adv:'Sem público, pandemia',timestamp:Date.UTC(year,6,1)});
+      }
+    }
+    plot.sort((a,b)=>(a.timestamp||computeTimestamp(a.data))-(b.timestamp||computeTimestamp(b.data)));
+    const labels=plot.map((m,i)=>!i||m.ano!==plot[i-1].ano?String(m.ano):'');
+    const avg=[]; const vals=[];
+    plot.forEach(m=>{if(m._gap){avg.push(null);return;} vals.push(m.sul);avg.push(vals.slice(-5).reduce((s,n)=>s+n,0)/Math.min(5,vals.length));});
+    const gaps=plot.map((m,i)=>m._gap?i:-1).filter(i=>i>=0);
+    const yearGroups=[];
+    plot.forEach((m,i)=>{
+      const year=m.ano;
+      if(!Number.isFinite(year)) return;
+      const last=yearGroups[yearGroups.length-1];
+      if(last && last.year===year) last.end=i;
+      else yearGroups.push({year,start:i,end:i});
+    });
+    const yearLabelsPlugin={
+      id:'sulYearLabels3271',
+      afterDraw(chart){
+        const x=chart.scales.x;
+        if(!x) return;
+        const ctx=chart.ctx;
+        ctx.save();
+        ctx.fillStyle=textColor;
+        ctx.textAlign='center';
+        ctx.textBaseline='top';
+        ctx.font="10px 'Plus Jakarta Sans', sans-serif";
+        let lastRight=chart.chartArea.left-8;
+        yearGroups.forEach(group=>{
+          const left=x.getPixelForTick(group.start);
+          const right=x.getPixelForTick(group.end);
+          if(!Number.isFinite(left)||!Number.isFinite(right)) return;
+          let center=(left+right)/2;
+          const label=String(group.year);
+          const width=ctx.measureText(label).width+8;
+          const half=width/2;
+          if(center-half<lastRight+4) center=lastRight+4+half;
+          center=Math.max(chart.chartArea.left+half, Math.min(chart.chartArea.right-half, center));
+          if(center-half>=lastRight+2){
+            ctx.fillText(label, center, x.bottom + 8);
+            lastRight=center+half;
+          }
+        });
+        ctx.restore();
+      }
+    };
+    if(wrap) wrap.style.width=`${Math.max(0,plot.length*11)}px`;
+    if(wrap && wrap.parentElement)wrap.style.minWidth='100%';
+    const canvas=prepareSulChart3270(id);if(!canvas)return;
+    activeCharts[id]=new Chart(canvas,{type:'bar',data:{labels,datasets:[
+      {label:'Pagantes no clássico',type:'bar',data:plot.map(m=>m._gap?null:m.sul),backgroundColor:plot.map(m=>sulRivalColor3271(sulRivalKey3270(m))),borderRadius:2,maxBarThickness:15,order:2},
+      {label:'Média móvel (5 jogos)',type:'line',data:avg,borderColor:'#0caa74',backgroundColor:'#0caa74',borderWidth:2.5,pointRadius:0,pointHoverRadius:4,tension:.26,spanGaps:false,order:1}
+    ]},plugins:[sulPandemicBandPlugin3270, yearLabelsPlugin],options:{...optsBase,
+      layout:{padding:{bottom:22}},
+      plugins:{...optsBase.plugins,sulPandemicBand3270:{indices:gaps},tooltip:{callbacks:{
+        title:items=>{const m=plot[items?.[0]?.dataIndex];return m?m._gap?`${m.ano} · Sem público, pandemia`:`${m.adv} · ${formatCatalogDate(m.data)}`:'';},
+        afterTitle:items=>{const m=plot[items?.[0]?.dataIndex];return m&&!m._gap?m.torneio:'';},
+        label:ctx=>` ${ctx.dataset.label}: ${sulFormatCount3270(ctx.parsed.y)}`,
+        afterBody:items=>{const m=plot[items?.[0]?.dataIndex];return m&&!m._gap?`Ocupação: ${sulFormatPct3270(sulOccupancyPercent326416(m))}`:'';}
+      }}},
+      scales:{...optsBase.scales,x:{grid:{display:false},ticks:{display:false,autoSkip:false,maxRotation:0,font:{size:10},callback:(v,i)=>labels[i]}}}
+    }});
+  }
+}
+function renderSulRivals3270(valid) {
+  const id='chartClassicosSulRivais3270';
+  const stats=CLASSICOS_SUL_RIVAIS_3270.map(r=>{
+    const ms=valid.filter(m=>sulRivalKey3270(m)===r.key);
+    return {...r, color: sulRivalColor3271(r.key), ...sulStats3270(ms)};
+  });
+  const table=document.getElementById('classicos-sul-rival-table');
+  if(table){
+    table.innerHTML=`<table aria-label="Resumo de pagantes no Setor Sul por rival"><thead><tr><th>Rival</th><th>Jogos</th><th>Média</th><th>Ocupação*</th><th>Maior</th></tr></thead>
+      <tbody>${stats.map(r=>`<tr><td><strong>${r.label}</strong></td><td>${r.n}</td><td>${sulFormatCount3270(r.mean)}</td><td>${sulFormatPct3270(r.occupancy)}</td><td title="${r.max?escapeHtml(formatCatalogDate(r.max.data)):''}">${sulFormatCount3270(r.max?.sul)}</td></tr>`).join('')}</tbody></table>
+      <div class="sul3270-rival-cards">${stats.map(r=>`<div class="sul3270-rival-card"><div class="sul3270-rival-card-header"><strong>${r.label}</strong><small>${r.n} ${r.n===1?'jogo':'jogos'} válidos</small></div><div class="sul3270-rival-card-values"><div><strong>${sulFormatCount3270(r.mean)}</strong><small>Média pagantes</small></div><div><strong>${sulFormatPct3270(r.occupancy)}</strong><small>Ocupação*</small></div><div><strong>${sulFormatCount3270(r.max?.sul)}</strong><small>Maior público</small></div></div></div>`).join('')}</div>`;
+  }
+  if (!stats.some(r=>r.n)){
+    showSulChartEmpty3270(id,'Não há partidas com público válido do Setor Sul para os rivais selecionados.');return;
+  }
+  const canvas=prepareSulChart3270(id);if(!canvas)return;
+  const light=document.documentElement.dataset.theme==='light';
+  const textColor=light?'#425c49':'#b8cbbd';
+  const labelsPlugin={id:'sulRivalValueLabels3270',afterDatasetsDraw(chart){
+    const meta=chart.getDatasetMeta(0);if(!meta)return;
+    const ctx=chart.ctx;ctx.save();ctx.textAlign='center';ctx.textBaseline='bottom';ctx.font="700 11px 'Plus Jakarta Sans',sans-serif";ctx.fillStyle=textColor;
+    meta.data.forEach((bar,i)=>{if(stats[i].n)ctx.fillText(sulFormatCount3270(stats[i].mean),bar.x,Math.max(chart.chartArea.top+16,bar.y-5));});ctx.restore();
+  }};
+  const maxMean=Math.max(0,...stats.map(s=>s.mean||0));
+  activeCharts[id]=new Chart(canvas,{type:'bar',data:{labels:stats.map(s=>s.label),datasets:[{
+    label:'Média pagantes',data:stats.map(s=>s.mean),backgroundColor:stats.map(s=>s.color),borderRadius:5,maxBarThickness:70
+  }]},plugins:[labelsPlugin],options:{responsive:true,maintainAspectRatio:false,animation:false,layout:{padding:{top:22,left:3,right:3}},
+    plugins:{legend:{display:false},tooltip:{callbacks:{title:items=>items[0]?.label||'',label:ctx=>` Média: ${sulFormatCount3270(ctx.parsed.y)} pagantes`,afterLabel:ctx=>{
+      const s=stats[ctx.dataIndex];return [`${s.n} jogo(s) válido(s)`,`Ocupação média: ${sulFormatPct3270(s.occupancy)}`,`Maior público: ${sulFormatCount3270(s.max?.sul)}`];
+    }}}},scales:{x:{grid:{display:false},ticks:{color:textColor,font:{size:11}}},y:{beginAtZero:true,max:Math.ceil(Math.max(maxMean*1.19,1000)/1000)*1000,
+      grid:{color:light?'rgba(17,71,40,.12)':'rgba(255,255,255,.10)'},ticks:{color:textColor,callback:v=>`${(v/1000).toFixed(0)} mil`}}}
+  }});
+}
+function renderClassicosSulPanel3270() {
+  const root=document.getElementById('classicos-sul-3270');if(!root)return;
+  root.dataset.view=classicosSulView3270;
+  ['ranking','evolucao','rivais'].forEach(view=>{
+    const active=view===classicosSulView3270;
+    const panel=document.getElementById(`sul3270-panel-${view}`),tab=document.getElementById(`sul3270-tab-${view}`);
+    if(panel)panel.hidden=!active;
+    if(tab){tab.classList.toggle('is-active',active);tab.setAttribute('aria-selected',String(active));tab.tabIndex=active?0:-1;}
+  });
+  const matches=classicosSulValidMatches3270;
+  const totals=sulStats3270(matches);
+  const mean=document.getElementById('classicos-sul-card-mean'),occ=document.getElementById('classicos-sul-card-occupancy'),count=document.getElementById('classicos-sul-card-count');
+  if(mean)mean.textContent=sulFormatCount3270(totals.mean);
+  if(occ)occ.textContent=sulFormatPct3270(totals.occupancy);
+  if(count)count.textContent=String(totals.n);
+  const label=document.getElementById('sul3270-ranking-count');
+  if(label)label.textContent=window.matchMedia('(max-width: 740px)').matches?'Top 5':'Top 10';
+  renderSulRanking3270(matches);
+  if(classicosSulView3270==='evolucao')renderSulEvolution3270(matches,classicosSulFilteredContext3270);
+  if(classicosSulView3270==='rivais')renderSulRivals3270(matches);
+}
+function setClassicosSulView3270(view){
+  if(!['ranking','evolucao','rivais'].includes(view))return;
+  classicosSulView3270=view;
+  // Destruir gráficos de painéis ocultos evita dimensões zeradas e renderização desnecessária.
+  ['chartClassicosSulEvolucao3270','chartClassicosSulRivais3270'].forEach(id=>{
+    if(activeCharts[id]){activeCharts[id].destroy();delete activeCharts[id];}
+  });
+  renderClassicosSulPanel3270();
+}
+
 function applyClassicosFilters() {
   updateClassicosDropdowns();
   updateClassicosLabels();
@@ -3528,11 +3826,15 @@ function applyClassicosFilters() {
 
   const sulMatchesClassicos = [];
   let missingSulCountClassicos = 0;
+  // Só anotar pandemia quando a seleção contém partidas explicitamente classificadas como PAND.
+  const sulPandemicYearsClassicos3270 = new Set();
 
   MATCHES_DATA.forEach(m => {
     if (!m.isMaracanaNorm) return;
     if (!isMatchInFilteredClassicos(m)) return;
-    if (m.sul !== null && m.sul > 0) {
+    if (m.sulPandemicZero) sulPandemicYearsClassicos3270.add(m.ano);
+    if (Number.isFinite(m.sul) && m.sul >= 0 && !m.sulPandemicZero && !m.sulNotApplicable) {
+      // Zero numérico válido é observado; apenas 0 - PAND / NA / vazio são excluídos.
       sulMatchesClassicos.push(m);
     } else if (!Number.isFinite(m.sul) && !m.sulNotApplicable) {
       // 0 - PAND, zero numérico e NA não são dados faltantes.
@@ -3584,11 +3886,10 @@ function applyClassicosFilters() {
     }
   }
 
-  const topSulMatchesClassicos = [...sulMatchesClassicos]
-    .sort((a, b) => b.sul - a.sul)
-    .slice(0, 10);
-
-  renderSulBarChart("chartClassicosSetorSul", topSulMatchesClassicos);
+  classicosSulValidMatches3270 = sulValidData3270(sulMatchesClassicos);
+  classicosSulFilteredContext3270 = filteredClassicos;
+  classicosSulPandemicYears3270 = sulPandemicYearsClassicos3270;
+  renderClassicosSulPanel3270();
   renderClassicosTable(filteredClassicos);
   renderAdvTable('classicos-adv-table-body', advStatsClassicos);
 }
@@ -3769,26 +4070,18 @@ function updateClassicosChart(data) {
   const isSingleRival = activeRivalsCount === 1;
 
   const datasets = [];
+  const lightTheme = document.documentElement.dataset.theme === 'light';
+  const colorFla = '#ef4444';
+  const colorVas = lightTheme ? '#111111' : '#ffffff';
+  const colorBot = lightTheme ? '#9ca3af' : '#b7c0c7';
+  const colorTotal = '#22c55e';
 
-  if (!isSingleRival) {
+  if (showFla) {
       datasets.push({ 
-          label: 'Saldo Total', 
-          data: dTot, 
-          borderColor: '#22c55e', 
-          backgroundColor: '#22c55e', 
-          borderWidth: 2.5, 
-          tension: 0, 
-          pointRadius: 0, 
-          pointHoverRadius: 5 
-      });
-  }
-
-  if (showBot) {
-      datasets.push({ 
-          label: 'Botafogo', 
-          data: dBot, 
-          borderColor: document.documentElement.dataset.theme === 'light' ? '#171717' : '#ffffff', 
-          backgroundColor: document.documentElement.dataset.theme === 'light' ? '#171717' : '#ffffff', 
+          label: 'Flamengo', 
+          data: dFla, 
+          borderColor: colorFla, 
+          backgroundColor: colorFla, 
           borderWidth: isSingleRival ? 2.5 : 1.5, 
           tension: 0, 
           pointRadius: 0, 
@@ -3799,24 +4092,36 @@ function updateClassicosChart(data) {
       datasets.push({ 
           label: 'Vasco', 
           data: dVas, 
-          borderColor: '#9ca3af', 
-          backgroundColor: '#9ca3af', 
+          borderColor: colorVas, 
+          backgroundColor: colorVas, 
           borderWidth: isSingleRival ? 2.5 : 1.5, 
           tension: 0, 
           pointRadius: 0, 
           pointHoverRadius: 4 
       });
   }
-  if (showFla) {
+  if (showBot) {
       datasets.push({ 
-          label: 'Flamengo', 
-          data: dFla, 
-          borderColor: '#ef4444', 
-          backgroundColor: '#ef4444', 
+          label: 'Botafogo', 
+          data: dBot, 
+          borderColor: colorBot, 
+          backgroundColor: colorBot, 
           borderWidth: isSingleRival ? 2.5 : 1.5, 
           tension: 0, 
           pointRadius: 0, 
           pointHoverRadius: 4 
+      });
+  }
+  if (!isSingleRival) {
+      datasets.push({ 
+          label: 'Saldo Total', 
+          data: dTot, 
+          borderColor: colorTotal, 
+          backgroundColor: colorTotal, 
+          borderWidth: 2.5, 
+          tension: 0, 
+          pointRadius: 0, 
+          pointHoverRadius: 5 
       });
   }
 
@@ -3912,6 +4217,15 @@ function initChartRecoveryHandlers() {
   window.addEventListener('resize', recoverChartSizes, { passive: true });
   window.addEventListener('orientationchange', recoverChartSizes, { passive: true });
   const chartBreakpoint32646 = window.matchMedia('(max-width: 767px)');
+  const sulBreakpoint3270 = window.matchMedia('(max-width: 639px)');
+  const updateSul3270 = () => {
+    if (!document.getElementById('view-classicos')?.classList.contains('hidden')) renderClassicosSulPanel3270();
+  };
+  if (sulBreakpoint3270.addEventListener) sulBreakpoint3270.addEventListener('change', updateSul3270);
+  else if (sulBreakpoint3270.addListener) sulBreakpoint3270.addListener(updateSul3270);
+  const sulRankBreakpoint3270 = window.matchMedia('(max-width: 740px)');
+  if (sulRankBreakpoint3270.addEventListener) sulRankBreakpoint3270.addEventListener('change', updateSul3270);
+  else if (sulRankBreakpoint3270.addListener) sulRankBreakpoint3270.addListener(updateSul3270);
   const updateTopOnBreakpoint32646 = () => {
     if (!document.getElementById('view-estadio')?.classList.contains('hidden')) {
       renderTopMandante3264(filteredMatches);
@@ -3946,6 +4260,7 @@ function handleDelegatedClick(event) {
     'dia-semana-chart-view': () => setDiaSemanaChartView3266(target.dataset.view),
     'top-mandante-view-3264': () => setTopMandanteView3264(target.dataset.view),
     'top-visitante-min-jogos': () => setTopVisitanteMinJogos3269(target.dataset.minJogos),
+    'classicos-sul-view': () => setClassicosSulView3270(target.dataset.view),
     'reset-rivals-filters': () => resetRivalsFilters(),
     'copy-filtered-url': () => copyFilteredUrl(),
     'export-filtered-csv': () => exportFilteredCsv(),

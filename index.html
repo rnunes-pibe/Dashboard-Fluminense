@@ -473,7 +473,7 @@
       <!-- GRÁFICOS DINÂMICOS GERAIS UNIFICADOS -->
       <div id="section-geral-temporada-competicao" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="glass-panel rounded-2xl p-3 sm:p-6 shadow-xl flex flex-col">
-          <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
+          <div class="flex flex-wrap items-start justify-between gap-3 mb-4 audience-dual-controls-3277 audience-dual-header-3277">
             <div>
               <h3 class="text-base font-bold text-white flex items-center gap-2">
                 <i data-lucide="trending-up" class="w-4 h-4 text-[#C5A059]"></i>
@@ -485,6 +485,7 @@
               <button type="button" class="is-active" data-action="temporada-chart-view" data-view="line" aria-pressed="true">Linha</button>
               <button type="button" data-action="temporada-chart-view" data-view="bar" aria-pressed="false">Coluna</button>
             </div>
+            <fieldset class="audience-exclusions-3275" aria-label="Excluir jogos"><legend>Excluir jogos</legend><label><input type="checkbox" data-change-action="audience-card-exclude-3275" data-card="season" data-exclude="classicos"/> Clássicos</label><label><input type="checkbox" data-change-action="audience-card-exclude-3275" data-card="season" data-exclude="estadual"/><span class="audience-exclude-long3276">Estadual / Amistosos</span><span class="audience-exclude-short3276">Estadual/Amistosos</span></label></fieldset>
           </div>
           <div class="audience-season-chart-wrap relative w-full">
             <canvas id="chartTemporada"></canvas>
@@ -549,9 +550,13 @@
                 Distribuição do Público (Mandante)
               </h3>
               <p class="text-xs text-white/60 mt-0.5">
-                Quantidade de jogos por faixa de público presente, considerando apenas o Fluminense como mandante
+                Quantidade de jogos por faixa de público presente, apenas Fluminense mandante
               </p>
             </div>
+          </div>
+          <div class="audience-chart-control-row-3275 audience-dual-controls-3277">
+            <div class="season-view-switch chart-view-toggle-3266" role="group" aria-label="Visualização de distribuição do público"><button type="button" class="is-active" data-action="distribution-chart-view-3275" data-view="line" aria-pressed="true">Linha</button><button type="button" data-action="distribution-chart-view-3275" data-view="bar" aria-pressed="false">Coluna</button></div>
+            <fieldset class="audience-exclusions-3275" aria-label="Excluir jogos"><legend>Excluir jogos</legend><label><input type="checkbox" data-change-action="audience-card-exclude-3275" data-card="distribution" data-exclude="classicos"/> Clássicos</label><label><input type="checkbox" data-change-action="audience-card-exclude-3275" data-card="distribution" data-exclude="estadual"/><span class="audience-exclude-long3276">Estadual / Amistosos</span><span class="audience-exclude-short3276">Estadual/Amistosos</span></label></fieldset>
           </div>
           <div class="relative w-full distribuicao-mandante-chart-wrap">
             <canvas id="chartDistribuicaoMandante"></canvas>
@@ -562,7 +567,7 @@
 
       <div id="section-geral-dia-horario" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="glass-panel rounded-2xl p-6 shadow-xl flex flex-col">
-          <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
+          <div class="flex flex-wrap items-start justify-between gap-3 mb-4 audience-dual-controls-3277 audience-dual-header-3277">
             <div>
               <h3 class="text-base font-bold text-white flex items-center gap-2">
                 <i data-lucide="calendar-days" class="w-4 h-4 text-[#C5A059]"></i>
@@ -574,6 +579,7 @@
               <button type="button" class="is-active" data-action="dia-semana-chart-view" data-view="line" aria-pressed="true">Linha</button>
               <button type="button" data-action="dia-semana-chart-view" data-view="bar" aria-pressed="false">Coluna</button>
             </div>
+            <fieldset class="audience-exclusions-3275" aria-label="Excluir jogos"><legend>Excluir jogos</legend><label><input type="checkbox" data-change-action="audience-card-exclude-3275" data-card="weekday" data-exclude="classicos"/> Clássicos</label><label><input type="checkbox" data-change-action="audience-card-exclude-3275" data-card="weekday" data-exclude="estadual"/><span class="audience-exclude-long3276">Estadual / Amistosos</span><span class="audience-exclude-short3276">Estadual/Amistosos</span></label></fieldset>
           </div>
           <div class="relative flex-1 min-h-[310px]">
             <canvas id="chartDiaSemana"></canvas>
@@ -581,7 +587,7 @@
         </div>
 
         <div class="glass-panel rounded-2xl p-6 shadow-xl flex flex-col">
-          <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center justify-between mb-4 audience-dual-controls-3277 audience-dual-header-3277">
             <div>
               <h3 class="text-base font-bold text-white flex items-center gap-2">
                 <i data-lucide="hourglass" class="w-4 h-4 text-[#C5A059]"></i>
@@ -589,6 +595,8 @@
               </h3>
               <p class="text-xs text-white/50">Comparativo do público médio conforme o horário de início das partidas</p>
             </div>
+            <div class="season-view-switch chart-view-toggle-3266" role="group" aria-label="Visualização de faixa de horário"><button type="button" class="is-active" data-action="horario-chart-view-3275" data-view="line" aria-pressed="true">Linha</button><button type="button" data-action="horario-chart-view-3275" data-view="bar" aria-pressed="false">Coluna</button></div>
+            <fieldset class="audience-exclusions-3275" aria-label="Excluir jogos"><legend>Excluir jogos</legend><label><input type="checkbox" data-change-action="audience-card-exclude-3275" data-card="hour" data-exclude="classicos"/> Clássicos</label><label><input type="checkbox" data-change-action="audience-card-exclude-3275" data-card="hour" data-exclude="estadual"/><span class="audience-exclude-long3276">Estadual / Amistosos</span><span class="audience-exclude-short3276">Estadual/Amistosos</span></label></fieldset>
           </div>
           <div class="relative flex-1 min-h-[310px]">
             <canvas id="chartHorario"></canvas>
@@ -604,27 +612,29 @@
               <i data-lucide="bar-chart-2" class="w-4 h-4 text-[#C5A059] inline mr-1"></i>
               Desempenho por Temporada
             </h3>
-            <p class="text-xs text-white/50">Histórico de vitórias, empates e derrotas ao longo dos anos filtrados</p>
+            <p class="text-xs text-white/50">Histórico de vitórias, empates e derrotas ao longo dos anos</p>
           </div>
         </div>
+        <div class="audience-chart-control-row-3275 audience-performance-control-3275"><fieldset class="audience-exclusions-3275" aria-label="Excluir jogos"><legend>Excluir jogos</legend><label><input type="checkbox" data-change-action="audience-card-exclude-3275" data-card="performance" data-exclude="classicos"/> Clássicos</label><label><input type="checkbox" data-change-action="audience-card-exclude-3275" data-card="performance" data-exclude="estadual"/> Estadual / Amistosos</label></fieldset></div>
         <div class="relative w-full h-[300px]">
           <canvas id="chartDesempenhoTemporada"></canvas>
         </div>
       </section>
 
       <section class="glass-panel rounded-2xl p-3 sm:p-6 shadow-2xl" id="section-top-mandante-3264">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
-          <div><h3 class="text-base font-black text-white flex items-center gap-2"><i data-lucide="users" class="w-4 h-4 text-[#C5A059] shrink-0" aria-hidden="true"></i><span>Maiores públicos do Fluminense mandante (exceto clássicos)</span></h3>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 audience-dual-controls-3277 audience-dual-header-3277">
+          <div><h3 class="text-base font-black text-white flex items-center gap-2"><i data-lucide="users" class="w-4 h-4 text-[#C5A059] shrink-0" aria-hidden="true"></i><span>Maiores públicos do Fluminense mandante</span></h3>
             <p class="text-xs text-white/60 mt-1"><span class="hidden md:inline">Top 10</span><span class="md:hidden">Top 5</span> maiores públicos presentes · respeita os filtros atuais</p></div>
           <div class="season-view-switch top-mandante-switch-32649 chart-view-toggle-3266" role="group" aria-label="Visualização dos maiores públicos">
             <button type="button" class="is-active" data-action="top-mandante-view-3264" data-view="line" aria-pressed="true">Linha</button>
             <button type="button" data-action="top-mandante-view-3264" data-view="bar" aria-pressed="false">Coluna</button>
           </div>
+          <fieldset class="audience-exclusions-3275" aria-label="Excluir jogos"><legend>Excluir jogos</legend><label><input type="checkbox" data-change-action="audience-card-exclude-3275" data-card="top" data-exclude="classicos" checked/> Clássicos</label><label><input type="checkbox" data-change-action="audience-card-exclude-3275" data-card="top" data-exclude="estadual"/><span class="audience-exclude-long3276">Estadual / Amistosos</span><span class="audience-exclude-short3276">Estadual/Amistosos</span></label></fieldset>
         </div>
         <div class="audience-top-chart-wrap relative w-full"><canvas id="chartTopMandanteSemClassicos"></canvas></div>
       </section>
 
-      <section class="glass-panel rounded-2xl p-6 shadow-2xl border border-cyan-500/30">
+      <section id="public-sul-card-3276" class="glass-panel sul3270-card public-sul3276 rounded-2xl p-6 shadow-2xl border border-cyan-500/30" data-view="ranking">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4 mb-6">
           <div>
             <h3 class="text-base font-black text-white flex items-center gap-2">
@@ -640,7 +650,7 @@
             </p>
           </div>
           <div class="flex items-center gap-4 text-xs">
-            <div class="px-3 py-1 rounded-lg bg-white/5 border border-white/10">
+            <div class="public-sul-header-capacity3276 px-3 py-1 rounded-lg bg-white/5 border border-white/10">
               <span class="text-white/50">Capacidade Total (Pagantes + Gratuidades) ≈</span>
               <span class="font-bold text-white ml-1">21.520 lugares</span>
             </div>
@@ -651,8 +661,34 @@
           </div>
         </div>
 
-        <div class="relative w-full h-[280px]">
-          <canvas id="chartSetorSul"></canvas>
+        <div class="sul3272-controls" aria-label="Visualizações e exclusões do Setor Sul">
+          <div class="sul3272-switch" role="group" aria-label="Visualização do Setor Sul">
+            <button type="button" class="is-active" data-action="public-sul-view-3272" data-view="ranking" aria-pressed="true">Maiores públicos</button>
+            <button type="button" data-action="public-sul-view-3272" data-view="evolucao" aria-pressed="false">Evolução</button>
+          </div>
+          <fieldset class="sul3272-exclusions">
+            <legend>Excluir jogos</legend>
+            <label><input type="checkbox" data-change-action="public-sul-exclude-3272" data-exclude="classicos"> Clássicos</label>
+            <label><input type="checkbox" data-change-action="public-sul-exclude-3272" data-exclude="estadual"> Estadual / Amistosos</label>
+          </fieldset>
+          <p id="sul3272-context" class="sul3272-context" aria-live="polite"></p>
+        </div>
+        <div id="sul3272-ranking-wrap" class="sul3274-body">
+          <div class="sul3274-primary">
+            <div class="sul3270-panel-heading"><h4>Maiores públicos pagantes</h4><span id="sul3274-ranking-count">Top 10</span></div>
+            <div class="sul3270-rank-columns"><span>Partida</span><span>Pagantes (Setor Sul)</span><span>Ocupação*</span></div>
+            <div id="sul3274-rank-list" class="sul3270-rank-list" aria-live="polite"></div>
+          </div>
+          <aside class="sul3270-aside sul3274-aside" aria-label="Resumo do Setor Sul">
+            <div class="sul3270-capacity" title="Capacidade do Setor Sul (pagantes + gratuidades): aproximadamente 21.520 lugares."><div><small>Capacidade Setor Sul</small><strong>≈ 21.520 lugares</strong><small>(Pagantes + gratuidades)</small></div></div>
+            <div class="sul3270-stats"><h4>Média dos jogos válidos</h4><div class="sul3270-stat-grid"><div><strong id="sul3274-mean">—</strong><span>pagantes</span></div><div><strong id="sul3274-occupancy">—</strong><span>ocupação*</span></div><div><strong id="sul3274-games">0</strong><span>jogos</span></div></div></div>
+            <p class="sul3270-stats-note">*Taxa de ocupação referente à capacidade de 21.520 lugares. São considerados apenas jogos com público pagante válido.</p>
+          </aside>
+        </div>
+        <div id="sul3272-evolution-panel" class="sul3272-evolution-panel" hidden>
+          <h4>Evolução do público pagante — Setor Sul</h4>
+          <p id="sul3272-evolution-description"></p>
+          <div class="sul3272-chart-scroll"><div id="sul3272-evolution-chart-wrap"><canvas id="chartSulEvolution3272"></canvas><p id="sul3273-evolution-empty" hidden>Sem jogos com registros válidos para exibir.</p></div></div>
         </div>
       </section>
 
@@ -997,9 +1033,8 @@
           </div>
 
           <aside class="sul3270-aside" aria-label="Resumo de público do Setor Sul nos clássicos">
-            <div class="sul3270-capacity" title="Capacidade total de referência: pagantes + gratuidades. Percentuais calculados com referência de 21.520 lugares, ou com a taxa informada na planilha.">
-              <i data-lucide="info" aria-hidden="true"></i>
-              <div><small>Capacidade de referência</small><strong>≈ 21.520 lugares</strong></div>
+            <div class="sul3270-capacity" title="Capacidade do Setor Sul (pagantes + gratuidades): aproximadamente 21.520 lugares.">
+              <div><small>Capacidade Setor Sul</small><strong>≈ 21.520 lugares</strong><small>(Pagantes + gratuidades)</small></div>
             </div>
             <div class="sul3270-stats">
               <h4>Média nos clássicos</h4>
@@ -1139,7 +1174,7 @@
     <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-center gap-2">
       <p>Grandes são os outros, o Fluminense é enorme</p>
       <span class="hidden sm:inline" aria-hidden="true">•</span>
-      <p>Fluminense FC • Dashboard Analítico • <strong id="dashboard-version" class="font-semibold text-emerald-100/70">v3.2.71</strong></p>
+      <p>Fluminense FC • Dashboard Analítico • <strong id="dashboard-version" class="font-semibold text-emerald-100/70">v4.0.1</strong></p>
     </div>
   </footer>
 

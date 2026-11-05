@@ -1,4 +1,4 @@
-const DASHBOARD_VERSION = '3.2.71';
+const DASHBOARD_VERSION = '4.0.1';
 
 // V3.2.59 — Aba Público: sem linhas de grade internas; manter somente
 // a linha inferior do eixo X nos gráficos verticais e a linha esquerda
@@ -66,6 +66,53 @@ let temporadaChartView = 'line';
 let diaSemanaChartView3266 = 'line'; // V3.2.66: linha por padrão, escolha preservada ao filtrar.
 let diaSemanaChartData3266 = null;
 let topMandanteView3264 = 'line';
+// V3.2.75 — exclusões independentes para cada gráfico de Público e Desempenho.
+const audienceCardExclusions3275 = {
+  season:{classicos:false,estadual:false},
+  distribution:{classicos:false,estadual:false},
+  weekday:{classicos:false,estadual:false},
+  hour:{classicos:false,estadual:false},
+  performance:{classicos:false,estadual:false},
+  top:{classicos:true,estadual:false}
+};
+let distributionChartView3275='line';
+let hourChartView3275='line';
+let hourChartData3275=null;
+let distributionChartData3275=null;
+function audienceCardEligible3275(card,match) {
+  const x=audienceCardExclusions3275[card];
+  if(!x)return true;
+  return (!x.classicos||!isRivalRapido(match.adv)) &&
+    (!x.estadual||publicSulIsMajorCompetition3273(match));
+}
+function setAudienceCardExclude3275(card,key,checked) {
+  if(!Object.prototype.hasOwnProperty.call(audienceCardExclusions3275,card) ||
+     !Object.prototype.hasOwnProperty.call(audienceCardExclusions3275[card],key))return;
+  audienceCardExclusions3275[card][key]=!!checked;
+  updateCharts();
+}
+function setDistributionChartView3275(view) {
+  if(!['line','bar'].includes(view))return;
+  distributionChartView3275=view;
+  document.querySelectorAll('[data-action="distribution-chart-view-3275"]').forEach(b=>{
+    const on=b.dataset.view===view;b.classList.toggle('is-active',on);b.setAttribute('aria-pressed',String(on));
+  });
+  if(!document.getElementById('view-estadio')?.classList.contains('hidden'))renderDistributionChart3275();
+}
+function setHourChartView3275(view) {
+  if(!['line','bar'].includes(view))return;
+  hourChartView3275=view;
+  document.querySelectorAll('[data-action="horario-chart-view-3275"]').forEach(b=>{
+    const on=b.dataset.view===view;b.classList.toggle('is-active',on);b.setAttribute('aria-pressed',String(on));
+  });
+  if(!document.getElementById('view-estadio')?.classList.contains('hidden'))renderHourChart3275();
+}
+function emptyAudienceStats3275(){return {sM:0,cM:0,sV:0,cV:0,sN:0,cN:0};}
+function audienceAddStats3275(stats,m){
+  if(m.mando==='Mandante' && m.pub>0){stats.sM+=m.pub;stats.cM++;}
+  else if(m.mando==='Visitante' && m.pubVis>0){stats.sV+=m.pubVis;stats.cV++;}
+  else if(m.mando==='Neutro' && m.pub>0){stats.sN+=m.pub;stats.cN++;}
+}
 // V3.2.69: amostra mínima para o ranking de estádios visitantes.
 let topVisitanteMinJogos3269 = 1;
 let topVisitanteEstadios3269 = {};
@@ -548,6 +595,23 @@ function parseScore(placarStr, normalizeHyphen = false) {
   return { gf: null, ga: null };
 }
 
+// V3.2.76 — Categoria do dado de Sul Pagantes para contagens do card.
+// 0 numérico = dado válido; célula realmente vazia = sem registro;
+// 0 - PAND, NA, NI e qualquer texto/código não numérico = excluído.
+function sulValueKind3276(raw) {
+  const text = normalizeText(raw).trim();
+  if (!text) return 'empty';
+  const normalized = text.replace(/\u00a0/g, '');
+  if (!/^(?:\d+|\d{1,3}(?:\.\d{3})+)(?:,\d+)?$/.test(normalized)) return 'excluded';
+  const num = parseNumber(normalized);
+  return Number.isFinite(num) && num >= 0 ? 'numeric' : 'excluded';
+}
+function sulMatchKind3276(match) {
+  if (match.sulValueKind3276) return match.sulValueKind3276;
+  if (match.sulNotApplicable || match.sulPandemicZero) return 'excluded';
+  return Number.isFinite(match.sul) && match.sul >= 0 ? 'numeric' : 'empty';
+}
+
 function parseNumber(val) {
   if (isDocumentedZeroAttendance32648(val)) return 0;
   if (val === null || val === undefined || val === "" || val === "-") return null;
@@ -775,6 +839,7 @@ async function fetchLiveGoogleSheet() {
           pub: parseNumber(row['Público Total']),
           pubVis: parseNumber(row['Público Visitante (Flu)'] || row['Público Visitante']),
           sul: parseNumber(row['Sul Pagantes']),
+          sulValueKind3276: sulValueKind3276(row['Sul Pagantes']),
           sulNotApplicable: isNotApplicableNA3268(row['Sul Pagantes']),
           sulPandemicZero: isPandemicSulZeroQuality326415(row['Sul Pagantes']),
           sulOccupancyPct: parseSulOccupancyPct326416(row['Taxa Ocupação Sul*']),
@@ -1603,15 +1668,13 @@ function updateKpis() {
       countVis++;
     }
     if (m.estadio === "Maracanã") {
-      // V3.2.68: 0 - PAND e zero numérico são registrados como zero;
-      // NA significa não aplicável e é ignorado no alerta, sem virar zero.
-      // Somente campos realmente sem informação entram na contagem.
-      if (Number.isFinite(m.sul)) {
-        if (m.sul > 0) {
-          sumSul += m.sul;
-          countSul++;
-        }
-      } else if (!m.sulNotApplicable) {
+      // V3.2.76: apenas número real (inclusive zero) e célula vazia.
+      // Códigos alfanuméricos como 0 - PAND, NA e NI não são ausência de dado.
+      const sulKind = sulMatchKind3276(m);
+      if (sulKind === 'numeric') {
+        sumSul += m.sul;
+        countSul++;
+      } else if (sulKind === 'empty') {
         missingSulCount++;
         const tournament = (m.torneio && m.torneio !== "-") ? m.torneio : "Sem torneio informado";
         missingSulByTournament.set(tournament, (missingSulByTournament.get(tournament) || 0) + 1);
@@ -1651,9 +1714,10 @@ function updateKpis() {
   document.getElementById("kpi-media-sul").textContent = countSul > 0 ? fmt(avgSul) : "-";
   document.getElementById("kpi-sub-sul").textContent = countSul > 0 ? `${countSul} jogos com Tricolores no Setor Sul` : "Sem dados do Setor Sul";
 
-  const taxaSul = sulAverageOccupancyPercent326416(validFiltered.filter(m => m.isMaracanaNorm && m.sul > 0));
+  const taxaSul = sulAverageOccupancyPercent326416(validFiltered.filter(m => m.isMaracanaNorm && sulMatchKind3276(m) === 'numeric'));
   document.getElementById("kpi-taxa-sul").textContent = Number.isFinite(taxaSul) ? formatSulOccupancyPct326416({sulOccupancyPct: taxaSul}) : "-";
-  document.getElementById("sul-recorded-count").textContent = `${countSul} jogos`;
+  // O contador "Partidas no Filtro Atual" é atualizado pelo próprio card
+  // com numéricos + lacunas reais e suas exclusões locais.
 
   const alertEl = document.getElementById("sul-alert-missing");
   const summaryEl = document.getElementById("sul-missing-summary");
@@ -2263,7 +2327,7 @@ function renderTopMandante3264(matches) {
     activeCharts.chartTopMandanteSemClassicos=null;
   }
   const mobile=window.matchMedia('(max-width: 767px)').matches;
-  const top=matches.filter(m=>m.mando==='Mandante'&&!isRivalRapido(m.adv)&&Number.isFinite(m.pub)&&m.pub>0)
+  const top=matches.filter(m=>m.mando==='Mandante'&&audienceCardEligible3275('top',m)&&Number.isFinite(m.pub)&&m.pub>0)
     .sort((a,b)=>b.pub-a.pub||(a.timestamp||0)-(b.timestamp||0)).slice(0,mobile?5:10);
   const topWrap=canvas.parentElement;
   const line=topMandanteView3264==='line';
@@ -2483,6 +2547,300 @@ function setTopVisitanteMinJogos3269(value) {
   renderTopVisitanteChart3269();
 }
 
+// V3.2.73 — Setor Sul: exclusões compartilhadas, evolução mensal no desktop e anual no mobile.
+// As opções são locais ao card, sem modificar os filtros gerais ou a aba Clássicos.
+let publicSulView3272 = 'ranking';
+const publicSulExclude3272 = {classicos:false,estadual:false};
+let publicSulMatches3272 = [];
+const PUBLIC_SUL_COMPETITIONS_3273 = [
+  ['campeonato brasileiro', 'brasileirao', 'serie a'],
+  ['copa sul-americana', 'sul-americana', 'conmebol sul-americana', 'copa sul americana'],
+  ['copa do brasil'],
+  ['copa do mundo de clubes', 'mundial de clubes', 'copa do mundo de clubes da fifa'],
+  ['libertadores da america', 'libertadores', 'conmebol libertadores', 'copa libertadores'],
+  ['recopa sul-americana', 'recopa sul americana', 'conmebol recopa']
+].flat().map(normalizeComparable);
+function publicSulIsMajorCompetition3273(m) {
+  const competition = normalizeComparable(String(m.torneio || ''));
+  return PUBLIC_SUL_COMPETITIONS_3273.some(name => competition === name || competition.startsWith(name + ' - ') || competition.startsWith(name + ' ('));
+}
+function publicSulEligible3272(matches) {
+  return matches.filter(m =>
+    (!publicSulExclude3272.classicos || !isRivalRapido(m.adv)) &&
+    (!publicSulExclude3272.estadual || publicSulIsMajorCompetition3273(m))
+  );
+}
+function setPublicSulView3272(view) {
+  if(view!=='ranking'&&view!=='evolucao')return;
+  publicSulView3272=view;
+  renderPublicSul3272(publicSulMatches3272);
+}
+function setPublicSulExclude3272(key,checked) {
+  if(!Object.prototype.hasOwnProperty.call(publicSulExclude3272,key))return;
+  publicSulExclude3272[key]=!!checked;
+  renderPublicSul3272(publicSulMatches3272);
+}
+function renderPublicSul3272(matches) {
+  publicSulMatches3272=matches;
+  const eligible=publicSulEligible3272(matches);
+  const publicCard=document.getElementById('public-sul-card-3276');
+  if(publicCard)publicCard.dataset.view=publicSulView3272;
+  const positive=eligible.filter(m=>m.sul>0);
+  const ranking=positive.slice().sort((a,b)=>b.sul-a.sul).slice(0,10);
+  const rankingWrap=document.getElementById('sul3272-ranking-wrap');
+  const evolution=document.getElementById('sul3272-evolution-panel');
+  const context=document.getElementById('sul3272-context');
+  const subtitle=document.getElementById('sul-chart-subtitle');
+  const count=document.getElementById('sul-recorded-count');
+  if(rankingWrap) rankingWrap.hidden=publicSulView3272!=='ranking';
+  if(evolution) evolution.hidden=publicSulView3272!=='evolucao';
+  document.querySelectorAll('[data-action="public-sul-view-3272"]').forEach(btn=>{
+    const active=btn.dataset.view===publicSulView3272;
+    btn.classList.toggle('is-active',active);
+    btn.setAttribute('aria-pressed',String(active));
+  });
+  if(context){
+    const exclusions=[publicSulExclude3272.classicos?'Sem clássicos':'',publicSulExclude3272.estadual?'Sem Estadual / Amistosos':''].filter(Boolean);
+    context.textContent=`${exclusions.length?exclusions.join(' · '):'Todos os jogos elegíveis'} · ${eligible.length.toLocaleString('pt-BR')} jogos com registro válido`;
+  }
+  // Total no card: registros numéricos + células vazias (sem informação),
+  // sempre após filtros globais e as exclusões locais do Setor Sul.
+  const selectedForCount = publicSulEligible3272(
+    filteredMatches.filter(m => m.isMaracanaNorm)
+  );
+  const eligibleForCount = selectedForCount.filter(m => {
+    const kind = sulMatchKind3276(m);
+    return kind === 'numeric' || kind === 'empty';
+  });
+  if(count)count.textContent=`${eligibleForCount.length.toLocaleString('pt-BR')} jogos`;
+  // O aviso de ausência também usa o MESMO recorte que o contador do card.
+  // Somente células realmente vazias são consideradas sem dado oficial.
+  const missingSulMatches3276=selectedForCount.filter(m=>sulMatchKind3276(m)==='empty');
+  const missingSulAlert3276=document.getElementById('sul-alert-missing');
+  const missingSulSummary3276=document.getElementById('sul-missing-summary');
+  if(missingSulAlert3276 && missingSulSummary3276){
+    missingSulAlert3276.classList.toggle('hidden',missingSulMatches3276.length===0);
+    const summaryByComp3276=new Map();
+    missingSulMatches3276.forEach(m=>{
+      const name=m.torneio&&m.torneio!=='-'?m.torneio:'Sem torneio informado';
+      const norm=normalizeComparable(name);
+      const shortName=(norm==='libertadores da america'||norm==='conmebol libertadores')?'Libertadores':
+        (norm==='copa sul-americana'||norm==='copa sul americana'||norm==='conmebol sul-americana'||norm==='conmebol sul americana')?'Sul-Americana':name;
+      summaryByComp3276.set(shortName,(summaryByComp3276.get(shortName)||0)+1);
+    });
+    const compDetails3276=[...summaryByComp3276].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],'pt-BR')).map(([k,n])=>`${k} (${n})`).join(' · ');
+    missingSulSummary3276.textContent=`Sem dados oficiais do Setor Sul em ${missingSulMatches3276.length} ${missingSulMatches3276.length===1?'jogo':'jogos'}${compDetails3276?`: ${compDetails3276}`:''}`;
+  }
+  if(subtitle){
+    const range=subtitle.querySelector('.dynamic-year-range')?.textContent||'2018–2026';
+    subtitle.innerHTML=publicSulView3272==='ranking' ? `<span class="sul-top-count">${window.matchMedia('(max-width: 639px)').matches?'Top 5':'Top 10'}</span> maiores ocupações do Setor Sul do Maracanã (<span class="dynamic-year-range">${range}</span>)` : `Evolução histórica do público pagante do Setor Sul do Maracanã (<span class="dynamic-year-range">${range}</span>)`;
+  }
+  if(publicSulView3272==='ranking'){
+    if(activeCharts.chartSulEvolution3272){activeCharts.chartSulEvolution3272.destroy();delete activeCharts.chartSulEvolution3272;}
+    if(activeCharts.chartSetorSul){activeCharts.chartSetorSul.destroy();delete activeCharts.chartSetorSul;}
+    const list=document.getElementById('sul3274-rank-list');
+    if(list){
+      const max=Math.max(CONFIG.capacidadeSulPagantes,...ranking.map(m=>m.sul));
+      list.innerHTML=ranking.length?ranking.map((m,i)=>sulRankHTML3270(m,i,max)).join(''):'<p class="sul3270-empty">Não há registros válidos para os filtros selecionados.</p>';
+    }
+    const mobile=window.matchMedia('(max-width:639px)').matches;
+    const rankCount=document.getElementById('sul3274-ranking-count');
+    if(rankCount)rankCount.textContent=mobile?'Top 5':'Top 10';
+    const valid=eligible.filter(m=>sulMatchKind3276(m)==='numeric');
+    const stats=sulStats3270(valid);
+    const mean=document.getElementById('sul3274-mean');if(mean)mean.textContent=stats.n?sulFormatCount3270(stats.mean):'—';
+    const occupancy=document.getElementById('sul3274-occupancy');if(occupancy)occupancy.textContent=stats.n?sulFormatPct3270(stats.occupancy):'—';
+    const games=document.getElementById('sul3274-games');if(games)games.textContent=stats.n.toLocaleString('pt-BR');
+  }else{
+    if(activeCharts.chartSetorSul){activeCharts.chartSetorSul.destroy();delete activeCharts.chartSetorSul;}
+    renderPublicSulEvolution3272(eligible);
+  }
+}
+function publicSulDate3272(m) {
+  if(Number.isFinite(m.timestamp))return m.timestamp;
+  const raw=String(m.data||'');
+  const iso=raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(iso)return Date.UTC(+iso[1],+iso[2]-1,+iso[3]);
+  const br=raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  return br?Date.UTC(+br[3],+br[2]-1,+br[1]):NaN;
+}
+function renderPublicSulEvolution3272(matches) {
+  const canvas=document.getElementById('chartSulEvolution3272');
+  if(!canvas)return;
+  if(activeCharts.chartSulEvolution3272){activeCharts.chartSulEvolution3272.destroy();delete activeCharts.chartSulEvolution3272;}
+  const mobile=window.matchMedia('(max-width: 639px)').matches;
+  const sorted=matches.filter(m=>Number.isFinite(m.sul)&&m.sul>=0&&Number.isFinite(publicSulDate3272(m)))
+    .slice().sort((a,b)=>publicSulDate3272(a)-publicSulDate3272(b));
+  const desc=document.getElementById('sul3272-evolution-description');
+  const wrap=document.getElementById('sul3272-evolution-chart-wrap');
+  const empty=document.getElementById('sul3273-evolution-empty');
+  const light=document.documentElement.dataset.theme==='light';
+  const fg=light?'#385642':'#a3b8b0';
+  if(wrap){wrap.style.width='100%';wrap.style.minWidth='0';}
+  if(desc)desc.textContent=mobile
+    ? 'Média anual dos jogos com registro válido de Sul Pagantes.'
+    : 'Média mensal dos jogos com registro válido de Sul Pagantes; linha verde indica média móvel dos últimos três meses.';
+  if(empty)empty.hidden=sorted.length>0;
+  canvas.hidden=!sorted.length;
+  if(!sorted.length){if(desc)desc.textContent='Nenhum jogo com registro válido para as exclusões selecionadas.';return;}
+
+  let labels=[],values=[],records=[],trend=[],months=[];
+  if(mobile){
+    const years=[...new Set(sorted.map(m=>new Date(publicSulDate3272(m)).getUTCFullYear()))].sort((a,b)=>a-b);
+    labels=years.map(String);
+    records=years.map(y=>sorted.filter(m=>new Date(publicSulDate3272(m)).getUTCFullYear()===y));
+    values=records.map(group=>group.reduce((sum,m)=>sum+m.sul,0)/group.length);
+  }else{
+    const byMonth=new Map();
+    sorted.forEach(m=>{
+      const date=new Date(publicSulDate3272(m));
+      const key=date.getUTCFullYear()*12+date.getUTCMonth();
+      if(!byMonth.has(key))byMonth.set(key,[]);
+      byMonth.get(key).push(m);
+    });
+    const keys=[...byMonth.keys()].sort((a,b)=>a-b);
+    // Inclui meses vazios como lacunas: nunca atribuir média zero ou interpolar público.
+    for(let key=keys[0];key<=keys[keys.length-1];key++){
+      const year=Math.floor(key/12), month=key%12;
+      months.push({year,month,key});
+      const group=byMonth.get(key)||[];
+      records.push(group);
+      labels.push(`${String(month+1).padStart(2,'0')}/${year}`);
+      values.push(group.length?group.reduce((sum,m)=>sum+m.sul,0)/group.length:null);
+    }
+    // Média móvel de 3 meses-calendário, apenas meses com dados válidos.
+    trend=values.map((value,i)=>{
+      if(value===null)return null;
+      const recent=values.slice(Math.max(0,i-2),i+1).filter(v=>v!==null);
+      return recent.length?recent.reduce((sum,v)=>sum+v,0)/recent.length:null;
+    });
+  }
+  const datasets=[{label:mobile?'Média anual':'Média mensal',data:values,
+    borderColor:'#0E4735',backgroundColor:'rgba(14,71,53,.16)',fill:true,tension:.18,
+    pointRadius:mobile?4:2,pointHoverRadius:6,pointBackgroundColor:'#C5A059',pointBorderColor:'#0E4735',
+    borderWidth:2.5,spanGaps:false}];
+  if(!mobile)datasets.push({label:'Média móvel (3 meses)',data:trend,borderColor:'#0caa74',
+    backgroundColor:'#0caa74',fill:false,tension:.22,pointRadius:0,pointHoverRadius:5,borderWidth:2,spanGaps:false});
+  activeCharts.chartSulEvolution3272=new Chart(canvas.getContext('2d'),{
+    type:'line',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,animation:false,
+      layout:{padding:{top:12,right:8,bottom:4}},
+      plugins:{legend:{display:!mobile,labels:{color:fg,boxWidth:15,font:{size:11}}},tooltip:{callbacks:{
+        title:items=>{const i=items?.[0]?.dataIndex;return i==null?'':mobile?`Temporada ${labels[i]}`:`Mês ${labels[i]}`;},
+        label:ctx=>` ${ctx.dataset.label}: ${Math.round(ctx.parsed.y).toLocaleString('pt-BR')} pagantes`,
+        afterBody:items=>{const i=items?.[0]?.dataIndex;return i==null?'':`${records[i].length} jogo(s) válido(s) no período`;}
+      }}},
+      scales:{x:{grid:{display:false},ticks:{color:fg,autoSkip:mobile,maxRotation:0,minRotation:0,font:{size:10},
+        callback:(tick,index)=>mobile?labels[index]:(months[index]?.month===0||index===0?String(months[index].year):'')}},
+        y:{beginAtZero:true,ticks:{color:fg,callback:v=>`${(v/1000).toLocaleString('pt-BR',{maximumFractionDigits:0})} mil`},
+          grid:{color:light?'rgba(35,90,58,.13)':'rgba(255,255,255,.08)'}}}
+    }
+  });
+}
+
+// V3.2.75 — a alternância Linha/Coluna reusa os dados filtrados do próprio card.
+function renderHourChart3275() {
+  const cache=hourChartData3275;
+  const canvas=document.getElementById('chartHorario')?.getContext('2d');
+  if(!cache||!canvas)return;
+  const {hourRanges,datasetsHor,showLegend}=cache;
+  const mobile=window.matchMedia('(max-width: 767px)').matches;
+  const light=document.documentElement.dataset.theme==='light';
+  const prev=activeCharts.chartHorario;
+  const visibility=prev && prev.data.datasets.length===datasetsHor.length &&
+    prev.data.datasets.every((d,i)=>d.label===datasetsHor[i].label)
+    ? prev.data.datasets.map((_d,i)=>prev.isDatasetVisible(i)):null;
+  if(prev)prev.destroy();
+  const line=hourChartView3275==='line';
+  const datasets=datasetsHor.map((raw,i)=>{
+    const color=raw.label==='Mandante'?'#0E4735':raw.label==='Visitante'?'#870A28':'#0f766e';
+    return {...raw,
+      data:raw.data.map((v,j)=>(raw.customCount[j]>0?v:null)),
+      hidden:visibility?!visibility[i]:false,
+      borderColor:line?color:raw.borderColor,
+      backgroundColor:line?(raw.label==='Mandante'?'rgba(14,71,53,.15)':raw.label==='Visitante'?'rgba(138,21,56,.12)':'rgba(15,118,110,.12)'):color,
+      pointRadius:line?4.5:0,pointHoverRadius:6,pointHitRadius:12,
+      pointBackgroundColor:color,pointBorderColor:'#C5A059',pointBorderWidth:1.5,
+      tension:line?.22:0,spanGaps:false,fill:line?'origin':false,
+      borderWidth:line?2.5:1.5,borderRadius:line?0:5,
+      categoryPercentage:.76,barPercentage:.84
+    };
+  });
+  activeCharts.chartHorario=new Chart(canvas,{
+    type:line?'line':'bar',
+    data:{labels:mobile?[['Manhã','(<13h)'],['Tarde','(13h–17h59)'],['Noite','(18h–20h59)'],['Noite Tardia','(≥21h)']]:hourRanges.map(h=>h.label),datasets},
+    plugins:[makeValueLabelsPlugin('publicoMedioHorarioLabels',{fullValue:true})],
+    options:{responsive:true,maintainAspectRatio:false,animation:false,
+      layout:{padding:{top:18,left:mobile?0:6,right:mobile?2:6}},
+      plugins:{legend:{display:showLegend,position:'top',labels:{color:light?'#385642':'rgba(255,255,255,0.7)'}},
+        tooltip:{callbacks:{label:ctx=>{
+          const j=ctx.dataset.customCount[ctx.dataIndex];
+          return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`;
+        }}}},
+      scales:{x:{ticks:{maxRotation:0,minRotation:0,autoSkip:false,font:{size:mobile?9:12}}},
+        y:{display:!mobile,beginAtZero:true,grace:line?'18%':'8%',ticks:{display:false,callback:v=>v.toLocaleString('pt-BR')}}}
+    }
+  });
+}
+function renderDistributionChart3275() {
+  const vals=distributionChartData3275;
+  const canvas=document.getElementById('chartDistribuicaoMandante')?.getContext('2d');
+  if(!vals||!canvas)return;
+  const previous=activeCharts.chartDistribuicaoMandante;
+  if(previous)previous.destroy();
+  const faixas=[
+    {label:'0–10 mil',min:0,max:10000},
+    {label:'10–20 mil',min:10000,max:20000},
+    {label:'20–30 mil',min:20000,max:30000},
+    {label:'30–40 mil',min:30000,max:40000},
+    {label:'40–50 mil',min:40000,max:50000},
+    {label:'50–60 mil',min:50000,max:60000},
+    {label:'60 mil+',min:60000,max:Infinity}
+  ].map(f=>({...f,count:0,sum:0}));
+  vals.forEach(pub=>{const f=faixas.find(r=>pub>=r.min&&pub<r.max);if(f){f.count++;f.sum+=pub;}});
+  const total=vals.length;
+  const peak=Math.max(0,...faixas.map(f=>f.count));
+  const axisMax=Math.max(1,Math.ceil(peak*1.23+3));
+  const line=distributionChartView3275==='line';
+  const mobile=window.innerWidth<=639;
+  const labelsPlugin={id:'distribuicaoMandanteCountLabels',afterDatasetsDraw(chart){
+    const ctx=chart.ctx,area=chart.chartArea,meta=chart.getDatasetMeta(0);
+    if(!meta||meta.hidden)return;
+    ctx.save();ctx.fillStyle=document.documentElement.dataset.theme==='light'?'#244634':'rgba(255,255,255,.88)';
+    ctx.textAlign='center';ctx.textBaseline='bottom';
+    meta.data.forEach((el,i)=>{
+      const n=Number(chart.data.datasets[0].data[i])||0;
+      if(!n)return;
+      const pct=total?(n/total*100).toFixed(1).replace('.',','):'0,0';
+      const y=Math.max(area.top+24,el.y);
+      ctx.font=`700 ${mobile?10:11}px 'Plus Jakarta Sans',sans-serif`;
+      ctx.fillText(String(n),el.x,y-(mobile?18:21));
+      ctx.font=`600 ${mobile?8:10}px 'Plus Jakarta Sans',sans-serif`;
+      ctx.fillText(`(${pct}%)`,el.x,y-6);
+    });
+    ctx.restore();
+  }};
+  activeCharts.chartDistribuicaoMandante=new Chart(canvas,{
+    type:line?'line':'bar',
+    data:{labels:faixas.map(f=>mobile?(f.label==='60 mil+'?['60','mil+']:[f.label.replace(' mil',''),'mil']):f.label),
+      datasets:[{label:'Jogos',data:faixas.map(f=>f.count),customSum:faixas.map(f=>f.sum),
+        backgroundColor:line?'rgba(14,71,53,.16)':'#0E4735',borderColor:line?'#0E4735':'#C5A059',
+        borderWidth:line?2.5:1.5,borderRadius:line?0:7,
+        fill:line?'origin':false,tension:line?.24:0,
+        pointRadius:line?5:0,pointHoverRadius:7,pointHitRadius:12,
+        pointBackgroundColor:'#0E4735',pointBorderColor:'#C5A059',pointBorderWidth:line?1.5:0}]},
+    plugins:[labelsPlugin],options:{responsive:true,maintainAspectRatio:false,animation:false,
+      layout:{padding:{top:18}},
+      plugins:{legend:{display:false},tooltip:{callbacks:{
+        title:items=>items.length?items[0].label:'',
+        label:ctx=>{const n=ctx.parsed.y||0;const pct=total?((n/total)*100).toFixed(1).replace('.',','):'0,0';return ` Jogos: ${n} (${pct}%)`;},
+        afterLabel:ctx=>{const n=ctx.parsed.y||0, sum=ctx.dataset.customSum[ctx.dataIndex]||0;
+          return ` Público médio: ${(n?Math.round(sum/n):0).toLocaleString('pt-BR')}`;}
+      }}},scales:{x:{ticks:{maxRotation:0,minRotation:0,font:{size:mobile?9:11}},grid:{display:false}},
+        y:{min:0,max:axisMax,beginAtZero:true,ticks:{display:false,precision:0}}}
+    }
+  });
+}
+
 function updateCharts() {
   const validFiltered = filteredMatches;
   const chartsMobile = window.matchMedia('(max-width: 767px)').matches;
@@ -2535,7 +2893,7 @@ function updateCharts() {
 
   const visitEstadioMap = {};
   const mandantePublicos = [];
-  const sulCandidates = [];
+  const sulEvolutionCandidates3272 = [];
 
   validFiltered.forEach(m => {
     // Inicializa Ano
@@ -2572,21 +2930,21 @@ function updateCharts() {
 
     // Acumula públicos conforme Mando
     if (m.mando === 'Mandante' && m.pub > 0) {
-      mandantePublicos.push(m.pub);
+      if (audienceCardEligible3275('distribution',m))mandantePublicos.push(m.pub);
       yrObj.sM += m.pub; yrObj.cM++;
       if (compObj) { compObj.sM += m.pub; compObj.cM++; }
-      if (dayObj) { dayObj.sM += m.pub; dayObj.cM++; }
-      if (hrObj) { hrObj.sM += m.pub; hrObj.cM++; }
+      if (dayObj && audienceCardEligible3275('weekday',m)) { dayObj.sM += m.pub; dayObj.cM++; }
+      if (hrObj && audienceCardEligible3275('hour',m)) { hrObj.sM += m.pub; hrObj.cM++; }
     } else if (m.mando === 'Visitante' && m.pubVis > 0) {
       yrObj.sV += m.pubVis; yrObj.cV++;
       if (compObj) { compObj.sV += m.pubVis; compObj.cV++; }
-      if (dayObj) { dayObj.sV += m.pubVis; dayObj.cV++; }
-      if (hrObj) { hrObj.sV += m.pubVis; hrObj.cV++; }
+      if (dayObj && audienceCardEligible3275('weekday',m)) { dayObj.sV += m.pubVis; dayObj.cV++; }
+      if (hrObj && audienceCardEligible3275('hour',m)) { hrObj.sV += m.pubVis; hrObj.cV++; }
     } else if (m.mando === 'Neutro' && m.pub > 0) {
       yrObj.sN += m.pub; yrObj.cN++;
       if (compObj) { compObj.sN += m.pub; compObj.cN++; }
-      if (dayObj) { dayObj.sN += m.pub; dayObj.cN++; }
-      if (hrObj) { hrObj.sN += m.pub; hrObj.cN++; }
+      if (dayObj && audienceCardEligible3275('weekday',m)) { dayObj.sN += m.pub; dayObj.cN++; }
+      if (hrObj && audienceCardEligible3275('hour',m)) { hrObj.sN += m.pub; hrObj.cN++; }
     }
 
     // Top 10 Visitante (todos os jogos com pubVis > 0)
@@ -2597,24 +2955,36 @@ function updateCharts() {
       visitEstadioMap[venueKey].count += 1;
     }
 
-    // Setor Sul Maracanã
-    if (m.estadio === "Maracanã" && m.sul !== null && m.sul > 0) {
-      sulCandidates.push(m);
+    // Setor Sul: só registros estritamente numéricos no Maracanã,
+    // independentemente do mando. Textos como 0 - PAND não entram nos gráficos.
+    if (m.isMaracanaNorm && sulMatchKind3276(m) === 'numeric') {
+      sulEvolutionCandidates3272.push(m);
     }
   });
 
-  // 1. TEMPORADA
+  // 1. TEMPORADA — agrega apenas jogos elegíveis dentro do próprio card.
+  // Preserva a sequência histórica de anos, inclusive lacunas de pandemia.
   const seasons = Object.keys(byYear).map(Number).sort((a,b) => a - b);
+  const seasonFiltered3275=validFiltered.filter(m=>audienceCardEligible3275('season',m));
+  const seasonMap3275={};
+  seasonFiltered3275.forEach(m=>{const a=seasonMap3275[m.ano] ||= emptyAudienceStats3275();audienceAddStats3275(a,m);});
   const dsMand = [], countMand = [], dsVis = [], countVis = [], dsNeu = [], countNeu = [];
-  const vTemporada = [], eTemporada = [], dTemporada = [];
-
   seasons.forEach(yr => {
-    const y = byYear[yr];
+    const y = seasonMap3275[yr]||emptyAudienceStats3275();
     dsMand.push(y.cM ? Math.round(y.sM / y.cM) : 0); countMand.push(y.cM);
     dsVis.push(y.cV ? Math.round(y.sV / y.cV) : 0); countVis.push(y.cV);
     dsNeu.push(y.cN ? Math.round(y.sN / y.cN) : 0); countNeu.push(y.cN);
-    vTemporada.push(y.v); eTemporada.push(y.e); dTemporada.push(y.d);
   });
+  const performanceMap3275={};
+  validFiltered.filter(m=>audienceCardEligible3275('performance',m)).forEach(m=>{
+    if(m.gf===null||m.ga===null)return;
+    const y=performanceMap3275[m.ano] ||= {v:0,e:0,d:0};
+    if(m.gf>m.ga)y.v++;else if(m.gf<m.ga)y.d++;else y.e++;
+  });
+  const vTemporada=seasons.map(yr=>performanceMap3275[yr]?.v||0);
+  const eTemporada=seasons.map(yr=>performanceMap3275[yr]?.e||0);
+  const dTemporada=seasons.map(yr=>performanceMap3275[yr]?.d||0);
+  const totalJogosTemporada3275=seasons.map((_,i)=>vTemporada[i]+eTemporada[i]+dTemporada[i]);
 
   let datasetsTemp = [];
   if (chartMode === 'mandante') datasetsTemp = [{ label: 'Mandante', data: dsMand, backgroundColor: '#0E4735', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: countMand }];
@@ -2626,7 +2996,7 @@ function updateCharts() {
       { label: 'Visitante', data: dsVis, backgroundColor: '#870A28', borderColor: '#C5A059', borderWidth: 1.5, borderRadius: 6, customCount: countVis }
     ];
   }
-  const pandemicYears = pandemicSeasonYears326412(validFiltered, seasons, datasetsTemp);
+  const pandemicYears = pandemicSeasonYears326412(seasonFiltered3275, seasons, datasetsTemp);
   temporadaChartData = { seasons, datasetsTemp, showLegend, pandemicYears };
   renderTemporadaChartOnly();
 
@@ -2720,24 +3090,8 @@ function updateCharts() {
       { label: 'Visitante', data: dsVisHor, borderColor: '#870A28', backgroundColor: 'rgba(138, 21, 56, 0.15)', borderWidth: 2.5, fill: true, tension: 0.35, pointBackgroundColor: '#C5A059', pointRadius: 5, customCount: countVisHor }
     ];
   }
-  activeCharts["chartHorario"] = new Chart(getChartCanvas("chartHorario"), {
-    type: 'line',
-    data: { labels: chartsMobile ? [['Manhã', '(<13h)'], ['Tarde', '(13h–17h59)'], ['Noite', '(18h–20h59)'], ['Noite Tardia', '(≥21h)']] : hourRanges.map(h => h.label), datasets: datasetsHor },
-    plugins: [makeValueLabelsPlugin('publicoMedioHorarioLabels', { fullValue: true })],
-    options: {
-      layout: { padding: { top: 18, left: chartsMobile ? 0 : 6, right: chartsMobile ? 2 : 6 } },
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: showLegend, position: 'top', labels: { color: (document.documentElement.dataset.theme === 'light' ? '#385642' : 'rgba(255,255,255,0.7)') } },
-        tooltip: { callbacks: { label: ctx => { let j = ctx.dataset.customCount[ctx.dataIndex]; return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} (${j} ${j>1?'jogos':'jogo'})`; } } }
-      },
-      scales: {
-        x: { ticks: { maxRotation: 0, minRotation: 0, autoSkip: false, font: { size: chartsMobile ? 9 : 12 } } },
-        y: { display: !chartsMobile, beginAtZero: true, ticks: { display: false, callback: v => v.toLocaleString('pt-BR') } }
-      }
-    }
-  });
+  hourChartData3275 = {hourRanges,datasetsHor,showLegend};
+  renderHourChart3275();
 
   // 5. TOP VISITANTE — a escolha da amostra mínima permanece ao aplicar filtros.
   topVisitanteEstadios3269 = visitEstadioMap;
@@ -2752,98 +3106,8 @@ function updateCharts() {
     if (hasM) {
       distribuicaoMandanteSection.classList.remove('hidden');
 
-      const faixas = [
-        { label: '0–10 mil', min: 0, max: 10000 },
-        { label: '10–20 mil', min: 10000, max: 20000 },
-        { label: '20–30 mil', min: 20000, max: 30000 },
-        { label: '30–40 mil', min: 30000, max: 40000 },
-        { label: '40–50 mil', min: 40000, max: 50000 },
-        { label: '50–60 mil', min: 50000, max: 60000 },
-        { label: '60 mil+', min: 60000, max: Infinity }
-      ].map(f => ({ ...f, count: 0, sum: 0 }));
-
-      mandantePublicos.forEach(pub => {
-        const faixa = faixas.find(f => pub >= f.min && pub < f.max);
-        if (faixa) { faixa.count += 1; faixa.sum += pub; }
-      });
-
-      const totalMandante = mandantePublicos.length;
-      // Folga acima da maior barra, inclusive se coincidir com um tick.
-      const maiorFaixa = Math.max(0, ...faixas.map(f => f.count));
-      const limiteSuperiorDistribuicao = Math.max(1, Math.ceil(maiorFaixa * 1.12 + 2));
-      const countLabelsPlugin = {
-        id: 'distribuicaoMandanteCountLabels',
-        afterDatasetsDraw(chart) {
-          const { ctx, chartArea } = chart;
-          ctx.save();
-          ctx.font = `700 ${window.innerWidth <= 639 ? 11 : 11}px 'Plus Jakarta Sans', sans-serif`;
-          ctx.fillStyle = document.documentElement.dataset.theme === 'light' ? '#244634' : 'rgba(255,255,255,0.88)';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'bottom';
-          const meta = chart.getDatasetMeta(0);
-          meta.data.forEach((bar, i) => {
-            const value = chart.data.datasets[0].data[i];
-            if (!value) return;
-            // Rótulo ancorado acima da barra, sem sobrepor o contorno.
-            // O teto explícito do eixo Y reserva espaço antes do desenho.
-            ctx.fillText(String(value), bar.x, bar.y - 8);
-          });
-          ctx.restore();
-        }
-      };
-
-      activeCharts['chartDistribuicaoMandante'] = new Chart(getChartCanvas('chartDistribuicaoMandante'), {
-        type: 'bar',
-        data: {
-          labels: faixas.map(f => window.innerWidth <= 639 ? (f.label === '60 mil+' ? ['60', 'mil+'] : [f.label.replace(' mil', ''), 'mil']) : f.label),
-          datasets: [{
-            label: 'Jogos',
-            data: faixas.map(f => f.count),
-            backgroundColor: '#0E4735',
-            borderColor: '#C5A059',
-            borderWidth: 1.5,
-            borderRadius: 7,
-            customSum: faixas.map(f => f.sum)
-          }]
-        },
-        plugins: [countLabelsPlugin],
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          layout: { padding: { top: 18 } },
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: {
-                title: items => items.length ? items[0].label : '',
-                label: ctx => {
-                  const jogos = ctx.parsed.y || 0;
-                  const pct = totalMandante > 0 ? ((jogos / totalMandante) * 100).toFixed(1).replace('.', ',') : '0,0';
-                  return ` Jogos: ${jogos} (${pct}%)`;
-                },
-                afterLabel: ctx => {
-                  const jogos = ctx.parsed.y || 0;
-                  const soma = ctx.dataset.customSum[ctx.dataIndex] || 0;
-                  const media = jogos > 0 ? Math.round(soma / jogos) : 0;
-                  return ` Público médio: ${media.toLocaleString('pt-BR')}`;
-                }
-              }
-            }
-          },
-          scales: {
-            x: {
-              ticks: { maxRotation: 0, minRotation: 0, font: { size: window.innerWidth <= 639 ? 9 : 11 } },
-              grid: { display: false }
-            },
-            y: {
-              min: 0,
-              max: limiteSuperiorDistribuicao,
-              beginAtZero: true,
-              ticks: { display: false, precision: 0 }
-            }
-          }
-        }
-      });
+      distributionChartData3275=mandantePublicos;
+      renderDistributionChart3275();
     } else {
       distribuicaoMandanteSection.classList.add('hidden');
       if (activeCharts['chartDistribuicaoMandante']) {
@@ -2925,7 +3189,7 @@ function updateCharts() {
   activeCharts["chartDesempenhoTemporada"] = new Chart(desempenhoCanvas, {
     type: 'bar',
     data: {
-      labels: seasons.map(String),
+      labels: seasons.map((year,i)=>[String(year),`${totalJogosTemporada3275[i]}J`]),
       datasets: [
         { label: 'Vitórias', data: vTemporada, backgroundColor: '#047857', borderRadius: 4,
           ...(chartsMobile ? { barThickness: espessuraMobileDesempenho, maxBarThickness: espessuraMobileDesempenho } : {}) },
@@ -2961,9 +3225,8 @@ function updateCharts() {
   });
 
   // 7. SETOR SUL
-  const sulMatches = sulCandidates.sort((a, b) => b.sul - a.sul).slice(0, 10);
   renderTopMandante3264(validFiltered);
-  renderSulBarChart("chartSetorSul", sulMatches);
+  renderPublicSul3272(sulEvolutionCandidates3272);
 }
 
 function getMatchResult(match) {
@@ -4259,8 +4522,11 @@ function handleDelegatedClick(event) {
     'temporada-chart-view': () => setTemporadaChartView(target.dataset.view),
     'dia-semana-chart-view': () => setDiaSemanaChartView3266(target.dataset.view),
     'top-mandante-view-3264': () => setTopMandanteView3264(target.dataset.view),
+    'distribution-chart-view-3275': () => setDistributionChartView3275(target.dataset.view),
+    'horario-chart-view-3275': () => setHourChartView3275(target.dataset.view),
     'top-visitante-min-jogos': () => setTopVisitanteMinJogos3269(target.dataset.minJogos),
     'classicos-sul-view': () => setClassicosSulView3270(target.dataset.view),
+    'public-sul-view-3272': () => setPublicSulView3272(target.dataset.view),
     'reset-rivals-filters': () => resetRivalsFilters(),
     'copy-filtered-url': () => copyFilteredUrl(),
     'export-filtered-csv': () => exportFilteredCsv(),
@@ -4305,6 +4571,8 @@ function handleDelegatedChange(event) {
   if (target.dataset.changeAction === 'rivals-ultimos-jogos') { rivalsFilterState.ultimos = Number(target.value) || 0; renderRivals(); }
   if (target.dataset.changeAction === 'filter-checkbox') onCheckboxChange(target.dataset.filter, target.value, target.checked);
   if (target.dataset.changeAction === 'classicos-checkbox') onClassicosCheckboxChange(target.dataset.filter, target.value, target.checked);
+  if (target.dataset.changeAction === 'public-sul-exclude-3272') setPublicSulExclude3272(target.dataset.exclude, target.checked);
+  if (target.dataset.changeAction === 'audience-card-exclude-3275') setAudienceCardExclude3275(target.dataset.card,target.dataset.exclude,target.checked);
 }
 
 function initEventHandlers() {

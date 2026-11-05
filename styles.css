@@ -2175,3 +2175,499 @@ html[data-theme="light"] .sul3270-rank-pct{background:#e0f3e5}
 .sul3270-pandemic-note{font-size:11px;line-height:1.5;color:#c9a466;background:rgba(197,160,89,.12);border:1px dashed rgba(197,160,89,.45);border-radius:8px;padding:8px 10px;margin-top:10px}
 html[data-theme="light"] .sul3270-pandemic-note{color:#876321}
 .sul3270-pandemic-note[hidden]{display:none!important}
+
+/* V3.2.72 — modos e exclusões do Setor Sul (aba Público) */
+.sul3272-controls{display:flex;flex-direction:column;gap:10px;margin:0 0 14px}
+.sul3272-switch{display:inline-grid;grid-template-columns:1fr 1fr;align-self:flex-start;max-width:100%;background:rgba(100,150,120,.10);border:1px solid rgba(100,150,120,.25);border-radius:12px;padding:4px;gap:4px}
+.sul3272-switch button{min-width:135px;padding:10px 12px;border-radius:9px;color:var(--text-primary,#c3d4ca);font-size:12px;font-weight:750;cursor:pointer}
+.sul3272-switch button.is-active{background:#126446;color:white;box-shadow:0 2px 5px rgba(0,0,0,.15)}
+.sul3272-exclusions{display:flex;align-items:center;flex-wrap:wrap;gap:12px 20px;padding:10px 13px;border:1px solid rgba(100,150,120,.22);border-radius:10px}
+.sul3272-exclusions legend{font-weight:750;font-size:12px;padding:0 5px}
+.sul3272-exclusions label{display:inline-flex;align-items:center;gap:7px;font-size:12px;cursor:pointer}
+.sul3272-exclusions input{accent-color:#126446;width:15px;height:15px}
+.sul3272-context{font-size:11px;opacity:.78}
+.sul3272-evolution-panel h4{font-size:14px;font-weight:800;margin-bottom:6px}
+.sul3272-evolution-panel>p{font-size:12px;opacity:.75;margin-bottom:10px}
+.sul3272-chart-scroll{overflow-x:auto;width:100%;max-width:100%}
+#sul3272-evolution-chart-wrap{height:300px;position:relative}
+#sul3272-ranking-wrap[hidden],#sul3272-evolution-panel[hidden]{display:none!important}
+@media(max-width:639px){.sul3272-switch{width:100%}.sul3272-switch button{min-width:0;padding:9px 6px;font-size:11px}.sul3272-exclusions{gap:9px 12px}.sul3272-exclusions label{font-size:11px}#sul3272-evolution-chart-wrap{height:270px}}
+
+/* V3.2.73 — controles compactos em uma linha no desktop; sem rolagem horizontal na evolução. */
+@media(min-width:768px){
+  .sul3272-controls{display:grid;grid-template-columns:max-content minmax(0,1fr);align-items:center;column-gap:16px;row-gap:8px}
+  .sul3272-switch{align-self:center}
+  .sul3272-exclusions{justify-self:start;min-height:52px;padding:9px 16px}
+  .sul3272-context{grid-column:1/-1}
+}
+.sul3272-chart-scroll{overflow-x:hidden}
+#sul3272-evolution-chart-wrap{width:100%!important;min-width:0!important}
+#sul3273-evolution-empty{padding:24px;text-align:center;font-size:12px;opacity:.75}
+#sul3273-evolution-empty[hidden]{display:none}
+@media(max-width:639px){.sul3272-controls{gap:10px}.sul3272-exclusions{width:100%}}
+
+/* V3.2.74 — ranking do Setor Sul da aba Público no mesmo padrão de Clássicos */
+.sul3274-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(210px,252px);gap:23px;min-width:0}
+.sul3274-primary{min-width:0}
+.sul3274-aside{align-self:start}
+@media(max-width:767px){
+ .sul3274-body{grid-template-columns:minmax(0,1fr);gap:14px}
+ .sul3274-aside{order:-1;border-left:0;border-bottom:1px solid var(--sul3270-border);padding:0 0 14px;display:grid;grid-template-columns:1fr;gap:8px}
+ .sul3274-body .sul3270-rank-columns{display:none}
+ .sul3274-body .sul3270-rank-row{grid-template-columns:24px minmax(0,1fr) auto;column-gap:7px;row-gap:8px;padding:9px 1px}
+ .sul3274-body .sul3270-rank-row:nth-child(n+6){display:none}
+ .sul3274-body .sul3270-rank-pos{width:22px;height:23px;font-size:11px}
+ .sul3274-body .sul3270-rank-match{grid-column:2;grid-row:1}
+ .sul3274-body .sul3270-rank-match strong{font-size:11px}
+ .sul3274-body .sul3270-rank-match small{font-size:9px;line-height:1.35}
+ .sul3274-body .sul3270-rank-pct{grid-column:3;grid-row:1;font-size:10px;padding:5px 8px}
+ .sul3274-body .sul3270-rank-bar-container{grid-column:2/4;grid-row:2}
+ .sul3274-body .sul3270-rank-bar-track{height:21px}
+ .sul3274-body .sul3270-rank-value{font-size:10px;width:43px;flex-basis:43px}
+}
+
+/* V3.2.75 — controles dos gráficos de Público e Desempenho. Escopo local a cada card. */
+.audience-exclusions-3275 {
+  display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;
+  gap:7px 16px;max-width:100%;min-width:0;
+  margin:0;padding:9px 12px 8px;
+  border:1px solid rgba(132,164,144,.34);border-radius:12px;
+  background:rgba(245,250,246,.035);box-sizing:border-box;
+  color:#c1d5c6;font-size:12px;line-height:1.2;
+}
+.audience-exclusions-3275 legend {
+  color:inherit;font-size:12px;font-weight:750;line-height:1.2;
+  padding:0 6px;margin-left:6px;
+}
+.audience-exclusions-3275 label {
+  display:inline-flex;align-items:center;gap:7px;white-space:nowrap;cursor:pointer;
+}
+.audience-exclusions-3275 input {
+  width:16px;height:16px;accent-color:#176346;cursor:pointer;
+}
+html[data-theme="light"] .audience-exclusions-3275 {
+  background:rgba(246,250,247,.72);border-color:#d2e2d8;color:#385642;
+}
+.audience-chart-control-row-3275 {
+  display:flex;align-items:center;justify-content:space-between;
+  gap:12px;flex-wrap:wrap;min-width:0;margin:0 0 12px;
+}
+.audience-chart-control-row-3275 .season-view-switch{margin:0;}
+.audience-performance-control-3275{justify-content:flex-start;margin:0 0 2px;}
+/* Os dois cards lado a lado têm seletores na mesma linha e mesma altura. */
+#section-geral-temporada-competicao > .glass-panel:first-child > .flex:first-child,
+#section-geral-dia-horario > .glass-panel > .flex:first-child {
+  display:grid;grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;gap:9px 10px;
+}
+#section-geral-temporada-competicao > .glass-panel:first-child > .flex:first-child > div:first-child,
+#section-geral-dia-horario > .glass-panel > .flex:first-child > div:first-child {
+  grid-column:1 / -1;min-width:0;
+}
+#section-geral-temporada-competicao > .glass-panel:first-child > .flex:first-child > .season-view-switch,
+#section-geral-dia-horario > .glass-panel > .flex:first-child > .season-view-switch{
+  grid-column:1;grid-row:2;justify-self:start;margin:0;
+}
+#section-geral-temporada-competicao > .glass-panel:first-child > .flex:first-child > .audience-exclusions-3275,
+#section-geral-dia-horario > .glass-panel > .flex:first-child > .audience-exclusions-3275 {
+  grid-column:2;grid-row:2;justify-self:end;
+}
+/* Ranking: título à esquerda e dois controles à direita do cabeçalho. */
+#section-top-mandante-3264 > .flex:first-child {
+  display:grid;grid-template-columns:minmax(0,1fr) 144px auto;
+  align-items:center;gap:10px 12px;
+}
+#section-top-mandante-3264 > .flex:first-child > div:first-child{min-width:0;}
+#section-top-mandante-3264 > .flex:first-child > .season-view-switch{grid-column:2;width:144px;min-width:144px;max-width:144px;margin:0;}
+#section-top-mandante-3264 > .flex:first-child > .audience-exclusions-3275{grid-column:3;justify-self:end;}
+/* Sem a altura mínima induzida pelo antigo flex-basis mobile. */
+@media (max-width: 767px) {
+  #section-geral-temporada-competicao > .glass-panel:first-child > .flex:first-child,
+  #section-geral-dia-horario > .glass-panel > .flex:first-child{
+    grid-template-columns:minmax(0,1fr);
+  }
+  #section-geral-temporada-competicao > .glass-panel:first-child > .flex:first-child > .season-view-switch,
+  #section-geral-dia-horario > .glass-panel > .flex:first-child > .season-view-switch{
+    grid-column:1;grid-row:2;
+  }
+  #section-geral-temporada-competicao > .glass-panel:first-child > .flex:first-child > .audience-exclusions-3275,
+  #section-geral-dia-horario > .glass-panel > .flex:first-child > .audience-exclusions-3275{
+    grid-column:1;grid-row:3;justify-self:start;
+  }
+  #section-top-mandante-3264 > .flex:first-child{grid-template-columns:minmax(0,1fr) 144px;}
+  #section-top-mandante-3264 > .flex:first-child > div:first-child{grid-column:1 / -1;}
+  #section-top-mandante-3264 > .flex:first-child > .season-view-switch{grid-column:1;grid-row:2;}
+  #section-top-mandante-3264 > .flex:first-child > .audience-exclusions-3275{grid-column:2;grid-row:2;}
+}
+@media (max-width: 767px) {
+  .audience-exclusions-3275 {max-width:100%;padding:7px 9px;gap:7px 10px;font-size:11px;}
+  .audience-exclusions-3275 legend {font-size:11px;}
+  .audience-exclusions-3275 input{height:15px;width:15px;}
+  .audience-chart-control-row-3275{align-items:flex-start;gap:7px;margin-bottom:10px;}
+  #section-top-mandante-3264 > .flex:first-child {grid-template-columns:minmax(0,1fr);}
+  #section-top-mandante-3264 > .flex:first-child > div:first-child{grid-column:1;grid-row:1;}
+  #section-top-mandante-3264 > .flex:first-child > .season-view-switch{grid-column:1;grid-row:2;width:144px!important;min-width:144px!important;max-width:144px!important;}
+  #section-top-mandante-3264 > .flex:first-child > .audience-exclusions-3275{grid-column:1;grid-row:3;justify-self:start;}
+  .audience-performance-control-3275{margin-top:0;margin-bottom:0;}
+}
+
+
+/* V3.2.76 — O Setor Sul de Público replica a apresentação da aba Clássicos.
+   Toda esta camada é restrita ao #public-sul-card-3276. */
+#public-sul-card-3276.sul3270-card {
+  padding:22px 24px 24px;
+}
+#public-sul-card-3276 .sul3274-body {
+  grid-template-columns:minmax(0,1fr) minmax(210px,252px);
+}
+#public-sul-card-3276 .sul3274-aside {
+  align-self:start;
+}
+#public-sul-card-3276 .sul3270-capacity>svg { flex:0 0 17px; }
+/* Os indicadores do card de Público usam a mesma composição, divisórias,
+   cartões e tipografia da referência Setor Sul — Clássicos. */
+#public-sul-card-3276 .sul3270-stats {
+  background:var(--sul3270-soft);
+  border-radius:12px;
+}
+#public-sul-card-3276 .sul3270-stat-grid > div + div {
+  border-left:1px solid var(--sul3270-border);
+}
+@media(max-width:767px){
+  #public-sul-card-3276.sul3270-card { padding:16px 12px 18px; }
+  #public-sul-card-3276 .sul3274-body {display:flex;flex-direction:column;gap:15px;}
+  #public-sul-card-3276[data-view="ranking"] .sul3274-aside {
+    order:-1; padding:0 0 14px; border-left:0; border-bottom:1px solid var(--sul3270-border);
+    display:grid;grid-template-columns:1fr;gap:8px;
+  }
+}
+/* V3.2.76 — Público Médio por Temporada: controles no mesmo eixo,
+   também no mobile, com rótulo abreviado só neste card. */
+.audience-exclude-short3276 { display:none; }
+@media(max-width:767px){
+  #section-geral-temporada-competicao > .glass-panel:first-child > .flex:first-child {
+    display:grid;
+    grid-template-columns:minmax(100px,36%) minmax(0,1fr);
+    align-items:start;gap:7px 6px;
+    min-width:0;
+  }
+  #section-geral-temporada-competicao > .glass-panel:first-child > .flex:first-child > div:first-child {
+    grid-column:1 / -1;grid-row:1;
+  }
+  #section-geral-temporada-competicao > .glass-panel:first-child > .flex:first-child > .season-view-switch {
+    grid-column:1;grid-row:2;justify-self:stretch;
+    width:100% !important;min-width:0 !important;max-width:none !important;
+    display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+    height:43px;min-height:43px;
+    padding:3px;gap:2px;
+  }
+  #section-geral-temporada-competicao > .glass-panel:first-child > .flex:first-child > .season-view-switch button {
+    min-width:0;width:100%;padding:0 2px;font-size:10px;
+  }
+  #section-geral-temporada-competicao > .glass-panel:first-child > .flex:first-child > .audience-exclusions-3275 {
+    grid-column:2;grid-row:2;justify-self:stretch;
+    display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-start;
+    gap:3px 9px;padding:6px 7px 5px;max-width:100%;min-width:0;
+    font-size:10px;line-height:1.2;
+  }
+  #section-geral-temporada-competicao > .glass-panel:first-child > .flex:first-child > .audience-exclusions-3275 legend {
+    font-size:10px;margin-left:3px;padding:0 3px;
+  }
+  #section-geral-temporada-competicao > .glass-panel:first-child > .flex:first-child > .audience-exclusions-3275 label {
+    display:inline-flex;align-items:center;gap:3px;white-space:nowrap;
+    font-size:10px;
+  }
+  #section-geral-temporada-competicao > .glass-panel:first-child > .flex:first-child > .audience-exclusions-3275 input {
+    width:13px;height:13px;flex:0 0 13px;
+  }
+  #section-geral-temporada-competicao .audience-exclude-short3276 {display:inline;}
+  #section-geral-temporada-competicao .audience-exclude-long3276 {display:none;}
+}
+@media(max-width:359px){
+  #section-geral-temporada-competicao > .glass-panel:first-child > .flex:first-child {
+    grid-template-columns:minmax(91px,34%) minmax(0,1fr);
+  }
+  #section-geral-temporada-competicao > .glass-panel:first-child > .flex:first-child > .audience-exclusions-3275 {
+    gap:3px 6px;padding-left:5px;padding-right:4px;
+  }
+  #section-geral-temporada-competicao > .glass-panel:first-child > .flex:first-child > .audience-exclusions-3275 label {font-size:9px;}
+}
+
+/* Não duplicar a capacidade de referência quando o resumo lateral/
+   superior já apresenta o cartão no modo Maiores públicos. */
+#public-sul-card-3276[data-view="ranking"] .public-sul-header-capacity3276 {display:none;}
+
+
+/* V3.2.77 — Mesma composição mobile nos QUATRO gráficos com seletor
+   Linha/Coluna + excluir jogos. Não altera a visualização desktop nem outros cards. */
+@media (max-width:767px) {
+  .audience-dual-controls-3277 {
+    display:grid !important;
+    grid-template-columns:minmax(0,min(39%,152px)) minmax(0,min(61%,280px)) !important;
+    align-items:stretch !important;
+    gap:7px 6px !important;
+    min-width:0;
+    --audience-control-row-3277:1;
+  }
+  .audience-dual-header-3277 { --audience-control-row-3277:2; }
+  .audience-dual-header-3277 > div:first-child {
+    grid-column:1 / -1 !important;
+    grid-row:1 !important;
+    min-width:0;
+  }
+  .audience-dual-controls-3277 > .season-view-switch.chart-view-toggle-3266 {
+    grid-column:1 !important;
+    grid-row:var(--audience-control-row-3277) !important;
+    justify-self:stretch !important;
+    align-self:stretch !important;
+    box-sizing:border-box !important;
+    width:100% !important;
+    min-width:0 !important;
+    max-width:none !important;
+    height:100% !important;
+    min-height:48px !important;
+    max-height:none !important;
+    padding:3px !important;
+    margin:0 !important;
+    gap:2px !important;
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    align-items:stretch !important;
+    align-content:stretch !important;
+  }
+  .audience-dual-controls-3277 > .season-view-switch.chart-view-toggle-3266 button {
+    font-size:10px !important;
+    padding:2px 1px !important;
+    min-width:0 !important;
+    width:100% !important;
+    min-height:34px !important;
+    height:100% !important;
+    max-height:none !important;
+  }
+  .audience-dual-controls-3277 > .audience-exclusions-3275 {
+    grid-column:2 !important;
+    grid-row:var(--audience-control-row-3277) !important;
+    justify-self:stretch !important;
+    align-self:stretch !important;
+    display:flex !important;
+    flex-wrap:wrap !important;
+    justify-content:flex-start !important;
+    align-items:center !important;
+    align-content:center !important;
+    box-sizing:border-box !important;
+    width:100% !important;
+    min-width:0 !important;
+    max-width:100% !important;
+    min-height:48px !important;
+    margin:0 !important;
+    padding:5px 6px 5px !important;
+    gap:3px 7px !important;
+    font-size:10px !important;
+    line-height:1.2 !important;
+  }
+  .audience-dual-controls-3277 > .audience-exclusions-3275 legend {
+    font-size:10px !important;
+    line-height:1.1 !important;
+    margin-left:3px !important;
+    padding:0 3px !important;
+  }
+  .audience-dual-controls-3277 > .audience-exclusions-3275 label {
+    display:inline-flex !important;
+    align-items:center !important;
+    gap:3px !important;
+    white-space:nowrap !important;
+    font-size:11px !important;
+    line-height:1.2 !important;
+  }
+  .audience-dual-controls-3277 > .audience-exclusions-3275 input {
+    flex:0 0 13px !important;
+    width:13px !important;
+    height:13px !important;
+    margin:0 !important;
+  }
+  .audience-dual-controls-3277 .audience-exclude-short3276 { display:inline !important; }
+  .audience-dual-controls-3277 .audience-exclude-long3276 { display:none !important; }
+}
+@media (max-width:359px) {
+  .audience-dual-controls-3277 {
+    grid-template-columns:minmax(0,36fr) minmax(0,64fr) !important;
+    gap:5px !important;
+  }
+  .audience-dual-controls-3277 > .audience-exclusions-3275 {
+    padding:5px 4px !important;
+    gap:3px 5px !important;
+  }
+  .audience-dual-controls-3277 > .audience-exclusions-3275 label {font-size:10px !important;}
+}
+
+/* V4.0.0 — Ajuste aprovado: 5º card adota a mesma proporção
+   móvel dos outros quatro (seletor à esquerda e exclusões à direita).
+   Regras intencionalmente restritas ao mobile. */
+@media (max-width:767px) {
+  #section-top-mandante-3264 > .audience-dual-controls-3277 {
+    display:grid !important;
+    grid-template-columns:minmax(0,min(39%,152px)) minmax(0,min(61%,280px)) !important;
+    align-items:stretch !important;
+    gap:7px 6px !important;
+    --audience-control-row-3277:2;
+  }
+  #section-top-mandante-3264 > .audience-dual-controls-3277 > div:first-child {
+    grid-column:1 / -1 !important;
+    grid-row:1 !important;
+  }
+  #section-top-mandante-3264 > .audience-dual-controls-3277 > .season-view-switch.chart-view-toggle-3266 {
+    grid-column:1 !important;
+    grid-row:2 !important;
+    justify-self:stretch !important;
+    width:100% !important;
+    min-width:0 !important;
+    max-width:100% !important;
+    height:100% !important;
+  }
+  #section-top-mandante-3264 > .audience-dual-controls-3277 > .audience-exclusions-3275 {
+    grid-column:2 !important;
+    grid-row:2 !important;
+    justify-self:stretch !important;
+    width:100% !important;
+    max-width:100% !important;
+    min-width:0 !important;
+  }
+}
+@media (max-width:359px) {
+  #section-top-mandante-3264 > .audience-dual-controls-3277 {
+    grid-template-columns:minmax(0,36fr) minmax(0,64fr) !important;
+    gap:5px !important;
+  }
+}
+/* V4.0.0 — rótulo da capacidade do Setor Sul em ambas as abas. */
+.sul3270-capacity > div {min-width:0}
+.sul3270-capacity > div > small:last-child {margin-top:3px;font-size:10px}
+
+
+/* V4.0.1 — Padronização APROVADA dos cinco pares de controles.
+   Mobile: duas caixas proporcionais, de altura igual, posicionadas nas duas
+   extremidades do card, sem deslocamento por justify-content: space-between.
+   Desktop: bordas superior/inferior alinhadas; título permanece intocado. */
+@media (min-width:768px) {
+  .audience-dual-controls-3277 > .season-view-switch.chart-view-toggle-3266,
+  .audience-dual-controls-3277 > .audience-exclusions-3275 {
+    height:52px !important;
+    min-height:52px !important;
+    max-height:52px !important;
+    align-self:center !important;
+    box-sizing:border-box !important;
+    margin-top:0 !important;
+    margin-bottom:0 !important;
+  }
+  .audience-dual-controls-3277 > .season-view-switch.chart-view-toggle-3266 {
+    align-content:stretch !important;
+  }
+  .audience-dual-controls-3277 > .season-view-switch.chart-view-toggle-3266 > button {
+    height:100% !important;
+  }
+  .audience-dual-controls-3277 > .audience-exclusions-3275 {
+    align-content:center !important;
+    justify-content:flex-start !important;
+  }
+  .audience-chart-control-row-3275.audience-dual-controls-3277 {
+    align-items:center !important;
+  }
+}
+@media (max-width:767px) {
+  /* Escopo: exatamente os cinco cards com .audience-dual-controls-3277. */
+  .audience-dual-controls-3277,
+  #section-top-mandante-3264 > .audience-dual-controls-3277 {
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important;
+    column-gap:8px !important;
+    row-gap:8px !important;
+    align-items:stretch !important;
+    width:100% !important;
+    min-width:0 !important;
+    box-sizing:border-box !important;
+  }
+  .audience-dual-controls-3277 > .season-view-switch.chart-view-toggle-3266,
+  #section-top-mandante-3264 > .audience-dual-controls-3277 > .season-view-switch.chart-view-toggle-3266 {
+    grid-column:1 !important;
+    justify-self:stretch !important;
+    align-self:stretch !important;
+    height:100% !important;
+    min-height:56px !important;
+    max-height:none !important;
+    width:100% !important;
+    min-width:0 !important;
+    max-width:100% !important;
+    display:grid !important;
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    padding:3px !important;
+    margin:0 !important;
+    gap:2px !important;
+    align-content:stretch !important;
+  }
+  .audience-dual-controls-3277 > .season-view-switch.chart-view-toggle-3266 > button {
+    width:100% !important;
+    height:100% !important;
+    min-height:0 !important;
+    max-height:none !important;
+    min-width:0 !important;
+    font-size:10px !important;
+    padding:2px 0 !important;
+  }
+  .audience-dual-controls-3277 > .audience-exclusions-3275,
+  #section-top-mandante-3264 > .audience-dual-controls-3277 > .audience-exclusions-3275 {
+    grid-column:2 !important;
+    justify-self:stretch !important;
+    align-self:stretch !important;
+    width:100% !important;
+    min-width:0 !important;
+    max-width:100% !important;
+    min-height:56px !important;
+    height:auto !important;
+    padding:6px 7px 5px !important;
+    margin:0 !important;
+    gap:3px 5px !important;
+    display:flex !important;
+    flex-direction:column !important;
+    flex-wrap:nowrap !important;
+    justify-content:center !important;
+    align-items:flex-start !important;
+    align-content:center !important;
+    box-sizing:border-box !important;
+  }
+  .audience-dual-controls-3277 > .audience-exclusions-3275 legend {
+    font-size:10px !important;
+    line-height:1 !important;
+  }
+  .audience-dual-controls-3277 > .audience-exclusions-3275 label {
+    font-size:10px !important;
+    line-height:1.12 !important;
+    display:flex !important;
+    align-items:center !important;
+    gap:4px !important;
+    white-space:nowrap !important;
+  }
+  .audience-dual-controls-3277 > .audience-exclusions-3275 input {
+    height:13px !important;
+    width:13px !important;
+    flex:0 0 13px !important;
+  }
+  .audience-dual-controls-3277 .audience-exclude-short3276 {display:inline !important;}
+  .audience-dual-controls-3277 .audience-exclude-long3276 {display:none !important;}
+}
+@media(max-width:359px){
+  .audience-dual-controls-3277,
+  #section-top-mandante-3264 > .audience-dual-controls-3277 {
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important;
+    column-gap:5px !important;
+  }
+  .audience-dual-controls-3277 > .audience-exclusions-3275 {
+    padding-left:4px !important;
+    padding-right:2px !important;
+  }
+  .audience-dual-controls-3277 > .audience-exclusions-3275 label {
+    font-size:9px !important;
+    letter-spacing:-.16px !important;
+    gap:3px !important;
+  }
+  .audience-dual-controls-3277 > .audience-exclusions-3275 input {
+    height:12px !important;width:12px !important;flex-basis:12px !important;
+  }
+}

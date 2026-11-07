@@ -1,4 +1,4 @@
-const DASHBOARD_VERSION = '4.0.1';
+const DASHBOARD_VERSION = '4.0.2';
 
 // V3.2.59 — Aba Público: sem linhas de grade internas; manter somente
 // a linha inferior do eixo X nos gráficos verticais e a linha esquerda
@@ -2326,6 +2326,7 @@ function renderTopMandante3264(matches) {
     activeCharts.chartTopMandanteSemClassicos.destroy();
     activeCharts.chartTopMandanteSemClassicos=null;
   }
+  canvas.parentElement?.querySelector('.flu402-tooltip')?.remove();
   const mobile=window.matchMedia('(max-width: 767px)').matches;
   const top=matches.filter(m=>m.mando==='Mandante'&&audienceCardEligible3275('top',m)&&Number.isFinite(m.pub)&&m.pub>0)
     .sort((a,b)=>b.pub-a.pub||(a.timestamp||0)-(b.timestamp||0)).slice(0,mobile?5:10);
@@ -2354,17 +2355,14 @@ function renderTopMandante3264(matches) {
   };
   const axisMax=audienceScaleMax32646([dataset]);
   const mobilePlugin=mobile?topMandanteMobileLabel32649(top,horizontal):null;
+  const resultLabelsPlugin=topMandanteResultLabels402(top);
   activeCharts.chartTopMandanteSemClassicos=new Chart(canvas.getContext('2d'),{
     type:line?'line':'bar',data:{labels,datasets:[dataset]},
-    plugins:[...(horizontal?[]:[audienceLabels32646('audienceTopMandanteLabels32646',{fullValue:true,fontSize:mobile?10:12})]),...(mobilePlugin?[mobilePlugin]:[])],
+    plugins:[...(horizontal?[]:[audienceLabels32646('audienceTopMandanteLabels32646',{fullValue:true,fontSize:mobile?10:12})]),resultLabelsPlugin,...(mobilePlugin?[mobilePlugin]:[])],
     options:{
       indexAxis:horizontal?'y':'x',responsive:true,maintainAspectRatio:false,animation:false,
       layout:{padding:horizontal?{top:8,right:6,left:0,bottom:4}:{top:6,right:mobile?4:8,left:mobile?4:8,bottom:mobile?36:0}},
-      plugins:{legend:{display:false},tooltip:{callbacks:{
-        title:(items)=>{const m=top[items[0]?.dataIndex];return m?`${m.adv} · ${formatCatalogDate(m.data)}`:''},
-        afterTitle:(items)=>{const m=top[items[0]?.dataIndex];return m?.torneio && m.torneio !== '-' ? m.torneio : 'Competição não informada';},
-        label:ctx=>` Público: ${Number(horizontal?ctx.parsed.x:ctx.parsed.y).toLocaleString('pt-BR')}`
-      }}},
+      plugins:{legend:{display:false},tooltip:{enabled:false,external:topMandanteTooltip402(top),intersect:false,mode:'nearest'}},
       scales:horizontal?{
         x:{min:0,max:axisMax,beginAtZero:true,grid:{display:false},ticks:{display:false},border:{display:false}},
         y:{offset:true,grid:{display:false},border:{display:false},afterFit(scale){scale.width=Math.min(142,Math.max(96,canvas.parentElement?.clientWidth*.36||110));},ticks:{display:false}}
@@ -3746,6 +3744,71 @@ function sulYearStats3270(matches, year) {
   const valid = matches.filter(m => m.ano === year);
   return sulStats3270(valid);
 }
+// V4.0.2 — placares exibidos sempre do ponto de vista do Fluminense.
+function matchResult402(m) {
+  const gf=m?.gf, ga=m?.ga;
+  if (!Number.isInteger(gf)||!Number.isInteger(ga)||gf<0||ga<0) return null;
+  const kind=gf>ga?'V':gf<ga?'D':'E';
+  return {kind,score:`${gf}x${ga}`};
+}
+function matchResultInline402(m) {
+  const result=matchResult402(m);
+  if (!result) return '';
+  const aria=result.kind==='V'?'Vitória':result.kind==='D'?'Derrota':'Empate';
+  return `<span class="flu402-result" aria-label="${aria}: ${result.score}"><span class="flu402-result-letter flu402-${result.kind}">${result.kind}</span><span class="flu402-result-score">${result.score}</span></span>`;
+}
+// Mantém o tooltip dentro da área do gráfico, inclusive em telas estreitas.
+function topMandanteTooltip402(top) {
+  return function(context) {
+    const {chart,tooltip}=context;
+    const wrap=chart.canvas.parentElement;
+    if(!wrap)return;
+    let box=wrap.querySelector('.flu402-tooltip');
+    if(!box){box=document.createElement('div');box.className='flu402-tooltip';wrap.appendChild(box);}
+    if(!tooltip||tooltip.opacity===0||!tooltip.dataPoints?.length){box.style.opacity='0';return;}
+    const i=tooltip.dataPoints[0].dataIndex;
+    const m=top[i];if(!m){box.style.opacity='0';return;}
+    const result=matchResult402(m);
+    const competition=m.torneio&&m.torneio!=='-'?m.torneio:'Competição não informada';
+    const resultLine=result?`<div class="flu402-tooltip-result">${matchResultInline402(m)}</div>`:'';
+    box.innerHTML=`<div class="flu402-tooltip-title">${escapeHtml(m.adv)} · ${escapeHtml(formatCatalogDate(m.data))}</div>${resultLine}<div class="flu402-tooltip-competition">${escapeHtml(competition)}</div><div class="flu402-tooltip-audience"><i aria-hidden="true"></i> Público: ${Number(m.pub).toLocaleString('pt-BR')}</div>`;
+    box.style.opacity='1';
+    const width=box.offsetWidth,height=box.offsetHeight;
+    const canvasOffsetX=chart.canvas.offsetLeft,canvasOffsetY=chart.canvas.offsetTop;
+    const targetX=canvasOffsetX+tooltip.caretX;
+    const targetY=canvasOffsetY+tooltip.caretY;
+    const left=Math.max(4,Math.min(wrap.clientWidth-width-4,targetX-width/2));
+    const above=targetY-height-14;
+    const topY=above>=3?above:Math.min(wrap.clientHeight-height-4,targetY+18);
+    box.style.left=`${left}px`;box.style.top=`${Math.max(3,topY)}px`;
+  };
+}
+function topMandanteResultLabels402(top) {
+  return {id:'topMandanteResultLabels402',afterDatasetsDraw(chart){
+    const {ctx,chartArea,scales}=chart;
+    if(!chartArea||!scales?.x)return;
+    const horizontal=chart.options.indexAxis==='y';
+    const mobile=window.matchMedia('(max-width: 767px)').matches;
+    const side=mobile?17:21;
+    ctx.save();
+    top.forEach((m,i)=>{
+      const result=matchResult402(m);if(!result)return;
+      // No modo Coluna mobile as barras são horizontais: selo discreto
+      // no começo da barra, alinhado à respectiva partida.
+      const centerX=horizontal?chartArea.left+side/2+4:scales.x.getPixelForTick(i);
+      const centerY=horizontal?scales.y?.getPixelForTick(i):chartArea.bottom-8-side/2;
+      if(!Number.isFinite(centerX)||!Number.isFinite(centerY))return;
+      const x=Math.round(centerX-side/2),y=Math.round(centerY-side/2);
+      if(x<chartArea.left||x+side>chartArea.right||y<chartArea.top||y+side>chartArea.bottom)return;
+      ctx.fillStyle=result.kind==='V'?'#176647':result.kind==='E'?'#ae831c':'#b92b42';
+      ctx.beginPath();ctx.roundRect(x,y,side,side,Math.max(4,Math.round(side*.26)));ctx.fill();
+      ctx.fillStyle='#ffffff';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.font=`700 ${mobile?10:12}px 'Plus Jakarta Sans', sans-serif`;
+      ctx.fillText(result.kind,centerX,centerY+.5);
+    });
+    ctx.restore();
+  }};
+}
 function sulRankHTML3270(m, i, max) {
   const ratio = Math.min(100, Math.max(1, m.sul / max * 100));
   const pct = sulOccupancyPercent326416(m);
@@ -3753,7 +3816,7 @@ function sulRankHTML3270(m, i, max) {
   const title = `${m.adv} · ${gameDate} · ${m.torneio}: ${sulFormatCount3270(m.sul)} pagantes (${sulFormatPct3270(pct)} da capacidade de referência)`;
   return `<div class="sul3270-rank-row" title="${escapeHtml(title)}">
       <div class="sul3270-rank-pos">${i+1}</div>
-      <div class="sul3270-rank-match"><strong>${escapeHtml(m.adv)}</strong>
+      <div class="sul3270-rank-match"><div class="flu402-match-head"><strong title="${escapeHtml(m.adv)}">${escapeHtml(m.adv)}</strong>${matchResultInline402(m)}</div>
         <small>${escapeHtml(gameDate)} · ${escapeHtml(m.torneio)}</small></div>
       <div class="sul3270-rank-bar-container"><div class="sul3270-rank-bar-track"><div class="sul3270-rank-bar-fill" style="width:${ratio.toFixed(2)}%"></div></div>
         <strong class="sul3270-rank-value">${sulFormatCount3270(m.sul)}</strong></div>

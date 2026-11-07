@@ -1,4 +1,4 @@
-const DASHBOARD_VERSION = '4.0.5';
+const DASHBOARD_VERSION = '4.0.10';
 
 // V3.2.59 — Aba Público: sem linhas de grade internas; manter somente
 // a linha inferior do eixo X nos gráficos verticais e a linha esquerda
@@ -839,6 +839,7 @@ async function fetchLiveGoogleSheet() {
           pub: parseNumber(row['Público Total']),
           pubVis: parseNumber(row['Público Visitante (Flu)'] || row['Público Visitante']),
           sul: parseNumber(row['Sul Pagantes']),
+          sulDevolvidos: parseSulDevolvidos408(row),
           sulValueKind3276: sulValueKind3276(row['Sul Pagantes']),
           sulNotApplicable: isNotApplicableNA3268(row['Sul Pagantes']),
           sulPandemicZero: isPandemicSulZeroQuality326415(row['Sul Pagantes']),
@@ -896,7 +897,8 @@ async function fetchLiveGoogleSheet() {
         gf: score.gf,
         ga: score.ga,
         presente: normalizeText(presVal),
-        sul: parseNumber(row['Sul Pagantes'])
+        sul: parseNumber(row['Sul Pagantes']),
+        sulDevolvidos: parseSulDevolvidos408(row)
       });
     });
 
@@ -2862,14 +2864,24 @@ function updateCharts() {
     else { chartMode = 'duplo'; titleSuffix = '(Mandante e Visitante)'; }
   }
 
-  const titleTemporada = document.getElementById('title-temporada');
-  if(titleTemporada) titleTemporada.textContent = `Público Médio por Temporada ${titleSuffix}`;
-  const titleCompeticao = document.getElementById('title-competicao');
-  if(titleCompeticao) titleCompeticao.textContent = `Público Médio por Competição ${titleSuffix}`;
-  const titleDia = document.getElementById('title-dia');
-  if(titleDia) titleDia.textContent = `Média de Público por Dia da Semana ${titleSuffix}`;
-  const titleHorario = document.getElementById('title-horario');
-  if(titleHorario) titleHorario.textContent = `Média de Público por Faixa de Horário ${titleSuffix}`;
+  // Somente os títulos dependentes do filtro Mando recebem ícones no mobile.
+  // O texto integral continua no DOM para desktop e acessibilidade.
+  const mandoIconHouse = '<i data-lucide="home" class="mando-title-icon mando-title-home" aria-hidden="true"></i>';
+  const mandoIconPlane = '<i data-lucide="plane" class="mando-title-icon mando-title-away" aria-hidden="true"></i>';
+  const mandoMobile = chartMode === 'mandante' ? mandoIconHouse
+    : chartMode === 'visitante' ? mandoIconPlane
+    : chartMode === 'duplo' ? mandoIconHouse + mandoIconPlane : '<span class="mando-title-neutral">Campo Neutro</span>';
+  const updateMandoTitle = (id, label) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.setAttribute('aria-label', `${label} ${titleSuffix}`);
+    el.innerHTML = `<span class="mando-title-base">${label}</span> <span class="mando-title-desktop">${titleSuffix}</span><span class="mando-title-mobile" aria-hidden="true">${mandoMobile}</span>`;
+  };
+  updateMandoTitle('title-temporada', 'Média Público - Temporada');
+  updateMandoTitle('title-competicao', 'Média Público - Competição');
+  updateMandoTitle('title-dia', 'Média Público - Dia da Semana');
+  updateMandoTitle('title-horario', 'Média Público - Faixa de Horário');
+  if (window.lucide) lucide.createIcons();
 
   const showLegend = chartMode === 'duplo';
 
@@ -3807,6 +3819,20 @@ function topMandanteResultLabels402(top) {
     ctx.restore();
   }};
 }
+// V4.0.8 — Devoluções são dados oficiais; zero é distinto de campo vazio.
+function parseSulDevolvidos408(row) {
+  const key=Object.keys(row||{}).find(k=>normalizeComparable(k).replace(/[^a-z0-9]/g,'')==='suldevolvidos');
+  if(!key)return null;
+  const raw=row[key];
+  if(raw===null||raw===undefined||String(raw).trim()==='')return null;
+  const val=parseNumber(raw);
+  return Number.isFinite(val)&&val>=0?val:null;
+}
+function formatSulDevolvidos408(m) {
+  const val=m.sulDevolvidos;
+  if(!Number.isFinite(val))return 'Não informado';
+  return `${val.toLocaleString('pt-BR')}${val<=10?' 🤔':''}`;
+}
 function sulRankHTML3270(m, i, max) {
   const ratio = Math.min(100, Math.max(1, m.sul / max * 100));
   const pct = sulOccupancyPercent326416(m);
@@ -3814,8 +3840,8 @@ function sulRankHTML3270(m, i, max) {
   const title = `${m.adv} · ${gameDate} · ${m.torneio}: ${sulFormatCount3270(m.sul)} pagantes (${sulFormatPct3270(pct)} da capacidade de referência)`;
   return `<div class="sul3270-rank-row" title="${escapeHtml(title)}">
       <div class="sul3270-rank-pos">${i+1}</div>
-      <div class="sul3270-rank-match"><div class="flu402-match-head"><strong title="${escapeHtml(m.adv)}">${escapeHtml(m.adv)}</strong>${matchResultInline402(m)}</div>
-        <small>${escapeHtml(gameDate)} · ${escapeHtml(m.torneio)}</small></div>
+      <div class="sul3270-rank-match"><div class="flu402-match-head"><strong title="${escapeHtml(m.adv)}">${escapeHtml(m.adv)}</strong>${matchResultInline402(m)}<span class="sul408-competition" title="${escapeHtml(m.torneio)}">${escapeHtml(m.torneio)}</span></div>
+        <small class="sul408-details">${escapeHtml(gameDate)} · Ingressos devolvidos: ${escapeHtml(formatSulDevolvidos408(m))}</small></div>
       <div class="sul3270-rank-bar-container"><div class="sul3270-rank-bar-track"><div class="sul3270-rank-bar-fill" style="width:${ratio.toFixed(2)}%"></div></div>
         <strong class="sul3270-rank-value">${sulFormatCount3270(m.sul)}</strong></div>
       <div class="sul3270-rank-pct">${sulFormatPct3270(pct)}</div>

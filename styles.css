@@ -2763,3 +2763,112 @@ html[data-theme="light"] .sul403-public-heading .sul3270-warning{color:#ae7217}
   #public-sul-card-3276 #sul-chart-subtitle .sul404-mobile-info,
   #classicos-sul-3270 #classicos-sul-chart-subtitle .sul404-mobile-info{display:inline-flex!important;vertical-align:middle;margin-left:5px;flex-shrink:0}
 }
+
+/* V4.0.6 — ícones de mando somente nos títulos dinâmicos em telas mobile */
+.mando-title-mobile { display: none; }
+@media (max-width: 767px) {
+  .mando-title-desktop { display: none; }
+  .mando-title-mobile { display: inline-flex; align-items: center; gap: 4px; vertical-align: -2px; white-space: nowrap; }
+  .mando-title-icon { display: inline-block; width: 1em; height: 1em; flex: none; }
+  .mando-title-home { color: #18a98e; }
+  .mando-title-away { color: #d96a86; }
+  .mando-title-neutral { font-size: .9em; }
+}
+
+/* V4.0.7 — Títulos fixos com ícones apenas no mobile */
+.mando-static-mobile { display: none; }
+@media (max-width: 767px) {
+  .mando-static-desktop { display: none; }
+  .mando-static-mobile { display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+  .mando-static-mobile .mando-title-icon { width: 1em; height: 1em; vertical-align: -0.1em; }
+}
+
+/* V4.0.8 — Setor Sul: linha 1 (adversário, resultado, competição); linha 2 sem negrito. */
+#public-sul-card-3276 .sul408-competition,
+#classicos-sul-3270 .sul408-competition {font-size:10px;color:var(--sul3270-muted);font-weight:400;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#public-sul-card-3276 .sul408-details,
+#classicos-sul-3270 .sul408-details {font-weight:400!important;}
+@media(max-width:740px){
+  #public-sul-card-3276 .sul408-competition,
+  #classicos-sul-3270 .sul408-competition{font-size:9px;}
+  #public-sul-card-3276 .sul408-details,
+  #classicos-sul-3270 .sul408-details{font-size:9px;}
+}
+
+/* V4.0.9 — Seletor Linha/Coluna: icones compactos em ambos os temas e tamanhos. */
+.season-view-switch.chart-view-toggle-3266{gap:2px;padding:3px;margin-left:0;}
+.season-view-switch.chart-view-toggle-3266 button{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:39px;height:34px;min-width:39px;min-height:34px;
+  padding:0;line-height:1;border-radius:7px;
+  background:transparent;color:#aab9b0;
+}
+.season-view-switch.chart-view-toggle-3266 button svg{width:19px;height:19px;stroke-width:2;flex:none;}
+.season-view-switch.chart-view-toggle-3266 button.is-active,
+html[data-theme="light"] .season-view-switch.chart-view-toggle-3266 button.is-active{
+  background:#104c37;color:#fff;box-shadow:0 1px 4px rgba(0,0,0,.18);
+}
+html[data-theme="light"] .season-view-switch.chart-view-toggle-3266 button:not(.is-active){background:#edf4ee;color:#7b8982;}
+@media(max-width:767px){
+  #section-top-mandante-3264 .top-mandante-switch-32649.chart-view-toggle-3266{
+    display:inline-flex;width:auto;flex:0 0 auto;grid-template-columns:none;gap:2px;
+  }
+}
+
+/* V4.0.10 — Controles Linha/Coluna e Excluir jogos: alturas iguais,
+   divisão 50/50 e botões centrados nos cinco cards, desktop e mobile. */
+.audience-dual-controls-3277 > .season-view-switch.chart-view-toggle-3266,
+#section-top-mandante-3264 > .audience-dual-controls-3277 > .season-view-switch.chart-view-toggle-3266 {
+  display:grid !important;
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  grid-template-rows:minmax(0,1fr) !important;
+  gap:2px !important;
+  padding:3px !important;
+  box-sizing:border-box !important;
+  overflow:hidden;
+}
+.audience-dual-controls-3277 > .season-view-switch.chart-view-toggle-3266 > button,
+#section-top-mandante-3264 > .audience-dual-controls-3277 > .season-view-switch.chart-view-toggle-3266 > button {
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:100% !important;
+  min-width:0 !important;
+  max-width:none !important;
+  height:100% !important;
+  min-height:0 !important;
+  max-height:none !important;
+  margin:0 !important;
+  padding:0 !important;
+  flex:initial !important;
+  box-sizing:border-box !important;
+}
+@media (min-width:768px) {
+  .audience-dual-controls-3277 > .season-view-switch.chart-view-toggle-3266,
+  #section-top-mandante-3264 > .audience-dual-controls-3277 > .season-view-switch.chart-view-toggle-3266,
+  .audience-dual-controls-3277 > .audience-exclusions-3275,
+  #section-top-mandante-3264 > .audience-dual-controls-3277 > .audience-exclusions-3275 {
+    height:52px !important;
+    min-height:52px !important;
+    max-height:52px !important;
+    align-self:center !important;
+    box-sizing:border-box !important;
+  }
+}
+@media (max-width:767px) {
+  .audience-dual-controls-3277 > .season-view-switch.chart-view-toggle-3266,
+  #section-top-mandante-3264 > .audience-dual-controls-3277 > .season-view-switch.chart-view-toggle-3266,
+  .audience-dual-controls-3277 > .audience-exclusions-3275,
+  #section-top-mandante-3264 > .audience-dual-controls-3277 > .audience-exclusions-3275 {
+    height:50px !important;
+    min-height:50px !important;
+    max-height:50px !important;
+    align-self:stretch !important;
+    box-sizing:border-box !important;
+  }
+  .audience-dual-controls-3277 > .audience-exclusions-3275,
+  #section-top-mandante-3264 > .audience-dual-controls-3277 > .audience-exclusions-3275 {
+    padding:5px 6px 4px !important;
+    gap:2px 4px !important;
+  }
+}

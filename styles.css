@@ -2671,3 +2671,27 @@ html[data-theme="light"] .audience-exclusions-3275 {
     height:12px !important;width:12px !important;flex-basis:12px !important;
   }
 }
+
+/* V4.0.2 — Resultado discreto nos rankings do Setor Sul, nas duas abas. */
+.flu402-match-head{display:flex;align-items:center;gap:7px;min-width:0;white-space:nowrap}
+.flu402-match-head>strong{display:block;min-width:0;flex:0 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;line-height:1.4}
+.flu402-result{display:inline-flex;align-items:center;gap:4px;white-space:nowrap;flex:0 0 auto;font-weight:700;font-size:12px;line-height:1}
+.flu402-result-letter{display:inline-flex;align-items:center;justify-content:center;border-radius:4px;width:18px;height:18px;color:#fff;font-size:11px;font-weight:800;line-height:1}
+.flu402-result-letter.flu402-V{background:#176647}
+.flu402-result-letter.flu402-E{background:#ae831c}
+.flu402-result-letter.flu402-D{background:#b92b42}
+.flu402-result-score{font-size:inherit;font-weight:700;color:var(--sul3270-text);font-variant-numeric:tabular-nums}
+@media(max-width:639px){
+  .flu402-match-head{gap:4px}
+  .flu402-match-head>strong{font-size:11px}
+  .flu402-result{gap:3px;font-size:10px}
+  .flu402-result-letter{width:15px;height:16px;font-size:10px;border-radius:3px}
+}
+/* Tooltip HTML permite exibir V/E/D colorido sem alterar a cor dos pontos. */
+.audience-top-chart-wrap .flu402-tooltip{pointer-events:none;position:absolute;z-index:25;opacity:0;max-width:min(268px,calc(100% - 8px));width:max-content;box-sizing:border-box;padding:10px 12px;background:rgba(31,32,33,.96);color:#fff;border-radius:8px;box-shadow:0 7px 20px rgba(0,0,0,.24);font-size:12px;line-height:1.5;transition:opacity .08s ease;overflow-wrap:anywhere}
+.flu402-tooltip-title{font-weight:800}
+.flu402-tooltip-competition{color:#e2e6e2}
+.flu402-tooltip-result{margin:4px 0}
+.flu402-tooltip-result .flu402-result-score{color:#fff}
+.flu402-tooltip-audience{display:flex;align-items:center;gap:6px;margin-top:4px}
+.flu402-tooltip-audience i{display:inline-block;width:10px;height:10px;border:2px solid #0e4735;background:#c5a059}

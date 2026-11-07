@@ -1,4 +1,4 @@
-const DASHBOARD_VERSION = '4.0.2';
+const DASHBOARD_VERSION = '4.0.5';
 
 // V3.2.59 — Aba Público: sem linhas de grade internas; manter somente
 // a linha inferior do eixo X nos gráficos verticais e a linha esquerda
@@ -2587,7 +2587,6 @@ function renderPublicSul3272(matches) {
   const ranking=positive.slice().sort((a,b)=>b.sul-a.sul).slice(0,10);
   const rankingWrap=document.getElementById('sul3272-ranking-wrap');
   const evolution=document.getElementById('sul3272-evolution-panel');
-  const context=document.getElementById('sul3272-context');
   const subtitle=document.getElementById('sul-chart-subtitle');
   const count=document.getElementById('sul-recorded-count');
   if(rankingWrap) rankingWrap.hidden=publicSulView3272!=='ranking';
@@ -2597,10 +2596,6 @@ function renderPublicSul3272(matches) {
     btn.classList.toggle('is-active',active);
     btn.setAttribute('aria-pressed',String(active));
   });
-  if(context){
-    const exclusions=[publicSulExclude3272.classicos?'Sem clássicos':'',publicSulExclude3272.estadual?'Sem Estadual / Amistosos':''].filter(Boolean);
-    context.textContent=`${exclusions.length?exclusions.join(' · '):'Todos os jogos elegíveis'} · ${eligible.length.toLocaleString('pt-BR')} jogos com registro válido`;
-  }
   // Total no card: registros numéricos + células vazias (sem informação),
   // sempre após filtros globais e as exclusões locais do Setor Sul.
   const selectedForCount = publicSulEligible3272(
@@ -2629,10 +2624,13 @@ function renderPublicSul3272(matches) {
     const compDetails3276=[...summaryByComp3276].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],'pt-BR')).map(([k,n])=>`${k} (${n})`).join(' · ');
     missingSulSummary3276.textContent=`Sem dados oficiais do Setor Sul em ${missingSulMatches3276.length} ${missingSulMatches3276.length===1?'jogo':'jogos'}${compDetails3276?`: ${compDetails3276}`:''}`;
   }
-  if(subtitle){
-    const range=subtitle.querySelector('.dynamic-year-range')?.textContent||'2018–2026';
-    subtitle.innerHTML=publicSulView3272==='ranking' ? `<span class="sul-top-count">${window.matchMedia('(max-width: 639px)').matches?'Top 5':'Top 10'}</span> maiores ocupações do Setor Sul do Maracanã (<span class="dynamic-year-range">${range}</span>)` : `Evolução histórica do público pagante do Setor Sul do Maracanã (<span class="dynamic-year-range">${range}</span>)`;
-  }
+  if(subtitle){const subtitleText=subtitle.querySelector('.sul405-subtitle-text');if(subtitleText)subtitleText.textContent='Top 10 pagantes do Setor Sul do Maracanã';}
+  const validSulRecords403=eligible.filter(m=>sulMatchKind3276(m)==='numeric' && m.sul>0);
+  const yearsSul403=validSulRecords403.map(m=>Number(m.ano)).filter(Number.isFinite);
+  const setSul403=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value;};
+  setSul403('sul403-public-valid',validSulRecords403.length.toLocaleString('pt-BR'));
+  setSul403('sul403-public-year-start',yearsSul403.length?Math.min(...yearsSul403):'—');
+  setSul403('sul403-public-year-end',yearsSul403.length?Math.max(...yearsSul403):'—');
   if(publicSulView3272==='ranking'){
     if(activeCharts.chartSulEvolution3272){activeCharts.chartSulEvolution3272.destroy();delete activeCharts.chartSulEvolution3272;}
     if(activeCharts.chartSetorSul){activeCharts.chartSetorSul.destroy();delete activeCharts.chartSetorSul;}
@@ -2643,7 +2641,7 @@ function renderPublicSul3272(matches) {
     }
     const mobile=window.matchMedia('(max-width:639px)').matches;
     const rankCount=document.getElementById('sul3274-ranking-count');
-    if(rankCount)rankCount.textContent=mobile?'Top 5':'Top 10';
+    if(rankCount)rankCount.textContent='Top 10';
     const valid=eligible.filter(m=>sulMatchKind3276(m)==='numeric');
     const stats=sulStats3270(valid);
     const mean=document.getElementById('sul3274-mean');if(mean)mean.textContent=stats.n?sulFormatCount3270(stats.mean):'—';
@@ -4045,7 +4043,7 @@ function renderClassicosSulPanel3270() {
   if(occ)occ.textContent=sulFormatPct3270(totals.occupancy);
   if(count)count.textContent=String(totals.n);
   const label=document.getElementById('sul3270-ranking-count');
-  if(label)label.textContent=window.matchMedia('(max-width: 740px)').matches?'Top 5':'Top 10';
+  if(label)label.textContent='Top 10';
   renderSulRanking3270(matches);
   if(classicosSulView3270==='evolucao')renderSulEvolution3270(matches,classicosSulFilteredContext3270);
   if(classicosSulView3270==='rivais')renderSulRivals3270(matches);
@@ -4152,6 +4150,7 @@ function applyClassicosFilters() {
 
   const sulMatchesClassicos = [];
   let missingSulCountClassicos = 0;
+  const missingSulMatches403=[];
   // Só anotar pandemia quando a seleção contém partidas explicitamente classificadas como PAND.
   const sulPandemicYearsClassicos3270 = new Set();
 
@@ -4159,12 +4158,12 @@ function applyClassicosFilters() {
     if (!m.isMaracanaNorm) return;
     if (!isMatchInFilteredClassicos(m)) return;
     if (m.sulPandemicZero) sulPandemicYearsClassicos3270.add(m.ano);
-    if (Number.isFinite(m.sul) && m.sul >= 0 && !m.sulPandemicZero && !m.sulNotApplicable) {
+    if (Number.isFinite(m.sul) && m.sul > 0 && !m.sulPandemicZero && !m.sulNotApplicable) {
       // Zero numérico válido é observado; apenas 0 - PAND / NA / vazio são excluídos.
       sulMatchesClassicos.push(m);
-    } else if (!Number.isFinite(m.sul) && !m.sulNotApplicable) {
-      // 0 - PAND, zero numérico e NA não são dados faltantes.
+    } else if (sulMatchKind3276(m)==='empty') {
       missingSulCountClassicos++;
+      missingSulMatches403.push(m);
     }
   });
 
@@ -4192,12 +4191,15 @@ function applyClassicosFilters() {
   const alertRecordsEl = document.getElementById("classicos-sul-alert-records");
   if (alertRecordsEl) {
       if (sulMatchesClassicos.length > 0) {
-          document.getElementById("classicos-sul-record-z").textContent = sulMatchesClassicos.length;
+          document.getElementById("classicos-sul-record-z").textContent = sulMatchesClassicos.filter(m=>m.sul>0).length;
           document.getElementById("classicos-sul-record-x").textContent = xxxx;
           document.getElementById("classicos-sul-record-y").textContent = yyyy;
           alertRecordsEl.classList.remove("hidden");
       } else {
-          alertRecordsEl.classList.add("hidden");
+          document.getElementById("classicos-sul-record-z").textContent = '0';
+          document.getElementById("classicos-sul-record-x").textContent = '—';
+          document.getElementById("classicos-sul-record-y").textContent = '—';
+          alertRecordsEl.classList.remove("hidden");
       }
   }
 
@@ -4206,6 +4208,17 @@ function applyClassicosFilters() {
   if (classicosAlertEl && classicosCountEl) {
     if (missingSulCountClassicos > 0) {
       classicosCountEl.textContent = missingSulCountClassicos;
+      const byCompetition403=new Map();
+      missingSulMatches403.forEach(m=>{
+        const name=m.torneio&&m.torneio!=='-'?m.torneio:'Sem torneio informado';
+        const norm=normalizeComparable(name);
+        const short=(norm==='libertadores da america'||norm==='conmebol libertadores')?'Libertadores':
+          (norm==='copa sul-americana'||norm==='copa sul americana'||norm==='conmebol sul-americana'||norm==='conmebol sul americana')?'Sul-Americana':name;
+        byCompetition403.set(short,(byCompetition403.get(short)||0)+1);
+      });
+      const summary403=[...byCompetition403].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],'pt-BR')).map(([name,n])=>`${name} (${n})`).join(' · ');
+      const summaryEl403=document.getElementById('classicos-sul-missing-summary');
+      if(summaryEl403)summaryEl403.textContent=`Sem dados oficiais do Setor Sul em ${missingSulCountClassicos} ${missingSulCountClassicos===1?'jogo':'jogos'}${summary403?`: ${summary403}`:''}`;
       classicosAlertEl.classList.remove("hidden");
     } else {
       classicosAlertEl.classList.add("hidden");
@@ -4590,6 +4603,15 @@ function handleDelegatedClick(event) {
     'top-visitante-min-jogos': () => setTopVisitanteMinJogos3269(target.dataset.minJogos),
     'classicos-sul-view': () => setClassicosSulView3270(target.dataset.view),
     'public-sul-view-3272': () => setPublicSulView3272(target.dataset.view),
+    'sul-capacity-info-403': () => {
+      const heading=target.closest('.sul403-public-heading, .sul3270-header-text');
+      const description=heading?.querySelector('.sul403-info-description');
+      if(!description)return;
+      description.hidden=!description.hidden;
+      heading.querySelectorAll('[data-action="sul-capacity-info-403"]').forEach(button=>{
+        button.setAttribute('aria-expanded',String(!description.hidden));
+      });
+    },
     'reset-rivals-filters': () => resetRivalsFilters(),
     'copy-filtered-url': () => copyFilteredUrl(),
     'export-filtered-csv': () => exportFilteredCsv(),

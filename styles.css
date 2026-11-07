@@ -2695,3 +2695,71 @@ html[data-theme="light"] .audience-exclusions-3275 {
 .flu402-tooltip-result .flu402-result-score{color:#fff}
 .flu402-tooltip-audience{display:flex;align-items:center;gap:6px;margin-top:4px}
 .flu402-tooltip-audience i{display:inline-block;width:10px;height:10px;border:2px solid #0e4735;background:#c5a059}
+
+/* V4.0.3 — Cabeçalhos e controles do Setor Sul, Top 10 mobile e alinhamento de desempenho. */
+#section-desempenho-temporada > div:first-child{align-items:center}
+#section-desempenho-temporada .audience-performance-control-3275{margin:0;flex:0 0 auto;justify-content:flex-end;align-self:center}
+#section-desempenho-temporada .audience-performance-control-3275 fieldset{min-height:52px}
+.sul403-public-header{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;border-bottom:1px solid var(--sul3270-border);padding-bottom:16px;margin-bottom:14px;min-width:0}
+.sul403-public-heading{min-width:0;flex:1 1 auto}
+.sul403-public-heading h3{display:flex;align-items:center;gap:9px;font-size:19px;font-weight:800;line-height:1.35}
+.sul403-public-heading h3>svg{width:20px;height:20px;color:#C5A059;flex-shrink:0}
+.sul403-public-heading>p{font-size:12px;line-height:1.5;margin-top:5px;color:var(--sul3270-muted)}
+.sul403-public-heading .sul403-record{font-size:11px;color:var(--sul3270-muted)}
+.sul403-public-heading .sul3270-warning{color:#f5be5c;font-size:11px;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+html[data-theme="light"] .sul403-public-heading .sul3270-warning{color:#ae7217}
+.sul403-public-controls{flex:0 1 505px;min-width:0;display:flex;flex-direction:column;align-items:flex-end;gap:9px}
+.sul403-public-controls .sul3272-switch{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;align-self:auto;max-width:none;gap:3px}
+.sul403-public-controls .sul3272-switch button{display:flex;justify-content:center;align-items:center;gap:7px;min-width:0;min-height:39px}
+.sul403-public-controls .sul3272-switch button svg{width:15px;height:15px;flex-shrink:0}
+.sul403-public-controls .sul3272-exclusions{width:auto;max-width:100%;min-height:52px;box-sizing:border-box}
+.sul403-info{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;color:#C5A059;flex-shrink:0;cursor:pointer}
+.sul403-info:hover,.sul403-info:focus-visible{background:rgba(197,160,89,.16);outline-offset:2px}
+.sul403-info svg{width:17px!important;height:17px!important;color:inherit!important}
+.sul403-info-description{font-size:12px!important;line-height:1.5!important;padding:9px 11px;border-radius:9px;border:1px solid var(--sul3270-border);background:var(--sul3270-soft);max-width:480px}
+.sul403-info-description[hidden]{display:none!important}
+.sul403-record{color:var(--sul3270-muted)}
+#classicos-sul-3270 .sul3270-header h3{flex-wrap:wrap}
+#classicos-sul-3270 .sul3270-header h3 .sul403-info{margin-left:1px}
+#public-sul-card-3276 .sul3272-context{margin:0 0 14px}
+@media(max-width:1060px){.sul403-public-header{flex-direction:column}.sul403-public-controls{flex:none;align-items:stretch;width:100%}.sul403-public-controls .sul3272-switch{max-width:510px}.sul403-public-controls .sul3272-exclusions{align-self:flex-end}}
+@media(max-width:639px){
+  #section-desempenho-temporada > div:first-child{align-items:stretch}
+  #section-desempenho-temporada .audience-performance-control-3275{align-self:stretch;justify-content:flex-start}
+  .sul403-public-heading h3{font-size:17px}
+  .sul403-public-controls .sul3272-switch{max-width:none}
+  .sul403-public-controls .sul3272-switch button{font-size:11px;padding:8px 4px}
+  .sul403-public-controls .sul3272-exclusions{align-self:stretch;width:100%}
+}
+@media(max-width:740px){
+  #classicos-sul-3270 .sul3270-rank-row:nth-child(n+6),
+  #public-sul-card-3276 .sul3270-rank-row:nth-child(n+6){display:grid}
+}
+@media(max-width:767px){#public-sul-card-3276 .sul3270-rank-row:nth-child(n+6){display:grid}}
+
+/* V4.0.4 — Ícone informativo junto ao subtítulo no mobile e alerta compacto. */
+.sul404-mobile-info{display:none}
+@media(max-width:740px){
+  #public-sul-card-3276 .sul403-public-heading h3>.sul403-info,
+  #classicos-sul-3270 .sul3270-header h3>.sul403-info{display:none}
+  #public-sul-card-3276 .sul404-mobile-info,
+  #classicos-sul-3270 .sul404-mobile-info{display:inline-flex;vertical-align:middle;margin-left:4px;width:19px;height:19px}
+  #public-sul-card-3276 .sul404-mobile-info svg,
+  #classicos-sul-3270 .sul404-mobile-info svg{width:16px!important;height:16px!important}
+  #public-sul-card-3276 .sul3270-warning,
+  #classicos-sul-3270 .sul3270-warning{display:flex;align-items:flex-start;flex-wrap:nowrap;gap:5px}
+  #public-sul-card-3276 .sul3270-warning>svg,
+  #classicos-sul-3270 .sul3270-warning>svg{flex:0 0 14px;margin-top:2px}
+  #public-sul-card-3276 .sul3270-warning>span,
+  #classicos-sul-3270 .sul3270-warning>span{min-width:0;flex:1 1 auto;overflow-wrap:break-word}
+}
+
+/* V4.0.5 — Conteúdo informativo em duas linhas e botão mobile persistente. */
+#public-sul-card-3276 .sul403-info-description>span,
+#classicos-sul-3270 .sul403-info-description>span{display:block}
+#public-sul-card-3276 .sul403-info-description>span+span,
+#classicos-sul-3270 .sul403-info-description>span+span{margin-top:5px}
+@media(max-width:740px){
+  #public-sul-card-3276 #sul-chart-subtitle .sul404-mobile-info,
+  #classicos-sul-3270 #classicos-sul-chart-subtitle .sul404-mobile-info{display:inline-flex!important;vertical-align:middle;margin-left:5px;flex-shrink:0}
+}

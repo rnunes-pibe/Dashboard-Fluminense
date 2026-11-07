@@ -614,8 +614,8 @@
             </h3>
             <p class="text-xs text-white/50">Histórico de vitórias, empates e derrotas ao longo dos anos</p>
           </div>
+          <div class="audience-chart-control-row-3275 audience-performance-control-3275"><fieldset class="audience-exclusions-3275" aria-label="Excluir jogos"><legend>Excluir jogos</legend><label><input type="checkbox" data-change-action="audience-card-exclude-3275" data-card="performance" data-exclude="classicos"/> Clássicos</label><label><input type="checkbox" data-change-action="audience-card-exclude-3275" data-card="performance" data-exclude="estadual"/> Estadual / Amistosos</label></fieldset></div>
         </div>
-        <div class="audience-chart-control-row-3275 audience-performance-control-3275"><fieldset class="audience-exclusions-3275" aria-label="Excluir jogos"><legend>Excluir jogos</legend><label><input type="checkbox" data-change-action="audience-card-exclude-3275" data-card="performance" data-exclude="classicos"/> Clássicos</label><label><input type="checkbox" data-change-action="audience-card-exclude-3275" data-card="performance" data-exclude="estadual"/> Estadual / Amistosos</label></fieldset></div>
         <div class="relative w-full h-[300px]">
           <canvas id="chartDesempenhoTemporada"></canvas>
         </div>
@@ -624,7 +624,7 @@
       <section class="glass-panel rounded-2xl p-3 sm:p-6 shadow-2xl" id="section-top-mandante-3264">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 audience-dual-controls-3277 audience-dual-header-3277">
           <div><h3 class="text-base font-black text-white flex items-center gap-2"><i data-lucide="users" class="w-4 h-4 text-[#C5A059] shrink-0" aria-hidden="true"></i><span>Maiores públicos do Fluminense mandante</span></h3>
-            <p class="text-xs text-white/60 mt-1"><span class="hidden md:inline">Top 10</span><span class="md:hidden">Top 5</span> maiores públicos presentes · respeita os filtros atuais</p></div>
+            <p class="text-xs text-white/60 mt-1"><span class="hidden md:inline">Top 10</span><span class="md:hidden">Top 5</span> maiores públicos presentes</p></div>
           <div class="season-view-switch top-mandante-switch-32649 chart-view-toggle-3266" role="group" aria-label="Visualização dos maiores públicos">
             <button type="button" class="is-active" data-action="top-mandante-view-3264" data-view="line" aria-pressed="true">Linha</button>
             <button type="button" data-action="top-mandante-view-3264" data-view="bar" aria-pressed="false">Coluna</button>
@@ -635,44 +635,23 @@
       </section>
 
       <section id="public-sul-card-3276" class="glass-panel sul3270-card public-sul3276 rounded-2xl p-6 shadow-2xl border border-cyan-500/30" data-view="ranking">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4 mb-6">
-          <div>
-            <h3 class="text-base font-black text-white flex items-center gap-2">
-              <span class="w-3 h-3 rounded-full bg-cyan-400"></span>
-              Público pagante Setor Sul
-            </h3>
-            <p id="sul-chart-subtitle" class="text-xs text-white/60 mt-0.5">
-              <span class="sul-top-count">Top 10</span> maiores ocupações do Setor Sul do Maracanã (<span class="dynamic-year-range">...</span>)
-            </p>
-            <p id="sul-alert-missing" class="text-[10px] text-amber-400 mt-2 flex items-center gap-1.5 font-medium hidden">
-              <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i>
-              <span id="sul-missing-summary">Sem dados oficiais do Setor Sul em 0 jogos</span>
-            </p>
+        <header class="sul403-public-header">
+          <div class="sul403-public-heading">
+            <h3><i data-lucide="users" aria-hidden="true"></i><span>Público pagante Setor Sul</span><button type="button" class="sul403-info" aria-label="Informações sobre a lotação do Setor Sul" aria-expanded="false" data-action="sul-capacity-info-403"><i data-lucide="info" aria-hidden="true"></i></button></h3>
+            <p class="sul403-info-description" hidden><span>Lotação do setor é composta por ingressos para Venda (pagantes), cortesias e gratuidades</span><span>Quantidade de ingressos para venda varia de jogo para jogo</span></p>
+            <p id="sul-chart-subtitle"><span class="sul405-subtitle-text">Top 10 pagantes do Setor Sul do Maracanã</span> <button type="button" class="sul403-info sul404-mobile-info" aria-label="Informações sobre a lotação do Setor Sul" aria-expanded="false" data-action="sul-capacity-info-403"><i data-lucide="info" aria-hidden="true"></i></button></p>
+            <p class="sul403-record">Registros oficiais: <strong id="sul403-public-valid">0</strong> jogos (<span id="sul403-public-year-start">—</span>–<span id="sul403-public-year-end">—</span>)</p>
+            <p id="sul-alert-missing" class="sul3270-warning hidden"><i data-lucide="alert-triangle" aria-hidden="true"></i><span id="sul-missing-summary">Sem dados oficiais do Setor Sul em 0 jogos</span></p>
           </div>
-          <div class="flex items-center gap-4 text-xs">
-            <div class="public-sul-header-capacity3276 px-3 py-1 rounded-lg bg-white/5 border border-white/10">
-              <span class="text-white/50">Capacidade Total (Pagantes + Gratuidades) ≈</span>
-              <span class="font-bold text-white ml-1">21.520 lugares</span>
+          <div class="sul403-public-controls">
+            <div class="sul3272-switch" role="group" aria-label="Visualização do Setor Sul">
+              <button type="button" class="is-active" data-action="public-sul-view-3272" data-view="ranking" aria-pressed="true"><i data-lucide="trophy" aria-hidden="true"></i><span>Maiores públicos</span></button>
+              <button type="button" data-action="public-sul-view-3272" data-view="evolucao" aria-pressed="false"><i data-lucide="chart-no-axes-combined" aria-hidden="true"></i><span>Evolução</span></button>
             </div>
-            <div class="px-3 py-1 rounded-lg bg-cyan-950/70 border border-cyan-500/40 text-cyan-300">
-              <span class="text-white/50">Partidas no Filtro Atual:</span>
-              <span id="sul-recorded-count" class="font-bold ml-1">0 jogos</span>
-            </div>
+            <fieldset class="sul3272-exclusions"><legend>Excluir jogos</legend><label><input type="checkbox" data-change-action="public-sul-exclude-3272" data-exclude="classicos"> Clássicos</label><label><input type="checkbox" data-change-action="public-sul-exclude-3272" data-exclude="estadual"> Estadual / Amistosos</label></fieldset>
           </div>
-        </div>
-
-        <div class="sul3272-controls" aria-label="Visualizações e exclusões do Setor Sul">
-          <div class="sul3272-switch" role="group" aria-label="Visualização do Setor Sul">
-            <button type="button" class="is-active" data-action="public-sul-view-3272" data-view="ranking" aria-pressed="true">Maiores públicos</button>
-            <button type="button" data-action="public-sul-view-3272" data-view="evolucao" aria-pressed="false">Evolução</button>
-          </div>
-          <fieldset class="sul3272-exclusions">
-            <legend>Excluir jogos</legend>
-            <label><input type="checkbox" data-change-action="public-sul-exclude-3272" data-exclude="classicos"> Clássicos</label>
-            <label><input type="checkbox" data-change-action="public-sul-exclude-3272" data-exclude="estadual"> Estadual / Amistosos</label>
-          </fieldset>
-          <p id="sul3272-context" class="sul3272-context" aria-live="polite"></p>
-        </div>
+        </header>
+        
         <div id="sul3272-ranking-wrap" class="sul3274-body">
           <div class="sul3274-primary">
             <div class="sul3270-panel-heading"><h4>Maiores públicos pagantes</h4><span id="sul3274-ranking-count">Top 10</span></div>
@@ -968,7 +947,7 @@
               <i data-lucide="line-chart" class="w-4 h-4 text-[#C5A059] inline mr-1"></i>
               Evolução do Saldo (V-D) vs Rivais
             </h3>
-            <p class="text-xs text-white/50">Histórico cumulativo de vitórias menos derrotas ao longo do tempo (respeita filtros ativos)</p>
+            <p class="text-xs text-white/50">Histórico cumulativo de vitórias menos derrotas ao longo do tempo</p>
           </div>
           <div class="saldo-mode-switch" role="group" aria-label="Escala temporal do saldo em Clássicos">
             <button type="button" data-action="saldo-mode" data-saldo-view="classicos" data-saldo-mode="partidas" aria-pressed="false">Partida a partida</button>
@@ -984,15 +963,16 @@
       <section id="classicos-sul-3270" class="glass-panel sul3270-card rounded-2xl shadow-2xl" data-view="ranking" aria-labelledby="classicos-sul-3270-title">
         <header class="sul3270-header">
           <div class="sul3270-header-text">
-            <h3 id="classicos-sul-3270-title"><i data-lucide="users" aria-hidden="true"></i> Setor Sul — Clássicos</h3>
-            <p id="classicos-sul-chart-subtitle">Público pagante na arquibancada Sul do Maracanã · Respeita os filtros da aba</p>
+            <h3 id="classicos-sul-3270-title"><i data-lucide="users" aria-hidden="true"></i><span>Público pagante Setor Sul — Clássicos</span><button type="button" class="sul403-info" aria-label="Informações sobre a lotação do Setor Sul" aria-expanded="false" data-action="sul-capacity-info-403"><i data-lucide="info" aria-hidden="true"></i></button></h3>
+            <p class="sul403-info-description" hidden><span>Lotação do setor é composta por ingressos para Venda (pagantes), cortesias e gratuidades</span><span>Quantidade de ingressos para venda varia de jogo para jogo</span></p>
+            <p id="classicos-sul-chart-subtitle"><span class="sul405-subtitle-text">Top 10 pagantes do Setor Sul do Maracanã</span> <button type="button" class="sul403-info sul404-mobile-info" aria-label="Informações sobre a lotação do Setor Sul" aria-expanded="false" data-action="sul-capacity-info-403"><i data-lucide="info" aria-hidden="true"></i></button></p>
             <p id="classicos-sul-alert-records" class="sul3270-record hidden">
-              Registros de público do Setor Sul: <strong id="classicos-sul-record-z">0</strong> jogos
+              Registros oficiais: <strong id="classicos-sul-record-z">0</strong> jogos
               (<span id="classicos-sul-record-x">—</span>–<span id="classicos-sul-record-y">—</span>)
             </p>
             <p id="classicos-sul-alert-missing" class="sul3270-warning hidden">
               <i data-lucide="alert-triangle" aria-hidden="true"></i>
-              Sem registros de público do Setor Sul em <strong id="classicos-sul-missing-count">0</strong> jogos (Maracanã)
+              <span id="classicos-sul-missing-summary">Sem dados oficiais do Setor Sul em 0 jogos</span><strong id="classicos-sul-missing-count" hidden>0</strong>
             </p>
           </div>
           <div class="sul3270-switch" role="tablist" aria-label="Visualização dos clássicos no Setor Sul">
@@ -1174,7 +1154,7 @@
     <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-center gap-2">
       <p>Grandes são os outros, o Fluminense é enorme</p>
       <span class="hidden sm:inline" aria-hidden="true">•</span>
-      <p>Fluminense FC • Dashboard Analítico • <strong id="dashboard-version" class="font-semibold text-emerald-100/70">v4.0.2</strong></p>
+      <p>Fluminense FC • Dashboard Analítico • <strong id="dashboard-version" class="font-semibold text-emerald-100/70">v4.0.5</strong></p>
     </div>
   </footer>
 

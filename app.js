@@ -1,4 +1,4 @@
-const DASHBOARD_VERSION = '4.0.13';
+const DASHBOARD_VERSION = '4.0.14';
 
 // V3.2.59 — Aba Público: sem linhas de grade internas; manter somente
 // a linha inferior do eixo X nos gráficos verticais e a linha esquerda

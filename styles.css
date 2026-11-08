@@ -3152,3 +3152,82 @@ html[data-theme="light"] #rivals-menu-wrap > #rivals-menu-button[data-active="tr
   header #theme-toggle {padding:.4rem .45rem;font-size:.7rem;}
   header .header-tabs > button {font-size:.68rem;padding:.45rem .25rem;}
 }
+
+
+/* V4.0.14 — O seletor de visualização adota a mesma legenda embutida na
+   borda do fieldset "Excluir jogos", sem alterar a altura de nenhum dos boxes.
+   O agrupamento dos botões permanece 50/50, com ações originais intactas. */
+.audience-dual-controls-3277 > fieldset.season-view-switch.chart-view-toggle-3266.flu414-chart-type,
+#section-top-mandante-3264 > .audience-dual-controls-3277 > fieldset.season-view-switch.chart-view-toggle-3266.flu414-chart-type {
+  display:block !important;
+  overflow:visible !important;
+  min-width:0 !important;
+  box-sizing:border-box !important;
+  padding:0 3px 3px !important;
+  margin:0 !important;
+  border:1px solid rgba(132,164,144,.34) !important;
+  border-radius:12px !important;
+  background:rgba(245,250,246,.035) !important;
+  height:52px !important;
+  min-height:52px !important;
+  max-height:52px !important;
+}
+html[data-theme="light"] .audience-dual-controls-3277 > fieldset.season-view-switch.chart-view-toggle-3266.flu414-chart-type,
+html[data-theme="light"] #section-top-mandante-3264 > .audience-dual-controls-3277 > fieldset.season-view-switch.chart-view-toggle-3266.flu414-chart-type {
+  background:rgba(246,250,247,.72) !important;
+  border-color:#d2e2d8 !important;
+  color:#385642 !important;
+}
+fieldset.flu414-chart-type > legend {
+  width:auto !important;
+  max-width:calc(100% - 12px);
+  padding:0 6px;
+  margin-left:6px;
+  font-size:12px;
+  font-weight:750;
+  line-height:1.2;
+  color:#c1d5c6;
+  white-space:nowrap;
+}
+html[data-theme="light"] fieldset.flu414-chart-type > legend {color:#385642;}
+fieldset.flu414-chart-type > .flu414-chart-buttons {
+  display:grid !important;
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  grid-template-rows:minmax(0,1fr) !important;
+  width:100% !important;
+  height:100% !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  gap:2px !important;
+  margin:0 !important;
+  padding:0 !important;
+  box-sizing:border-box !important;
+}
+fieldset.flu414-chart-type > .flu414-chart-buttons > button {
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:100% !important;
+  height:100% !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  max-width:none !important;
+  max-height:none !important;
+  padding:0 !important;
+  margin:0 !important;
+  box-sizing:border-box !important;
+}
+@media(max-width:767px){
+  .audience-dual-controls-3277 > fieldset.season-view-switch.chart-view-toggle-3266.flu414-chart-type,
+  #section-top-mandante-3264 > .audience-dual-controls-3277 > fieldset.season-view-switch.chart-view-toggle-3266.flu414-chart-type {
+    height:50px !important;
+    min-height:50px !important;
+    max-height:50px !important;
+  }
+  fieldset.flu414-chart-type > legend {
+    font-size:10px !important;
+    line-height:1.1 !important;
+    padding:0 3px !important;
+    margin-left:3px !important;
+  }
+}

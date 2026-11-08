@@ -2928,3 +2928,77 @@ html[data-theme="light"] .season-view-switch.chart-view-toggle-3266 button:not(.
   }
   #classicos-filters-card > .grid { row-gap: .85rem !important; }
 }
+
+
+/* V4.0.12 — Compactação estrutural real no mobile.
+   A V4.0.11 reduziu o padding, mas o main.space-y-8 ainda aplicava 2rem
+   de margin-top às views que não são o primeiro filho (mesmo quando
+   a aba anterior estava oculta por classe). Corrige essa origem e
+   aproxima os primeiros cards, sem alterar tipografia nem controles. */
+@media (max-width: 767px) {
+  /* Deixa só a margem de respiro do conteúdo abaixo da navegação. */
+  main { padding-top: .7rem !important; }
+  main.space-y-8 > #view-estadio,
+  main.space-y-8 > #view-classicos {
+    margin-top: 0 !important;
+  }
+
+  /* Espaço consistente entre os dois primeiros cards de cada aba. */
+  #view-estadio > #public-filters-card,
+  #view-classicos > #classicos-filters-card {
+    margin-top: .75rem !important;
+  }
+
+  /* A primeira seção de dados começa mais cedo após os controles. */
+  #view-estadio > :nth-child(3),
+  #view-classicos > :nth-child(3) {
+    margin-top: 1rem !important;
+  }
+
+  /* Avisos: nenhuma informação ou botão suprimido. */
+  #view-estadio > #data-notice-card {
+    padding-top: .75rem !important;
+    padding-bottom: .75rem !important;
+  }
+  #data-notice-card .data-notice-header {
+    column-gap: .6rem !important;
+    row-gap: .45rem !important;
+  }
+  #data-notice-card .data-notice-toggle {
+    margin-top: 0 !important;
+    min-height: 44px;
+  }
+
+  /* Filtros Público: mantém Ver filtros, Restaurar Padrão, contador e texto. */
+  #view-estadio > #public-filters-card {
+    padding-top: .8rem !important;
+    padding-bottom: .8rem !important;
+  }
+  #public-filters-card .public-filters-header {
+    gap: .45rem !important;
+    padding-bottom: .55rem !important;
+  }
+  #public-filters-card .public-filters-actions {
+    row-gap: .45rem !important;
+    column-gap: .55rem !important;
+  }
+
+  /* Clássicos: base histórica e filtros permanecem integralmente visíveis. */
+  #view-classicos > #classicos-intro-card {
+    padding-top: .75rem !important;
+    padding-bottom: .75rem !important;
+    gap: .65rem !important;
+  }
+  #view-classicos > #classicos-filters-card {
+    padding-top: .8rem !important;
+    padding-bottom: .8rem !important;
+  }
+  #classicos-filters-card > div:first-child {
+    margin-bottom: .65rem !important;
+    padding-bottom: .55rem !important;
+    gap: .5rem !important;
+  }
+  #classicos-filters-card > div:first-child > div:last-child {
+    gap: .45rem !important;
+  }
+}

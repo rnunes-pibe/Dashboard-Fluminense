@@ -1,4 +1,4 @@
-const DASHBOARD_VERSION = '4.0.12';
+const DASHBOARD_VERSION = '4.0.13';
 
 // V3.2.59 — Aba Público: sem linhas de grade internas; manter somente
 // a linha inferior do eixo X nos gráficos verticais e a linha esquerda
@@ -723,7 +723,26 @@ function switchClassicosTableTab(tab) {
   }
 }
 
+/* V4.0.13: a aba extra tem um estado ativo independente da abertura do menu. */
+function setRivalsMenuActive(active) {
+  const button = document.getElementById('rivals-menu-button');
+  const item = document.querySelector('#rivals-menu [data-action="open-rivals"]');
+  if (!button) return;
+  button.dataset.active = String(Boolean(active));
+  button.classList.toggle('is-active', Boolean(active));
+  button.setAttribute('aria-label', active ? 'Clássicos dos Rivais (aba ativa)' : 'Mais opções');
+  button.title = active ? 'Clássicos dos Rivais (aba ativa)' : 'Mais opções';
+  if (active) button.setAttribute('aria-current', 'page');
+  else button.removeAttribute('aria-current');
+  if (item) {
+    if (active) item.setAttribute('aria-current', 'page');
+    else item.removeAttribute('aria-current');
+  }
+}
+
 function switchTab(tabName) {
+  setRivalsMenuActive(false);
+  document.getElementById('rivals-menu-button')?.setAttribute('aria-expanded', 'false');
   markActiveTabs(['tab-btn-capa', 'tab-btn-estadio', 'tab-btn-classicos'], 'tab-btn-' + tabName);
   document.getElementById('view-rivais')?.classList.add('hidden');
   document.getElementById('rivals-menu')?.classList.add('hidden');
@@ -4863,7 +4882,12 @@ function openRivalsView(){
  ['view-capa','view-estadio','view-classicos'].forEach(id=>document.getElementById(id)?.classList.add('hidden'));
  document.getElementById('view-rivais').classList.remove('hidden');document.getElementById('rivals-menu').classList.add('hidden');
  document.getElementById('rivals-menu-button').setAttribute('aria-expanded','false');
- markActiveTabs(['tab-btn-capa','tab-btn-estadio','tab-btn-classicos'],'');initRivalsFilters();renderRivals();window.scrollTo({top:0,behavior:'smooth'});
+ markActiveTabs(['tab-btn-capa','tab-btn-estadio','tab-btn-classicos'],'');
+ ['tab-btn-capa','tab-btn-estadio','tab-btn-classicos'].forEach(id=>{
+   const tabButton=document.getElementById(id);
+   if(tabButton) tabButton.className='px-3 py-1.5 rounded-md text-xs font-bold transition text-white/70 hover:text-white';
+ });
+ setRivalsMenuActive(true);initRivalsFilters();renderRivals();window.scrollTo({top:0,behavior:'smooth'});
 }
 // V3.2.56 — Perspectiva independente por confronto, sem alterar os filtros gerais.
 const rivalsCardPerspective = {};
@@ -5013,7 +5037,7 @@ function setSaldoMode(view,mode) {
    const active=btn.dataset.saldoMode===mode;btn.classList.toggle('is-active',active);btn.setAttribute('aria-pressed',String(active));
  });
 }
-document.addEventListener('click',event=>{const wrap=document.getElementById('rivals-menu-wrap');if(wrap&&!wrap.contains(event.target))document.getElementById('rivals-menu')?.classList.add('hidden');if(event.target.closest('#theme-toggle')&&!document.getElementById('view-rivais')?.classList.contains('hidden'))requestAnimationFrame(renderRivalsChart);});
+document.addEventListener('click',event=>{const wrap=document.getElementById('rivals-menu-wrap');if(wrap&&!wrap.contains(event.target)){document.getElementById('rivals-menu')?.classList.add('hidden');document.getElementById('rivals-menu-button')?.setAttribute('aria-expanded','false');}if(event.target.closest('#theme-toggle')&&!document.getElementById('view-rivais')?.classList.contains('hidden'))requestAnimationFrame(renderRivalsChart);});
 
 // V3.2.42 — Filtros gerais e cards de desempenho dos rivais.
 const rivalsFilterState={competitions:[],minYear:null,maxYear:null,ultimos:0,team:'Flamengo',opponents:['Vasco','Botafogo','Fluminense']};

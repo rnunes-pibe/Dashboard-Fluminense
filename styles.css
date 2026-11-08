@@ -3002,3 +3002,153 @@ html[data-theme="light"] .season-view-switch.chart-view-toggle-3266 button:not(.
     gap: .45rem !important;
   }
 }
+
+
+/* V4.0.13 — a aba extra compartilha o destaque institucional das abas principais.
+   O estado de seleção permanece distinto da abertura do menu dropdown. */
+#rivals-menu-wrap > #rivals-menu-button[data-active="true"] {
+  width: 35px;
+  height: 36px;
+  opacity: 1;
+  font-weight: 800;
+  color: #fff;
+  background: #104C37;
+  box-shadow: inset 0 -3px 0 #C5A059;
+  border-radius: 8px;
+}
+#rivals-menu-wrap > #rivals-menu-button[data-active="true"]:hover,
+#rivals-menu-wrap > #rivals-menu-button[data-active="true"]:focus-visible {
+  opacity: 1;
+  background: #176446;
+}
+#rivals-menu-wrap > #rivals-menu-button:focus-visible {
+  outline: 2px solid #C5A059;
+  outline-offset: 2px;
+}
+#rivals-menu [aria-current="page"] {
+  box-shadow: inset 3px 0 0 #C5A059;
+  background: rgba(16,76,55,.12);
+}
+html[data-theme="light"] #rivals-menu-wrap > #rivals-menu-button[data-active="true"] {
+  color: #fff !important;
+  background: #104C37 !important;
+  opacity: 1 !important;
+  box-shadow: inset 0 -3px 0 #C5A059;
+}
+
+/* V4.0.13 — reordena apenas o cabeçalho mobile: marca/título/tema;
+   atualizar/data; navegação (inclusive menu adicional). O desktop preserva seu layout. */
+@media (max-width:767px) {
+  header > .header-inner {
+    display: grid !important;
+    grid-template-columns: 3rem minmax(0,1fr) auto;
+    grid-template-rows: auto auto auto;
+    column-gap: .65rem;
+    row-gap: .7rem;
+    align-items: center;
+    justify-content: stretch;
+    padding-top: .75rem !important;
+    padding-bottom: .75rem !important;
+  }
+  header .header-brand,
+  header .header-title-controls,
+  header .header-actions {
+    display: contents !important;
+  }
+  header .header-logo {
+    grid-column: 1;
+    grid-row: 1;
+    width: 3rem !important;
+    height: 3rem !important;
+    margin: 0 !important;
+    align-self: center;
+  }
+  header .header-title-controls > h1 {
+    grid-column: 2;
+    grid-row: 1;
+    margin: 0 !important;
+    font-size: 1.25rem;
+    line-height: 1.12;
+    white-space: normal;
+    align-self: center;
+    overflow-wrap: normal;
+  }
+  header #theme-toggle {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
+    padding: .5rem .6rem;
+    margin: 0;
+    min-height: 38px;
+  }
+  header .header-update-row {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    align-items: center;
+    width: 100%;
+    gap: .8rem;
+  }
+  header #update-data-button {
+    flex: 0 0 auto;
+    min-height: 38px;
+  }
+  header .header-update-status {flex:1 1 auto;min-width:0;}
+  header #last-update-time {
+    display:block;
+    max-width:none;
+    overflow-wrap:anywhere;
+    line-height:1.3;
+    margin:0;
+  }
+  header .header-tabs {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    display:flex;
+    width:calc(100% - 44px);
+    min-width:0;
+    max-width:100%;
+    padding: .25rem;
+    gap: .1rem;
+    justify-content:space-between;
+    align-items:stretch;
+  }
+  header .header-tabs > button {
+    flex: 0 1 auto;
+    min-width: 0;
+    padding: .45rem .4rem;
+    line-height: 1.2;
+    white-space: normal;
+    text-align: center;
+  }
+  header .header-tabs > #tab-btn-estadio {flex: 1 1 auto;}
+  header #rivals-menu-wrap {
+    grid-column: 3;
+    grid-row: 3;
+    justify-self:end;
+    align-self:stretch;
+    margin:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  header #rivals-menu-button {
+    width:35px;
+    min-width:35px;
+    height:100%;
+    min-height:36px;
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  header #rivals-menu {top:calc(100% + 5px);}
+}
+@media (max-width:360px) {
+  header > .header-inner {column-gap:.4rem;}
+  header .header-title-controls > h1 {font-size:1.1rem;}
+  header #theme-toggle {padding:.4rem .45rem;font-size:.7rem;}
+  header .header-tabs > button {font-size:.68rem;padding:.45rem .25rem;}
+}

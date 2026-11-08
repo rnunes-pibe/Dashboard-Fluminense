@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Fluminense FC | Dashboard Analítico</title>
-  <!-- Dashboard V3.0: arquitetura separada, eventos desacoplados e manutenção simplificada -->
+  <!-- Dashboard V4.0.13: cabeçalho mobile e seleção do menu adicional -->
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -23,21 +23,21 @@
 <body class="min-h-screen flex flex-col antialiased selection:bg-[#8A1538] selection:text-white">
 
   <header class="border-b border-white/10 bg-[#070D0B]/95 sticky top-0 z-50 backdrop-blur-md">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div class="header-inner max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
       
-      <div class="flex items-start gap-4">
-        <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-[#8A1538] via-[#0E4735] to-[#C5A059] flex items-center justify-center p-0.5 shadow-xl shrink-0 mt-1">
+      <div class="header-brand flex items-start gap-4">
+        <div class="header-logo w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-[#8A1538] via-[#0E4735] to-[#C5A059] flex items-center justify-center p-0.5 shadow-xl shrink-0 mt-1">
           <div class="w-full h-full bg-[#0B1512] rounded-[14px] flex items-center justify-center font-black text-[#C5A059] text-xl sm:text-2xl tracking-tighter border border-[#C5A059]/40">
             FFC
           </div>
         </div>
         
-        <div class="flex flex-col justify-center">
+        <div class="header-title-controls flex flex-col justify-center">
           <h1 class="text-xl sm:text-2xl font-black tracking-tight text-white leading-tight mb-2">
             Fluminense FC
           </h1>
           
-          <div class="flex items-center gap-3">
+          <div class="header-update-row flex items-center gap-3">
             <button id="update-data-button" type="button" data-action="refresh-data" class="text-[10px] font-bold text-cyan-200 hover:text-white transition flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-950 border border-cyan-400/50 hover:bg-cyan-900 shadow-sm active:scale-95 group shrink-0">
               <div class="relative flex items-center justify-center">
                 <span class="absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75 animate-ping"></span>
@@ -45,7 +45,7 @@
               </div>
               <span id="update-data-label">Atualizar</span>
             </button>
-            <div class="flex flex-col text-[10px] leading-tight">
+            <div class="header-update-status flex flex-col text-[10px] leading-tight">
               <span class="text-cyan-300 font-semibold">Clique aqui para atualizar base de dados</span>
               <span id="last-update-time" class="text-white/50 mt-0.5">Última atualização: Aguardando...</span>
             </div>
@@ -53,13 +53,13 @@
         </div>
       </div>
 
-      <div class="flex items-center gap-2 flex-wrap mt-2 md:mt-0">
+      <div class="header-actions flex items-center gap-2 flex-wrap mt-2 md:mt-0">
         <button id="theme-toggle" type="button" aria-label="Ativar modo claro" aria-pressed="false" title="Alternar modo claro e escuro" class="theme-toggle" >
           <i data-lucide="sun" class="w-4 h-4 theme-icon-light"></i>
           <i data-lucide="moon" class="w-4 h-4 theme-icon-dark"></i>
           <span id="theme-toggle-label">Claro</span>
         </button>
-        <div class="inline-flex p-1 rounded-lg bg-[#0B1512] border border-[#C5A059]/30">
+        <div class="header-tabs inline-flex p-1 rounded-lg bg-[#0B1512] border border-[#C5A059]/30">
           <button data-action="switch-tab" data-tab="capa" id="tab-btn-capa" data-active="true" aria-selected="true" class="px-3 py-1.5 rounded-md text-xs font-bold transition bg-[#C5A059] text-[#0A120F]">
             Início
           </button>
@@ -70,7 +70,7 @@
             Clássicos
           </button>
         </div>
-        <div class="rivals-menu-wrap" id="rivals-menu-wrap"><button type="button" id="rivals-menu-button" aria-label="Mais opções" title="Mais opções" aria-expanded="false" data-action="toggle-rivals-menu">⋮</button><div id="rivals-menu" class="hidden" role="menu"><button type="button" role="menuitem" data-action="open-rivals"><strong>⚔ Clássicos dos Rivais</strong><span>Flamengo · Vasco · Botafogo</span></button></div></div>
+        <div class="rivals-menu-wrap" id="rivals-menu-wrap"><button type="button" id="rivals-menu-button" aria-label="Mais opções" title="Mais opções" aria-expanded="false" data-active="false" data-action="toggle-rivals-menu">⋮</button><div id="rivals-menu" class="hidden" role="menu"><button type="button" role="menuitem" data-action="open-rivals"><strong>⚔ Clássicos dos Rivais</strong><span>Flamengo · Vasco · Botafogo</span></button></div></div>
       </div>
     </div>
   </header>
@@ -1157,7 +1157,7 @@
     <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-center gap-2">
       <p>Grandes são os outros, o Fluminense é enorme</p>
       <span class="hidden sm:inline" aria-hidden="true">•</span>
-      <p>Fluminense FC • Dashboard Analítico • <strong id="dashboard-version" class="font-semibold text-emerald-100/70">v4.0.12</strong></p>
+      <p>Fluminense FC • Dashboard Analítico • <strong id="dashboard-version" class="font-semibold text-emerald-100/70">v4.0.13</strong></p>
     </div>
   </footer>
 

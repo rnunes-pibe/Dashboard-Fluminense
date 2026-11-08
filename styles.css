@@ -2872,3 +2872,59 @@ html[data-theme="light"] .season-view-switch.chart-view-toggle-3266 button:not(.
     gap:2px 4px !important;
   }
 }
+
+
+/* V4.0.11 — compactação mobile das três abas. Mantém fontes, botões e dados. */
+@media (max-width: 767px) {
+  /* A navegação continua no cabeçalho; elimina apenas o excesso de respiro abaixo. */
+  main { padding-top: 1rem !important; }
+
+  /* Início: usa o espaço vazio do hero sem reduzir tipografia e botões. */
+  #home-hero-panel {
+    padding-top: 1.35rem !important;
+    padding-bottom: 1.35rem !important;
+  }
+  #home-hero-panel > .max-w-3xl.space-y-6 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: .95rem !important;
+  }
+  #home-hero-panel > .max-w-3xl > .pt-4 { padding-top: .4rem !important; }
+  #home-hero-panel > .max-w-3xl > .flex.flex-wrap { row-gap: .65rem !important; }
+
+  /* Público: compacta avisos e filtros, mas não os campos nem suas áreas de toque. */
+  #view-estadio > #public-filters-card { margin-top: 1rem !important; }
+  #data-notice-card,
+  #public-filters-card {
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+  }
+  #data-notice-card .data-notice-header { gap: .65rem !important; }
+  #data-notice-card .data-notice-toggle {
+    margin-top: 0 !important;
+    min-height: 44px;
+  }
+  #public-filters-card .public-filters-header {
+    gap: .65rem !important;
+    padding-bottom: .75rem !important;
+  }
+  #public-filters-card .public-filters-actions { gap: .55rem !important; }
+  #public-filters-card .public-filters-content { margin-top: .85rem !important; }
+
+  /* Clássicos: mantém todos os filtros expostos, com menos margens externas. */
+  #view-classicos > #classicos-filters-card { margin-top: 1rem !important; }
+  #classicos-intro-card,
+  #classicos-filters-card {
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+  }
+  #classicos-intro-card { gap: .75rem !important; }
+  #classicos-filters-card > div:first-child {
+    margin-bottom: .8rem !important;
+    padding-bottom: .75rem !important;
+    gap: .65rem !important;
+  }
+  #classicos-filters-card > div:first-child > div:last-child {
+    gap: .55rem !important;
+    flex-wrap: wrap;
+  }
+  #classicos-filters-card > .grid { row-gap: .85rem !important; }
+}

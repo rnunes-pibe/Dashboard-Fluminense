@@ -78,12 +78,7 @@
   <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
     
     <div id="view-capa" class="space-y-8">
-<section id="quality-panel-3264" class="glass-panel rounded-xl p-4 my-4" aria-label="Validação da base">
-  <details><summary class="cursor-pointer font-bold text-sm">Qualidade da Base — <span id="quality-summary-3264">Aguardando dados</span></summary>
-  <p class="text-xs opacity-70 my-2">Avisos para conferência manual. Nenhuma célula do Google Sheets é modificada. Até 200 ocorrências exibidas.</p>
-  <div class="overflow-x-auto max-h-72 overflow-y-auto"><table class="min-w-full text-left"><thead><tr><th>Tipo</th><th>ID Jogo</th><th>Campo</th><th>Valor</th><th>Verificação</th></tr></thead><tbody id="quality-body-3264"></tbody></table></div>
-  </details>
-</section>
+
       <section id="home-hero-panel" class="glass-panel rounded-3xl p-8 sm:p-12 shadow-2xl relative overflow-hidden border border-[#C5A059]/40">
         <div class="absolute -right-16 -bottom-16 w-80 h-80 rounded-full bg-gradient-to-br from-[#8A1538]/20 via-[#0E4735]/30 to-[#C5A059]/10 blur-3xl pointer-events-none"></div>
         
@@ -132,6 +127,14 @@
           <p class="text-xs text-white/50 mt-1">Vitórias, gols e aproveitamento</p>
         </div>
       </div>
+
+      <!-- V4.0.11: Validação da base ao final da página Início (desktop/mobile). -->
+      <section id="quality-panel-3264" class="glass-panel rounded-xl p-4 my-4" aria-label="Validação da base">
+  <details><summary class="cursor-pointer font-bold text-sm">Qualidade da Base — <span id="quality-summary-3264">Aguardando dados</span></summary>
+  <p class="text-xs opacity-70 my-2">Avisos para conferência manual. Nenhuma célula do Google Sheets é modificada. Até 200 ocorrências exibidas.</p>
+  <div class="overflow-x-auto max-h-72 overflow-y-auto"><table class="min-w-full text-left"><thead><tr><th>Tipo</th><th>ID Jogo</th><th>Campo</th><th>Valor</th><th>Verificação</th></tr></thead><tbody id="quality-body-3264"></tbody></table></div>
+  </details>
+</section>
     </div>
 
     <!-- VIEW ESTADIO (Público e Desempenho Combinados) -->
@@ -748,7 +751,7 @@
 
     <!-- VIEW CLÁSSICOS -->
     <div id="view-classicos" class="hidden space-y-8">
-      <section class="glass-panel rounded-2xl p-5 sm:p-6 shadow-xl border border-[#C5A059]/30 flex items-start sm:items-center gap-4 relative overflow-hidden">
+      <section id="classicos-intro-card" class="glass-panel rounded-2xl p-5 sm:p-6 shadow-xl border border-[#C5A059]/30 flex items-start sm:items-center gap-4 relative overflow-hidden">
         <div class="absolute -right-8 -bottom-8 w-32 h-32 rounded-full bg-gradient-to-br from-[#8A1538]/20 via-[#0E4735]/20 to-[#C5A059]/20 blur-2xl pointer-events-none"></div>
         <div class="p-3 rounded-xl bg-[#0E4735] text-[#C5A059] border border-[#C5A059]/30 shrink-0 relative z-10">
           <i data-lucide="book-open" class="w-5 h-5"></i>
@@ -760,7 +763,7 @@
         </div>
       </section>
 
-      <section class="glass-panel rounded-2xl p-6 shadow-2xl relative z-30">
+      <section id="classicos-filters-card" class="glass-panel rounded-2xl p-6 shadow-2xl relative z-30">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 border-b border-white/10 pb-3.5">
           <div class="flex items-center gap-2.5">
             <div class="p-2 rounded-lg bg-[#0E4735] text-[#C5A059] border border-[#C5A059]/30">
@@ -1154,7 +1157,7 @@
     <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-center gap-2">
       <p>Grandes são os outros, o Fluminense é enorme</p>
       <span class="hidden sm:inline" aria-hidden="true">•</span>
-      <p>Fluminense FC • Dashboard Analítico • <strong id="dashboard-version" class="font-semibold text-emerald-100/70">v4.0.10</strong></p>
+      <p>Fluminense FC • Dashboard Analítico • <strong id="dashboard-version" class="font-semibold text-emerald-100/70">v4.0.11</strong></p>
     </div>
   </footer>
 

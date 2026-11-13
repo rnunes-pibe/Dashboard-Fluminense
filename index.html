@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Fluminense FC | Dashboard Analítico</title>
-  <!-- Dashboard V4.0.14: legenda Tipo de gráfico e texto histórico dos clássicos -->
+  <!-- Dashboard V4.0.16: catálogo com horário e layout responsivo; avisos conforme imagem aprovada -->
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -164,7 +164,7 @@
               <li><strong>Público Visitante:</strong> Os dados dependem dos boletins de outros clubes, que muitas vezes são imprecisos ou não separam as torcidas. <br> Na dúvida, adotamos estimativas conservadoras.</li>
               <li><strong>O público visitante do Fluminense não foi preenchido quando:</strong>
                 <ul class="list-[circle] pl-6 mt-2 space-y-1 text-white/80">
-                  <li>Boletim financeiro não discriminou setor do visitate;</li>
+                  <li>Boletim financeiro não discriminou setor do visitante;</li>
                   <li>Ocorreu clássico com divisão 50/50;</li>
                   <li>O adversário foi um clube de menor investimento no Carioca.</li>
                 </ul>
@@ -702,11 +702,28 @@
         <!-- CONTEÚDO: CATÁLOGO DE PARTIDAS -->
         <div id="content-catalogo" class="space-y-4">
           <div id="catalog-summary" class="catalog-summary"></div>
+          <div class="catalog-mobile-sort" role="group" aria-label="Ordenação das partidas">
+            <label for="catalog-mobile-sort-key">Ordenar por</label>
+            <select id="catalog-mobile-sort-key" data-change-action="catalog-mobile-sort-key" aria-label="Campo de ordenação">
+              <option value="date">Data</option>
+              <option value="time">Horário</option>
+              <option value="opponent">Adversário</option>
+              <option value="score">Placar</option>
+              <option value="competition">Competição</option>
+              <option value="homeAway">Mando</option>
+              <option value="stadium">Estádio</option>
+              <option value="attendance">Público Total</option>
+              <option value="visitors">Flu Visitante</option>
+              <option value="south">Sul Pagantes</option>
+            </select>
+            <button type="button" id="catalog-mobile-sort-direction" data-action="catalog-mobile-sort-direction" aria-label="Inverter ordenação" title="Inverter ordenação">↓</button>
+          </div>
           <div class="catalog-scroll">
             <table class="catalog-main-table w-full text-left text-xs text-white/80">
               <thead class="catalog-sticky-head text-[11px] font-bold uppercase tracking-wider text-[#C5A059] border-b border-white/10">
                 <tr>
                   <th class="p-3"><button data-action="sort-catalog" data-sort-scope="main" data-sort-key="date" class="table-sort-button">Data <span class="sort-indicator"></span></button></th>
+                  <th class="p-3"><button data-action="sort-catalog" data-sort-scope="main" data-sort-key="time" class="table-sort-button">Horário <span class="sort-indicator"></span></button></th>
                   <th class="p-3"><button data-action="sort-catalog" data-sort-scope="main" data-sort-key="opponent" class="table-sort-button">Adversário <span class="sort-indicator"></span></button></th>
                   <th class="p-3 text-center"><button data-action="sort-catalog" data-sort-scope="main" data-sort-key="score" class="table-sort-button justify-center">Placar <span class="sort-indicator"></span></button></th>
                   <th class="p-3"><button data-action="sort-catalog" data-sort-scope="main" data-sort-key="competition" class="table-sort-button">Competição <span class="sort-indicator"></span></button></th>
@@ -1156,7 +1173,7 @@
     <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-center gap-2">
       <p>Grandes são os outros, o Fluminense é enorme</p>
       <span class="hidden sm:inline" aria-hidden="true">•</span>
-      <p>Fluminense FC • Dashboard Analítico • <strong id="dashboard-version" class="font-semibold text-emerald-100/70">v4.0.14</strong></p>
+      <p>Fluminense FC • Dashboard Analítico • <strong id="dashboard-version" class="font-semibold text-emerald-100/70">v4.0.16</strong></p>
     </div>
   </footer>
 

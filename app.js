@@ -1,4 +1,4 @@
-const DASHBOARD_VERSION = '4.0.14';
+const DASHBOARD_VERSION = '4.0.16';
 
 // V3.2.59 — Aba Público: sem linhas de grade internas; manter somente
 // a linha inferior do eixo X nos gráficos verticais e a linha esquerda
@@ -3385,6 +3385,13 @@ function renderCatalogSummary(scope, count) {
 }
 
 function renderTable() {
+  const mobileSort = document.getElementById('catalog-mobile-sort-key');
+  const mobileDirection = document.getElementById('catalog-mobile-sort-direction');
+  if (mobileSort) mobileSort.value = mainTableSort.key;
+  if (mobileDirection) {
+    mobileDirection.textContent = mainTableSort.direction === 'asc' ? '↑' : '↓';
+    mobileDirection.setAttribute('aria-label', mainTableSort.direction === 'asc' ? 'Ordem crescente; inverter ordenação' : 'Ordem decrescente; inverter ordenação');
+  }
   const validFiltered = sortedTableData(filteredMatches, mainTableSort);
   const tbody = document.getElementById("table-body");
   renderCatalogSummary('main', validFiltered.length);
@@ -3395,7 +3402,7 @@ function renderTable() {
   const pageItems = validFiltered.slice(start, end);
 
   if (pageItems.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="9" class="p-8 text-center text-white/40 font-sans">Nenhuma partida encontrada para os filtros selecionados.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-white/40 font-sans">Nenhuma partida encontrada para os filtros selecionados.</td></tr>`;
     document.getElementById("table-pagination").innerHTML = "";
     return;
   }
@@ -3405,15 +3412,16 @@ function renderTable() {
     const isAway = m.mando === "Visitante";
     const mandoBadge = isHome ? `<span class="catalog-mando-badge catalog-mando-home px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 font-sans text-[10px] font-bold border border-emerald-500/40">Mandante</span>` : isAway ? `<span class="catalog-mando-badge catalog-mando-away px-2 py-0.5 rounded bg-rose-950 text-rose-300 font-sans text-[10px] font-bold border border-rose-500/40">Visitante</span>` : `<span class="px-2 py-0.5 rounded bg-amber-950 text-amber-300 font-sans text-[10px] font-bold border border-amber-500/40">Neutro</span>`;
     return `<tr class="hover:bg-white/[0.04] transition border-b border-white/5">
-      <td class="p-3 text-white/90 whitespace-nowrap">${escapeHtml(formatCatalogDate(m.data))}</td>
-      <td class="p-3 font-sans font-bold text-white">${escapeHtml(m.adv)}</td>
-      <td class="p-3 text-center">${resultBadge(m)}</td>
-      <td class="p-3 font-sans text-[11px] text-white/80" title="${escapeHtml(m.torneio)}">${escapeHtml(m.torneio)}</td>
-      <td class="p-3">${mandoBadge}</td>
-      <td class="p-3 font-sans text-white/70" title="${escapeHtml(m.estadio)}">${escapeHtml(m.estadio)}</td>
-      <td class="p-3 text-right font-bold text-emerald-400">${fmt(m.pub)}</td>
-      <td class="p-3 text-right text-rose-300">${fmt(m.pubVis)}</td>
-      <td class="p-3 text-right text-cyan-300 font-semibold">${fmt(m.sul)}</td>
+      <td data-label="Data" class="p-3 text-white/90 whitespace-nowrap">${escapeHtml(formatCatalogDate(m.data))}</td>
+      <td data-label="Horário" class="p-3 text-white/80 whitespace-nowrap">${escapeHtml(m.hora || '-')}</td>
+      <td data-label="Adversário" class="p-3 font-sans font-bold text-white">${escapeHtml(m.adv)}</td>
+      <td data-label="Placar" class="p-3 text-center">${resultBadge(m)}</td>
+      <td data-label="Competição" class="p-3 font-sans text-[11px] text-white/80" title="${escapeHtml(m.torneio)}">${escapeHtml(m.torneio)}</td>
+      <td data-label="Mando" class="p-3">${mandoBadge}</td>
+      <td data-label="Estádio" class="p-3 font-sans text-white/70" title="${escapeHtml(m.estadio)}">${escapeHtml(m.estadio)}</td>
+      <td data-label="Público Total" class="p-3 text-right font-bold text-emerald-400">${fmt(m.pub)}</td>
+      <td data-label="Flu Visitante" class="p-3 text-right text-rose-300">${fmt(m.pubVis)}</td>
+      <td data-label="Sul Pagantes" class="p-3 text-right text-cyan-300 font-semibold">${fmt(m.sul)}</td>
     </tr>`;
   }).join('');
 
@@ -4663,6 +4671,7 @@ function handleDelegatedClick(event) {
     'export-classicos-csv': () => exportClassicosFilteredCsv(),
     'navigate-page': () => navigatePage(Number(target.dataset.direction)),
     'sort-catalog': () => sortCatalog(target.dataset.sortScope, target.dataset.sortKey),
+    'catalog-mobile-sort-direction': () => { mainTableSort.direction = mainTableSort.direction === 'asc' ? 'desc' : 'asc'; tableCurrentPage = 1; renderTable(); },
     'switch-tab': () => switchTab(target.dataset.tab),
     'toggle-rivals-menu': () => toggleRivalsMenu(),
     'open-rivals': () => openRivalsView(),
@@ -4696,6 +4705,12 @@ function handleDelegatedChange(event) {
   const target = event.target.closest('[data-change-action]');
   if (!target) return;
 
+  if (target.dataset.changeAction === 'catalog-mobile-sort-key') {
+    mainTableSort.key = target.value;
+    mainTableSort.direction = ['date', 'attendance', 'visitors', 'south'].includes(target.value) ? 'desc' : 'asc';
+    tableCurrentPage = 1;
+    renderTable();
+  }
   if (target.dataset.changeAction === 'apply-classicos-filters') applyClassicosFilters();
   if (target.dataset.changeAction === 'classicos-ultimos-jogos') { classicosState.ultimos = Number(target.value) || 0; applyClassicosFilters(); }
   if (target.dataset.changeAction === 'rivals-ultimos-jogos') { rivalsFilterState.ultimos = Number(target.value) || 0; renderRivals(); }

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Fluminense FC | Dashboard Analítico</title>
-  <!-- Dashboard V4.0.16: catálogo com horário e layout responsivo; avisos conforme imagem aprovada -->
+  <!-- Dashboard V4.0.18: identificação do gráfico e tooltip com dia/horário -->
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -723,6 +723,7 @@
               <thead class="catalog-sticky-head text-[11px] font-bold uppercase tracking-wider text-[#C5A059] border-b border-white/10">
                 <tr>
                   <th class="p-3"><button data-action="sort-catalog" data-sort-scope="main" data-sort-key="date" class="table-sort-button">Data <span class="sort-indicator"></span></button></th>
+                  <th class="p-2 text-center">DIA</th>
                   <th class="p-3"><button data-action="sort-catalog" data-sort-scope="main" data-sort-key="time" class="table-sort-button">Horário <span class="sort-indicator"></span></button></th>
                   <th class="p-3"><button data-action="sort-catalog" data-sort-scope="main" data-sort-key="opponent" class="table-sort-button">Adversário <span class="sort-indicator"></span></button></th>
                   <th class="p-3 text-center"><button data-action="sort-catalog" data-sort-scope="main" data-sort-key="score" class="table-sort-button justify-center">Placar <span class="sort-indicator"></span></button></th>
@@ -1173,7 +1174,7 @@
     <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-center gap-2">
       <p>Grandes são os outros, o Fluminense é enorme</p>
       <span class="hidden sm:inline" aria-hidden="true">•</span>
-      <p>Fluminense FC • Dashboard Analítico • <strong id="dashboard-version" class="font-semibold text-emerald-100/70">v4.0.16</strong></p>
+      <p>Fluminense FC • Dashboard Analítico • <strong id="dashboard-version" class="font-semibold text-emerald-100/70">v4.0.18</strong></p>
     </div>
   </footer>
 

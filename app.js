@@ -1,4 +1,4 @@
-const DASHBOARD_VERSION = '4.0.16';
+const DASHBOARD_VERSION = '4.0.18';
 
 // V3.2.59 — Aba Público: sem linhas de grade internas; manter somente
 // a linha inferior do eixo X nos gráficos verticais e a linha esquerda
@@ -2310,9 +2310,11 @@ function topMandanteMobileLabel32649(top, horizontal) {
           if (!Number.isFinite(y)) return;
           ctx.textAlign='left';
           ctx.font="600 10px 'Plus Jakarta Sans', sans-serif";
-          ctx.fillText(club, 4, y-7, Math.max(30,chartArea.left-13));
+          ctx.fillText(club, 4, y-14, Math.max(30,chartArea.left-13));
           ctx.font="9px 'Plus Jakarta Sans', sans-serif";
-          ctx.fillText(date, 4, y+7, Math.max(30,chartArea.left-13));
+          ctx.fillText(date, 4, y, Math.max(30,chartArea.left-13));
+          ctx.font="8px 'Plus Jakarta Sans', sans-serif";
+          ctx.fillText(topMandanteDayTime402(top[i]), 4, y+14, Math.max(30,chartArea.left-13));
           const el=chart.getDatasetMeta(0).data[i];
           if (!el) return;
           const x=Math.min(chart.width-6,el.x+8);
@@ -2323,9 +2325,11 @@ function topMandanteMobileLabel32649(top, horizontal) {
           if (!Number.isFinite(x)) return;
           ctx.textAlign='center';
           ctx.font="600 9px 'Plus Jakarta Sans', sans-serif";
-          ctx.fillText(club,x,chartArea.bottom+15,Math.max(28,scales.x.width/Math.max(top.length,1)-3));
+          ctx.fillText(club,x,chartArea.bottom+12,Math.max(28,scales.x.width/Math.max(top.length,1)-3));
           ctx.font="8px 'Plus Jakarta Sans', sans-serif";
-          ctx.fillText(date,x,chartArea.bottom+29,Math.max(28,scales.x.width/Math.max(top.length,1)-3));
+          ctx.fillText(date,x,chartArea.bottom+24,Math.max(28,scales.x.width/Math.max(top.length,1)-3));
+          ctx.font="7px 'Plus Jakarta Sans', sans-serif";
+          ctx.fillText(topMandanteDayTime402(top[i]),x,chartArea.bottom+36,Math.max(28,scales.x.width/Math.max(top.length,1)-3));
         }
       });
       ctx.restore();
@@ -2362,7 +2366,8 @@ function renderTopMandante3264(matches) {
   const ctxLabels=canvas.getContext('2d');
   const labels=mobile ? top.map((m,i)=>horizontal ? String(i+1) : topMandanteShortName32649(m.adv)) : top.map(m=>[
     ...audienceWrapLabel32647(m.adv,ctxLabels,axisLabelWidth,visualFont),
-    ...audienceWrapLabel32647(formatCatalogDate(m.data),ctxLabels,axisLabelWidth,visualFont)
+    ...audienceWrapLabel32647(formatCatalogDate(m.data),ctxLabels,axisLabelWidth,visualFont),
+    ...audienceWrapLabel32647(topMandanteDayTime402(m),ctxLabels,axisLabelWidth,Math.max(8,visualFont-2))
   ]);
   const barThickness=horizontal?22:audienceBarThickness32647(topWrap,top.length,1,mobile,mobile?42:65);
   const dataset={
@@ -2382,7 +2387,7 @@ function renderTopMandante3264(matches) {
     plugins:[...(horizontal?[]:[audienceLabels32646('audienceTopMandanteLabels32646',{fullValue:true,fontSize:mobile?10:12})]),resultLabelsPlugin,...(mobilePlugin?[mobilePlugin]:[])],
     options:{
       indexAxis:horizontal?'y':'x',responsive:true,maintainAspectRatio:false,animation:false,
-      layout:{padding:horizontal?{top:8,right:6,left:0,bottom:4}:{top:6,right:mobile?4:8,left:mobile?4:8,bottom:mobile?36:0}},
+      layout:{padding:horizontal?{top:8,right:6,left:0,bottom:4}:{top:6,right:mobile?4:8,left:mobile?4:8,bottom:mobile?46:0}},
       plugins:{legend:{display:false},tooltip:{enabled:false,external:topMandanteTooltip402(top),intersect:false,mode:'nearest'}},
       scales:horizontal?{
         x:{min:0,max:axisMax,beginAtZero:true,grid:{display:false},ticks:{display:false},border:{display:false}},
@@ -3384,6 +3389,12 @@ function renderCatalogSummary(scope, count) {
   `;
 }
 
+function abbreviateWeekday326417(value) {
+  const key = normalizeComparable(value || '').replace(/[-]/g, ' ').replace(/\s+/g, ' ').trim();
+  const map = { domingo:'DOM', segunda:'SEG', terca:'TER', quarta:'QUA', quinta:'QUI', sexta:'SEX', sabado:'SAB' };
+  return map[key] || (key ? key.slice(0,3).toUpperCase() : '-');
+}
+
 function renderTable() {
   const mobileSort = document.getElementById('catalog-mobile-sort-key');
   const mobileDirection = document.getElementById('catalog-mobile-sort-direction');
@@ -3402,7 +3413,7 @@ function renderTable() {
   const pageItems = validFiltered.slice(start, end);
 
   if (pageItems.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-white/40 font-sans">Nenhuma partida encontrada para os filtros selecionados.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="11" class="p-8 text-center text-white/40 font-sans">Nenhuma partida encontrada para os filtros selecionados.</td></tr>`;
     document.getElementById("table-pagination").innerHTML = "";
     return;
   }
@@ -3413,6 +3424,7 @@ function renderTable() {
     const mandoBadge = isHome ? `<span class="catalog-mando-badge catalog-mando-home px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 font-sans text-[10px] font-bold border border-emerald-500/40">Mandante</span>` : isAway ? `<span class="catalog-mando-badge catalog-mando-away px-2 py-0.5 rounded bg-rose-950 text-rose-300 font-sans text-[10px] font-bold border border-rose-500/40">Visitante</span>` : `<span class="px-2 py-0.5 rounded bg-amber-950 text-amber-300 font-sans text-[10px] font-bold border border-amber-500/40">Neutro</span>`;
     return `<tr class="hover:bg-white/[0.04] transition border-b border-white/5">
       <td data-label="Data" class="p-3 text-white/90 whitespace-nowrap">${escapeHtml(formatCatalogDate(m.data))}</td>
+      <td data-label="DIA" class="p-2 text-center text-white/70 whitespace-nowrap">${escapeHtml(abbreviateWeekday326417(m.dia))}</td>
       <td data-label="Horário" class="p-3 text-white/80 whitespace-nowrap">${escapeHtml(m.hora || '-')}</td>
       <td data-label="Adversário" class="p-3 font-sans font-bold text-white">${escapeHtml(m.adv)}</td>
       <td data-label="Placar" class="p-3 text-center">${resultBadge(m)}</td>
@@ -3794,6 +3806,15 @@ function matchResultInline402(m) {
   const aria=result.kind==='V'?'Vitória':result.kind==='D'?'Derrota':'Empate';
   return `<span class="flu402-result" aria-label="${aria}: ${result.score}"><span class="flu402-result-letter flu402-${result.kind}">${result.kind}</span><span class="flu402-result-score">${result.score}</span></span>`;
 }
+function topMandanteDayTime402(m) {
+  const day=normalizeComparable(m?.dia||'').replace(/-feira/g,'').trim();
+  const days=[['domingo','DOM'],['segunda','SEG'],['terca','TER'],['quarta','QUA'],['quinta','QUI'],['sexta','SEX'],['sabado','SAB']];
+  const abbreviation=days.find(([name])=>day.startsWith(name))?.[1]||'—';
+  const rawTime=String(m?.hora||'').trim();
+  const timeMatch=rawTime.match(/^(\d{1,2}):(\d{2})/);
+  const time=timeMatch?`${timeMatch[1].padStart(2,'0')}:${timeMatch[2]}`:'—';
+  return `${abbreviation} ${time}`;
+}
 // Mantém o tooltip dentro da área do gráfico, inclusive em telas estreitas.
 function topMandanteTooltip402(top) {
   return function(context) {
@@ -3807,8 +3828,8 @@ function topMandanteTooltip402(top) {
     const m=top[i];if(!m){box.style.opacity='0';return;}
     const result=matchResult402(m);
     const competition=m.torneio&&m.torneio!=='-'?m.torneio:'Competição não informada';
-    const resultLine=result?`<div class="flu402-tooltip-result">${matchResultInline402(m)}</div>`:'';
-    box.innerHTML=`<div class="flu402-tooltip-title">${escapeHtml(m.adv)} · ${escapeHtml(formatCatalogDate(m.data))}</div>${resultLine}<div class="flu402-tooltip-competition">${escapeHtml(competition)}</div><div class="flu402-tooltip-audience"><i aria-hidden="true"></i> Público: ${Number(m.pub).toLocaleString('pt-BR')}</div>`;
+    const resultInline=result?` · ${matchResultInline402(m)}`:'';
+    box.innerHTML=`<div class="flu402-tooltip-title">${escapeHtml(m.adv)} - ${escapeHtml(formatCatalogDate(m.data))}</div><div class="flu402-tooltip-result">${escapeHtml(topMandanteDayTime402(m))}${resultInline}</div><div class="flu402-tooltip-competition">${escapeHtml(competition)}</div><div class="flu402-tooltip-audience"><i aria-hidden="true"></i> Público: ${Number(m.pub).toLocaleString('pt-BR')}</div>`;
     box.style.opacity='1';
     const width=box.offsetWidth,height=box.offsetHeight;
     const canvasOffsetX=chart.canvas.offsetLeft,canvasOffsetY=chart.canvas.offsetTop;

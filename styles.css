@@ -3233,7 +3233,7 @@ fieldset.flu414-chart-type > .flu414-chart-buttons > button {
 }
 
 
-/* V4.0.16 — Catálogo principal: Horário após Data. A tabela deve caber no card
+/* V4.0.17 — Catálogo principal: Horário após Data. A tabela deve caber no card
    sem barra horizontal, incluindo em telas menores (layout de fichas rotuladas). */
 #content-catalogo .catalog-scroll {
   max-width:100%;
@@ -3262,27 +3262,31 @@ fieldset.flu414-chart-type > .flu414-chart-buttons > button {
     align-items:center;
     max-width:100%;
   }
-  #content-catalogo .catalog-main-table th:nth-child(1),#content-catalogo .catalog-main-table td:nth-child(1) {width:8%;}
-  #content-catalogo .catalog-main-table th:nth-child(2),#content-catalogo .catalog-main-table td:nth-child(2) {width:5.5%;}
-  #content-catalogo .catalog-main-table th:nth-child(3),#content-catalogo .catalog-main-table td:nth-child(3) {width:11%;}
-  #content-catalogo .catalog-main-table th:nth-child(4),#content-catalogo .catalog-main-table td:nth-child(4) {width:9%;}
-  #content-catalogo .catalog-main-table th:nth-child(5),#content-catalogo .catalog-main-table td:nth-child(5) {width:16%;}
-  #content-catalogo .catalog-main-table th:nth-child(6),#content-catalogo .catalog-main-table td:nth-child(6) {width:8%;}
-  #content-catalogo .catalog-main-table th:nth-child(7),#content-catalogo .catalog-main-table td:nth-child(7) {width:14%;}
-  #content-catalogo .catalog-main-table th:nth-child(8),#content-catalogo .catalog-main-table td:nth-child(8) {width:11%;}
-  #content-catalogo .catalog-main-table th:nth-child(9),#content-catalogo .catalog-main-table td:nth-child(9) {width:9%;}
-  #content-catalogo .catalog-main-table th:nth-child(10),#content-catalogo .catalog-main-table td:nth-child(10) {width:8.5%;}
-  #content-catalogo .catalog-main-table tbody td:nth-child(3),
-  #content-catalogo .catalog-main-table tbody td:nth-child(5),
-  #content-catalogo .catalog-main-table tbody td:nth-child(7) {
+  #content-catalogo .catalog-main-table th:nth-child(1),#content-catalogo .catalog-main-table td:nth-child(1) {width:7.5%;}
+  #content-catalogo .catalog-main-table th:nth-child(2),#content-catalogo .catalog-main-table td:nth-child(2) {width:3.5%;}
+  #content-catalogo .catalog-main-table th:nth-child(3),#content-catalogo .catalog-main-table td:nth-child(3) {width:5.5%;}
+  #content-catalogo .catalog-main-table th:nth-child(4),#content-catalogo .catalog-main-table td:nth-child(4) {width:11%;}
+  #content-catalogo .catalog-main-table th:nth-child(5),#content-catalogo .catalog-main-table td:nth-child(5) {width:8%;}
+  #content-catalogo .catalog-main-table th:nth-child(6),#content-catalogo .catalog-main-table td:nth-child(6) {width:15%;}
+  #content-catalogo .catalog-main-table th:nth-child(7),#content-catalogo .catalog-main-table td:nth-child(7) {width:7%;}
+  #content-catalogo .catalog-main-table th:nth-child(8),#content-catalogo .catalog-main-table td:nth-child(8) {width:12%;}
+  #content-catalogo .catalog-main-table th:nth-child(9),#content-catalogo .catalog-main-table td:nth-child(9) {width:11%;}
+  #content-catalogo .catalog-main-table th:nth-child(10),#content-catalogo .catalog-main-table td:nth-child(10) {width:9%;}
+  #content-catalogo .catalog-main-table th:nth-child(11),#content-catalogo .catalog-main-table td:nth-child(11) {width:10.5%;}
+  /* Espaço entre Estádio e Público Total reduzido para preservar a tabela na viewport. */
+  #content-catalogo .catalog-main-table th:nth-child(8),#content-catalogo .catalog-main-table td:nth-child(8),
+  #content-catalogo .catalog-main-table th:nth-child(9),#content-catalogo .catalog-main-table td:nth-child(9) {padding-left:2px!important;padding-right:2px!important;}
+  #content-catalogo .catalog-main-table tbody td:nth-child(4),
+  #content-catalogo .catalog-main-table tbody td:nth-child(6),
+  #content-catalogo .catalog-main-table tbody td:nth-child(8) {
     overflow:hidden;
     text-overflow:ellipsis;
     white-space:nowrap;
   }
-  #content-catalogo .catalog-main-table tbody td:nth-child(3),
-  #content-catalogo .catalog-main-table tbody td:nth-child(5),
-  #content-catalogo .catalog-main-table tbody td:nth-child(7) {font-size:10px;}
-  #content-catalogo .catalog-main-table tbody td:nth-child(4) > .catalog-score-compact {
+  #content-catalogo .catalog-main-table tbody td:nth-child(4),
+  #content-catalogo .catalog-main-table tbody td:nth-child(6),
+  #content-catalogo .catalog-main-table tbody td:nth-child(8) {font-size:10px;}
+  #content-catalogo .catalog-main-table tbody td:nth-child(5) > .catalog-score-compact {
     display:inline-flex!important;
     align-items:center!important;
     justify-content:center!important;
@@ -3292,7 +3296,7 @@ fieldset.flu414-chart-type > .flu414-chart-buttons > button {
     gap:4px!important;
     max-width:100%;
   }
-  #content-catalogo .catalog-main-table tbody td:nth-child(4) > .catalog-score-compact > .catalog-score-result {
+  #content-catalogo .catalog-main-table tbody td:nth-child(5) > .catalog-score-compact > .catalog-score-result {
     width:19px!important; min-width:19px!important;
     height:19px!important; min-height:19px!important; flex:0 0 19px!important;
   }
@@ -3339,14 +3343,14 @@ fieldset.flu414-chart-type > .flu414-chart-buttons > button {
     text-transform:uppercase;
   }
   html[data-theme="light"] #content-catalogo .catalog-main-table tbody td::before {color:#58715f;}
-  #content-catalogo .catalog-main-table tbody td:nth-child(3),
-  #content-catalogo .catalog-main-table tbody td:nth-child(5),
-  #content-catalogo .catalog-main-table tbody td:nth-child(7) {
+  #content-catalogo .catalog-main-table tbody td:nth-child(4),
+  #content-catalogo .catalog-main-table tbody td:nth-child(6),
+  #content-catalogo .catalog-main-table tbody td:nth-child(8) {
     white-space:normal;
     overflow:visible;
     text-overflow:clip;
   }
-  #content-catalogo .catalog-main-table tbody td:nth-child(4) > .catalog-score-compact {
+  #content-catalogo .catalog-main-table tbody td:nth-child(5) > .catalog-score-compact {
     display:inline-flex!important;
     justify-content:center!important;
     align-items:center!important;
@@ -3360,7 +3364,7 @@ fieldset.flu414-chart-type > .flu414-chart-buttons > button {
   #content-catalogo .catalog-main-table tbody td[colspan]::before {display:none;}
 }
 
-/* V4.0.16: mobile ordering remains accessible when table headers are hidden. */
+/* V4.0.17: mobile ordering remains accessible when table headers are hidden. */
 #content-catalogo .catalog-mobile-sort {display:none;}
 @media (max-width:1023px) {
   #content-catalogo .catalog-mobile-sort {
@@ -3382,10 +3386,12 @@ fieldset.flu414-chart-type > .flu414-chart-buttons > button {
   }
 }
 @media (min-width:1024px) {
-  #content-catalogo .catalog-main-table tbody td:nth-child(3),
-  #content-catalogo .catalog-main-table tbody td:nth-child(5),
-  #content-catalogo .catalog-main-table tbody td:nth-child(7) {
+  #content-catalogo .catalog-main-table tbody td:nth-child(4),
+  #content-catalogo .catalog-main-table tbody td:nth-child(6),
+  #content-catalogo .catalog-main-table tbody td:nth-child(8) {
     white-space:normal; overflow:visible; text-overflow:clip;
     overflow-wrap:anywhere; word-break:normal;
   }
 }
+
+/* V4.0.18 — Identificação do Top Maiores Públicos e tooltip com dia/horário. */
